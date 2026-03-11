@@ -19,7 +19,7 @@ import { MondayGoalsReview } from "@/components/MondayGoalsReview";
 import { FridayWeeklyReport } from "@/components/FridayWeeklyReport";
 import { TodayEvents } from "@/components/TodayEvents";
 import { DailyNudge } from "@/components/DailyNudge";
-import { DailyTasksView } from "@/components/DailyTasksView";
+import { UnifiedKanban } from "@/components/UnifiedKanban";
 import { DayGate } from "@/components/DayGate";
 import { MoodCheckIn } from "@/components/MoodCheckIn";
 import { ModuleDashboard } from "@/components/ModuleDashboard";
