@@ -65,12 +65,6 @@ export function HomeModule({ energy }: HomeModuleProps) {
   const pendentes = casa.listaCompras.filter((i) => !i.comprado);
   const comprados = casa.listaCompras.filter((i) => i.comprado);
 
-  // Determine tasks to show based on energy
-  const getVisibleComodos = () => {
-    if (energy === "basico") return casa.comodos.slice(0, 1);
-    if (energy === "modo_leve") return selectedComodo ? [selectedComodo] : casa.comodos.slice(0, 2);
-    return casa.comodos;
-  };
 
   return (
     <div className="space-y-5 animate-fade-in">
