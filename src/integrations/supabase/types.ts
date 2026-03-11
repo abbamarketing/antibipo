@@ -774,6 +774,54 @@ export type Database = {
         }
         Relationships: []
       }
+      reunioes: {
+        Row: {
+          cor: string | null
+          created_at: string | null
+          data: string
+          descricao: string | null
+          hora_fim: string | null
+          hora_inicio: string
+          id: string
+          lembrete_min: number | null
+          local: string | null
+          participantes: string[] | null
+          tipo: string | null
+          titulo: string
+          user_id: string
+        }
+        Insert: {
+          cor?: string | null
+          created_at?: string | null
+          data: string
+          descricao?: string | null
+          hora_fim?: string | null
+          hora_inicio: string
+          id?: string
+          lembrete_min?: number | null
+          local?: string | null
+          participantes?: string[] | null
+          tipo?: string | null
+          titulo: string
+          user_id: string
+        }
+        Update: {
+          cor?: string | null
+          created_at?: string | null
+          data?: string
+          descricao?: string | null
+          hora_fim?: string | null
+          hora_inicio?: string
+          id?: string
+          lembrete_min?: number | null
+          local?: string | null
+          participantes?: string[] | null
+          tipo?: string | null
+          titulo?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       sessoes_energia: {
         Row: {
           data: string
