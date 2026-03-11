@@ -9,6 +9,32 @@ export default function Configuracoes() {
   const { profile, updateProfile } = useProfileStore();
   const [confirmReset, setConfirmReset] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const [resumos, setResumos] = useState<any[]>([]);
+  const [logCount, setLogCount] = useState<number | null>(null);
+
+  useEffect(() => {
+    (async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      // Fetch consolidated summaries
+      const { data: configs } = await supabase
+        .from("configuracoes" as any)
+        .select("*")
+        .eq("user_id", user.id)
+        .like("chave", "resumo_logs_%")
+        .order("created_at", { ascending: false })
+        .limit(10);
+      if (configs) setResumos(configs as any[]);
+
+      // Fetch current log count
+      const { count } = await supabase
+        .from("activity_log" as any)
+        .select("*", { count: "exact", head: true })
+        .eq("user_id", user.id);
+      setLogCount(count ?? 0);
+    })();
+  }, []);
 
   const handleResetAccount = async () => {
     if (!confirmReset) { setConfirmReset(true); return; }
