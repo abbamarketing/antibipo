@@ -7,10 +7,12 @@ import { SaldosTab } from "@/components/financeiro/SaldosTab";
 import { TotaisTab } from "@/components/financeiro/TotaisTab";
 import { TagsTab } from "@/components/financeiro/TagsTab";
 import { HorizonteTab } from "@/components/financeiro/HorizonteTab";
+import { CarteiraTab } from "@/components/financeiro/CarteiraTab";
 import { LancamentoModal } from "@/components/financeiro/LancamentoModal";
 import { ModuleOnboardingGuard } from "@/components/ModuleOnboardingGuard";
+import { Briefcase } from "lucide-react";
 
-type FinTab = "saldos" | "totais" | "tags" | "horizonte";
+type FinTab = "saldos" | "totais" | "tags" | "carteira" | "horizonte";
 
 export default function Financeiro() {
   const navigate = useNavigate();
