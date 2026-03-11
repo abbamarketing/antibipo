@@ -389,6 +389,35 @@ export function QuickCapture({ open, onClose, onActionComplete }: QuickCapturePr
           });
           break;
         }
+
+        case "plano_casa": {
+          const tarefasPlano = dados.plano_tarefas || [];
+          if (tarefasPlano.length > 0) {
+            // Create tasks in the tasks table with module "casa" and deadline
+            for (const t of tarefasPlano) {
+              await supabase.from("tasks").insert({
+                titulo: `${t.tarefa} — ${t.comodo}`,
+                modulo: "casa" as any,
+                urgencia: t.prioridade || 2,
+                tipo: "domestico" as any,
+                dono: "eu" as any,
+                tempo_min: t.tempo_estimado_min || 15,
+                estado_ideal: "qualquer" as any,
+                impacto: t.prioridade === 1 ? 3 : 2,
+                status: "hoje" as any,
+                data_limite: dados.plano_prazo || null,
+                notas: dados.plano_resumo || null,
+              } as any);
+            }
+            toast.success(`Plano criado com ${tarefasPlano.length} tarefas!`);
+          }
+          logActivity("captura_rapida", {
+            tipo: "plano_casa",
+            tarefas: tarefasPlano.length,
+            prazo: dados.plano_prazo,
+          });
+          break;
+        }
       }
     } catch (err) {
       console.error("Action execution error:", err);
@@ -412,19 +441,27 @@ export function QuickCapture({ open, onClose, onActionComplete }: QuickCapturePr
         { data: pendingTasks },
         { data: lastHumor },
         { data: lastSono },
+        { data: tarefasCasa },
       ] = await Promise.all([
-        supabase.from("profiles").select("nome, trabalho_tipo, trabalho_equipe, trabalho_clientes_ativos, objetivo_saude").eq("user_id", user.id).maybeSingle(),
+        supabase.from("profiles").select("nome, trabalho_tipo, trabalho_equipe, trabalho_clientes_ativos, objetivo_saude, casa_comodos, casa_moradores, casa_pets").eq("user_id", user.id).maybeSingle(),
         supabase.from("activity_log").select("acao, detalhes").eq("user_id", user.id).order("criado_em", { ascending: false }).limit(10),
         supabase.from("configuracoes").select("valor").eq("user_id", user.id).like("chave", "resumo_logs_%").order("updated_at", { ascending: false }).limit(2),
         supabase.from("clientes").select("nome, tipo, status").eq("status", "ativo").limit(20),
         supabase.from("tasks").select("titulo, status, urgencia, dono").in("status", ["hoje", "em_andamento", "aguardando"]).limit(10),
         supabase.from("registros_humor").select("valor, notas").eq("data", todayStr).maybeSingle(),
         supabase.from("registros_sono").select("horario_dormir, horario_acordar, qualidade").eq("data", todayStr).maybeSingle(),
+        supabase.from("tarefas_casa" as any).select("comodo, tarefa, frequencia").eq("ativo", true).order("comodo"),
       ]);
 
       const parts: string[] = [];
       if (profile?.nome) parts.push(`Nome: ${profile.nome}`);
       if (profile?.trabalho_tipo) parts.push(`Trabalho: ${profile.trabalho_tipo}, equipe: ${profile.trabalho_equipe || "solo"}`);
+      if (profile?.casa_comodos) parts.push(`Casa: ${profile.casa_comodos} cômodos, ${profile.casa_moradores || 1} moradores${profile.casa_pets ? ", tem pets" : ""}`);
+      if (tarefasCasa?.length) {
+        const comodos = [...new Set((tarefasCasa as any[]).map((t: any) => t.comodo))];
+        parts.push(`Cômodos cadastrados: ${comodos.join(", ")}`);
+        parts.push(`Tarefas domésticas cadastradas: ${(tarefasCasa as any[]).map((t: any) => `${t.tarefa} (${t.comodo})`).join(", ")}`);
+      }
       if (clientes?.length) parts.push(`Clientes ativos: ${clientes.map((c: any) => `${c.nome} (${c.tipo})`).join(", ")}`);
       if (pendingTasks?.length) parts.push(`Tarefas pendentes: ${pendingTasks.map((t: any) => `${t.titulo} [${t.status}]`).join(", ")}`);
       if (lastHumor) parts.push(`Humor hoje: ${lastHumor.valor}/5`);
