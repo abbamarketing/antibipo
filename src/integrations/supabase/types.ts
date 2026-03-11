@@ -71,6 +71,129 @@ export type Database = {
         }
         Relationships: []
       }
+      fc_consolidacao: {
+        Row: {
+          ano: number
+          id: string
+          mes: number
+          performance: number | null
+          saldo_final: number | null
+          saldo_inicial: number | null
+          total_entradas: number | null
+          total_saidas: number | null
+        }
+        Insert: {
+          ano: number
+          id?: string
+          mes: number
+          performance?: number | null
+          saldo_final?: number | null
+          saldo_inicial?: number | null
+          total_entradas?: number | null
+          total_saidas?: number | null
+        }
+        Update: {
+          ano?: number
+          id?: string
+          mes?: number
+          performance?: number | null
+          saldo_final?: number | null
+          saldo_inicial?: number | null
+          total_entradas?: number | null
+          total_saidas?: number | null
+        }
+        Relationships: []
+      }
+      fc_lancamento_tags: {
+        Row: {
+          lancamento_id: string
+          tag_id: string
+          valor: number | null
+        }
+        Insert: {
+          lancamento_id: string
+          tag_id: string
+          valor?: number | null
+        }
+        Update: {
+          lancamento_id?: string
+          tag_id?: string
+          valor?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fc_lancamento_tags_lancamento_id_fkey"
+            columns: ["lancamento_id"]
+            isOneToOne: false
+            referencedRelation: "fc_lancamentos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fc_lancamento_tags_tag_id_fkey"
+            columns: ["tag_id"]
+            isOneToOne: false
+            referencedRelation: "fc_tags"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      fc_lancamentos: {
+        Row: {
+          ano: number
+          created_at: string | null
+          dia: number
+          diario: string | null
+          entrada: number | null
+          id: string
+          mes: number
+          saida: number | null
+          saldo: number | null
+        }
+        Insert: {
+          ano: number
+          created_at?: string | null
+          dia: number
+          diario?: string | null
+          entrada?: number | null
+          id?: string
+          mes: number
+          saida?: number | null
+          saldo?: number | null
+        }
+        Update: {
+          ano?: number
+          created_at?: string | null
+          dia?: number
+          diario?: string | null
+          entrada?: number | null
+          id?: string
+          mes?: number
+          saida?: number | null
+          saldo?: number | null
+        }
+        Relationships: []
+      }
+      fc_tags: {
+        Row: {
+          cor: string | null
+          emoji: string | null
+          id: string
+          nome: string
+        }
+        Insert: {
+          cor?: string | null
+          emoji?: string | null
+          id?: string
+          nome: string
+        }
+        Update: {
+          cor?: string | null
+          emoji?: string | null
+          id?: string
+          nome?: string
+        }
+        Relationships: []
+      }
       medicamentos: {
         Row: {
           criado_em: string
