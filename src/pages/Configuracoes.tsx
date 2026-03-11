@@ -144,6 +144,44 @@ export default function Configuracoes() {
           })}
         </section>
 
+        {/* Log Summaries */}
+        <section className="bg-card rounded-lg border p-4 mb-4">
+          <div className="flex items-center gap-2 mb-3">
+            <ScrollText className="w-4 h-4 text-muted-foreground" />
+            <h2 className="font-mono text-xs font-semibold tracking-wider">RESUMOS DE ATIVIDADE</h2>
+          </div>
+          <div className="flex items-center justify-between py-1.5 mb-2">
+            <span className="font-mono text-xs text-muted-foreground">Logs pendentes</span>
+            <span className="font-mono text-xs">{logCount ?? "..."}/100</span>
+          </div>
+          {resumos.length === 0 ? (
+            <p className="font-mono text-[10px] text-muted-foreground/60 py-2">
+              Nenhum resumo ainda. A cada 100 ações, um resumo é gerado automaticamente.
+            </p>
+          ) : (
+            <div className="space-y-2">
+              {resumos.map((r: any) => {
+                const valor = r.valor as any;
+                return (
+                  <div key={r.id} className="bg-secondary/50 rounded-md p-3 space-y-1">
+                    <div className="flex items-center justify-between">
+                      <span className="font-mono text-[9px] text-muted-foreground">
+                        {new Date(r.created_at).toLocaleDateString("pt-BR")}
+                      </span>
+                      <span className="font-mono text-[9px] text-primary">
+                        {valor?.total_acoes || 0} ações
+                      </span>
+                    </div>
+                    <p className="font-body text-xs text-foreground/80 leading-relaxed">
+                      {valor?.resumo || "Sem resumo"}
+                    </p>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </section>
+
         {/* Actions */}
         <section className="space-y-2">
           <button
