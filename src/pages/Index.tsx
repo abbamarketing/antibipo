@@ -56,7 +56,6 @@ const Index = () => {
   const handleSetEnergy = (energy: typeof current_energy) => {
     if (!energy) return;
     setEnergy(energy);
-    logActivity("energia_selecionada", { estado: energy, hora: brasiliaTimeString() });
   };
 
   const handleCompleteTask = (id: string) => {
