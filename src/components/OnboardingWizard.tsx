@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useProfileStore, Profile } from "@/lib/profile-store";
 import { logActivity } from "@/lib/activity-log";
+import { seedTarefasCasa } from "@/lib/casa-seed";
 import { ChevronRight, User, Briefcase, Home, Heart, Wallet, X } from "lucide-react";
 
 type ModuloOnboarding = "saude" | "trabalho" | "casa" | "financeiro";
