@@ -59,7 +59,7 @@ Regras:
             type: "function",
             function: {
               name: "parse_command",
-              description: "Converte texto natural do usuario em acao estruturada para o app FLOW.",
+              description: "Converte texto natural do usuario em acao estruturada para o app AntiBipolaridade.",
               parameters: {
                 type: "object",
                 properties: {

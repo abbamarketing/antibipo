@@ -66,7 +66,7 @@ Tempo estimado em minutos (padrão 30)`,
             type: "function",
             function: {
               name: "classify_task",
-              description: "Classifica uma tarefa do FLOW com tipo, estado ideal, urgência, impacto, dono e tempo estimado.",
+              description: "Classifica uma tarefa do AntiBipolaridade com tipo, estado ideal, urgência, impacto, dono e tempo estimado.",
               parameters: {
                 type: "object",
                 properties: {
