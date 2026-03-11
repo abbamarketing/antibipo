@@ -462,6 +462,10 @@ export function QuickCapture({ open, onClose, onActionComplete }: QuickCapturePr
       });
 
       if (error) throw error;
+      if (data?.ai_provider) {
+        const { trackAIProvider } = await import("@/lib/ai-stats");
+        trackAIProvider(data.ai_provider);
+      }
       if (data?.error) {
         setFeedback("error");
         setLastResponse(data.error);

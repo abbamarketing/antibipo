@@ -310,6 +310,10 @@ export function useFlowStore() {
         body: { titulo },
       });
       if (error) throw error;
+      if (data?.ai_provider) {
+        const { trackAIProvider } = await import("@/lib/ai-stats");
+        trackAIProvider(data.ai_provider);
+      }
       if (data?.classification) {
         updateTaskMut.mutate({ id: taskId, changes: data.classification });
       }
