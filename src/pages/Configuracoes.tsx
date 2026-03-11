@@ -35,7 +35,7 @@ function AIProviderStats() {
               <span className="font-mono text-[10px] font-medium">{geminiPct}% ({stats.gemini_direct})</span>
             </div>
             <div className="w-full h-2 bg-secondary rounded-full overflow-hidden">
-              <div className="h-full bg-blue-500 rounded-full transition-all" style={{ width: `${geminiPct}%` }} />
+              <div className="h-full bg-accent rounded-full transition-all" style={{ width: `${geminiPct}%` }} />
             </div>
           </div>
 
