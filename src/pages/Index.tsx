@@ -103,7 +103,7 @@ const Index = () => {
     if (type === "acordar") {
       const hoje = brasiliaTime();
       const dia = hoje.getDay();
-      const sessionKey = `flow_review_${hoje.toISOString().split("T")[0]}`;
+      const sessionKey = `ab_review_${hoje.toISOString().split("T")[0]}`;
       
       if (dia === 1 && !sessionStorage.getItem(`${sessionKey}_monday`)) {
         sessionStorage.setItem(`${sessionKey}_monday`, "1");
@@ -143,7 +143,7 @@ const Index = () => {
         {/* Header */}
         <header className="mb-6">
           <div className="flex items-center justify-between">
-            <h1 className="font-mono text-xl font-bold tracking-tight">FLOW</h1>
+            <h1 className="font-mono text-sm font-bold tracking-tight">AB</h1>
             <div className="flex items-center gap-2">
               <button
                 onClick={() => navigate("/calendario")}

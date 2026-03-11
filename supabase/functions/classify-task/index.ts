@@ -26,7 +26,7 @@ serve(async (req) => {
         messages: [
           {
             role: "system",
-            content: `Você é um classificador de tarefas para o sistema FLOW. Recebe o título de uma tarefa e retorna a classificação usando tool calling.
+            content: `Você é um classificador de tarefas para o sistema AntiBipolaridade. Recebe o título de uma tarefa e retorna a classificação usando tool calling.
 
 Contexto do usuário:
 - Empreendedor, dono de agência de vídeo para clínicas médicas
@@ -66,7 +66,7 @@ Tempo estimado em minutos (padrão 30)`,
             type: "function",
             function: {
               name: "classify_task",
-              description: "Classifica uma tarefa do FLOW com tipo, estado ideal, urgência, impacto, dono e tempo estimado.",
+              description: "Classifica uma tarefa do AntiBipolaridade com tipo, estado ideal, urgência, impacto, dono e tempo estimado.",
               parameters: {
                 type: "object",
                 properties: {

@@ -36,13 +36,13 @@ export function NotificationManager({ medicamentos, isMedTaken, hasEnergy }: Not
     requestPermission();
 
     // Welcome notification on first PWA open
-    const welcomed = localStorage.getItem("flow_welcomed");
+    const welcomed = localStorage.getItem("ab_welcomed");
     if (!welcomed && "Notification" in window) {
       const checkPerm = () => {
         if (Notification.permission === "granted") {
-          localStorage.setItem("flow_welcomed", "1");
+          localStorage.setItem("ab_welcomed", "1");
           setTimeout(() => {
-            notify("Bem-vindo ao FLOW", "App instalado com sucesso. Suas notificacoes estao ativas.");
+            notify("AntiBipolaridade", "App instalado com sucesso. Suas notificacoes estao ativas.");
           }, 2000);
         }
       };
@@ -70,7 +70,7 @@ export function NotificationManager({ medicamentos, isMedTaken, hasEnergy }: Not
         const pendingGoals = metasStore.metasAtivas.length;
         const goalMsg = pendingGoals > 0 ? ` ${pendingGoals} metas ativas.` : "";
 
-        notify("FLOW", `Selecione seu estado de energia para comecar.${meetingMsg}${goalMsg}`);
+        notify("AntiBipolaridade", `Selecione seu estado de energia para comecar.${meetingMsg}${goalMsg}`);
       }
     };
 
@@ -144,7 +144,7 @@ export function NotificationManager({ medicamentos, isMedTaken, hasEnergy }: Not
     const check = setInterval(() => {
       const elapsed = Date.now() - lastInactivity.current;
       if (elapsed > 2 * 60 * 60 * 1000 && hasEnergy) {
-        notify("FLOW", "Ha um tempo sem atividade. Como estao as tarefas?");
+        notify("AntiBipolaridade", "Ha um tempo sem atividade. Como estao as tarefas?");
         lastInactivity.current = Date.now();
       }
     }, 15 * 60 * 1000);
@@ -162,11 +162,11 @@ export function NotificationManager({ medicamentos, isMedTaken, hasEnergy }: Not
       const now = new Date();
       const hour = now.getHours();
       const todayStr = today();
-      const eveningKey = `flow_evening_${todayStr}`;
+      const eveningKey = `ab_evening_${todayStr}`;
 
       if (hour >= 20 && hour <= 21 && !sessionStorage.getItem(eveningKey) && hasEnergy) {
         sessionStorage.setItem(eveningKey, "1");
-        notify("FLOW", "Registrou tudo hoje? Peso, exercicio e humor ajudam no acompanhamento.");
+        notify("AntiBipolaridade", "Registrou tudo hoje? Peso, exercicio e humor ajudam no acompanhamento.");
       }
     };
 

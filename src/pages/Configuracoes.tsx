@@ -58,7 +58,7 @@ export default function Configuracoes() {
     if ("Notification" in window) {
       const perm = await Notification.requestPermission();
       if (perm === "granted") {
-        new Notification("FLOW", { body: "Notificacoes ativadas com sucesso.", icon: "/pwa-192.png" });
+        new Notification("AntiBipolaridade", { body: "Notificacoes ativadas com sucesso.", icon: "/pwa-192.png" });
       }
     }
   };
@@ -161,7 +161,7 @@ export default function Configuracoes() {
         </section>
 
         {/* Version */}
-        <p className="text-center font-mono text-[9px] text-muted-foreground/30 mt-8">FLOW v2.0</p>
+        <p className="text-center font-mono text-[9px] text-muted-foreground/30 mt-8">AntiBipolaridade v2.0</p>
       </div>
     </div>
   );

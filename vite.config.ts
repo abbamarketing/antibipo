@@ -19,9 +19,9 @@ export default defineConfig(({ mode }) => ({
       registerType: "autoUpdate",
       includeAssets: ["favicon.ico", "pwa-192.png", "pwa-512.png"],
       manifest: {
-        name: "FLOW",
-        short_name: "FLOW",
-        description: "Sistema pessoal de produtividade, saude e financas",
+        name: "AntiBipolaridade",
+        short_name: "AntiBipolar",
+        description: "Sistema pessoal de produtividade, saude e bem-estar",
         theme_color: "#0a0a0a",
         background_color: "#0a0a0a",
         display: "standalone",
