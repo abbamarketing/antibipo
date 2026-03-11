@@ -236,6 +236,39 @@ export type Database = {
         }
         Relationships: []
       }
+      carteira_docs: {
+        Row: {
+          created_at: string | null
+          dados: Json | null
+          id: string
+          notas: string | null
+          tipo: string
+          titulo: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          dados?: Json | null
+          id?: string
+          notas?: string | null
+          tipo?: string
+          titulo: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          dados?: Json | null
+          id?: string
+          notas?: string | null
+          tipo?: string
+          titulo?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       clientes: {
         Row: {
           contato: string | null
@@ -416,6 +449,39 @@ export type Database = {
           id?: string
           item?: string
           quantidade?: string | null
+        }
+        Relationships: []
+      }
+      log_consolidado: {
+        Row: {
+          created_at: string | null
+          detalhes: Json | null
+          id: string
+          metricas: Json | null
+          periodo_fim: string
+          periodo_inicio: string
+          resumo: string | null
+          tipo: string
+        }
+        Insert: {
+          created_at?: string | null
+          detalhes?: Json | null
+          id?: string
+          metricas?: Json | null
+          periodo_fim: string
+          periodo_inicio: string
+          resumo?: string | null
+          tipo: string
+        }
+        Update: {
+          created_at?: string | null
+          detalhes?: Json | null
+          id?: string
+          metricas?: Json | null
+          periodo_fim?: string
+          periodo_inicio?: string
+          resumo?: string | null
+          tipo?: string
         }
         Relationships: []
       }
