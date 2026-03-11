@@ -17,25 +17,14 @@ import { NotificationManager } from "@/components/NotificationManager";
 import { ModuleOnboardingGuard } from "@/components/ModuleOnboardingGuard";
 import { MondayGoalsReview } from "@/components/MondayGoalsReview";
 import { FridayWeeklyReport } from "@/components/FridayWeeklyReport";
-import { Plus, Activity, Zap, Sun, Battery, Wallet, Settings, CalendarDays } from "lucide-react";
+import { Plus, Zap, Sun, Battery, Wallet, Settings, CalendarDays, Activity } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 const Index = () => {
   const {
-    state,
-    setEnergy,
-    setModulo,
-    addTask,
-    completeTask,
-    updateTask,
-    addMedicamento,
-    registrarMedicamento,
-    registrarHumor,
-    registrarSono,
-    isMedTakenToday,
-    pendingMeds,
-    getFilteredTasks,
-    todayHumor,
+    state, setEnergy, setModulo, addTask, completeTask, updateTask,
+    addMedicamento, registrarMedicamento, registrarHumor, registrarSono,
+    isMedTakenToday, pendingMeds, getFilteredTasks, todayHumor,
   } = useFlowStore();
 
   const navigate = useNavigate();
@@ -58,7 +47,7 @@ const Index = () => {
   const energyConfig: Record<string, { icon: typeof Zap; label: string }> = {
     foco_total: { icon: Zap, label: "FOCO TOTAL" },
     modo_leve: { icon: Sun, label: "MODO LEVE" },
-    basico: { icon: Battery, label: "SÓ O BÁSICO" },
+    basico: { icon: Battery, label: "SO O BASICO" },
   };
 
   const handleSetEnergy = (energy: typeof current_energy) => {
@@ -99,7 +88,6 @@ const Index = () => {
     registrarSono(type, qualidade);
     logActivity(type === "dormir" ? "sono_dormir" : "sono_acordar", { qualidade, hora: brasiliaTimeString() });
     
-    // Trigger Monday/Friday modals on "acordei"
     if (type === "acordar") {
       const hoje = brasiliaTime();
       const dia = hoje.getDay();
@@ -139,46 +127,29 @@ const Index = () => {
         hasEnergy={!!current_energy}
       />
 
-      <div className="max-w-lg mx-auto px-4 py-6 pb-24">
-        {/* Header */}
-        <header className="mb-6">
+      <div className="max-w-lg mx-auto px-4 py-4 pb-24">
+        {/* Header - compact */}
+        <header className="mb-5">
           <div className="flex items-center justify-between">
-            <h1 className="font-mono text-sm font-bold tracking-tight">AB</h1>
-            <div className="flex items-center gap-2">
-              <button
-                onClick={() => navigate("/calendario")}
-                className="p-1.5 rounded-md text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors"
-                title="Calendario"
-              >
-                <CalendarDays className="w-4 h-4" />
-              </button>
-              <button
-                onClick={() => navigate("/financeiro")}
-                className="p-1.5 rounded-md text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors"
-                title="Financeiro"
-              >
+            <div>
+              <h1 className="font-mono text-sm font-bold tracking-tight">AB</h1>
+              <p className="text-[10px] text-muted-foreground font-mono tracking-widest mt-0.5">
+                {brasiliaDateString()}
+              </p>
+            </div>
+            <div className="flex items-center gap-1">
+              <span className="font-mono text-xs text-muted-foreground tabular-nums mr-1">{clock}</span>
+              <button onClick={() => navigate("/financeiro")} className="p-2 rounded-md text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors">
                 <Wallet className="w-4 h-4" />
               </button>
-              <button
-                onClick={() => navigate("/log")}
-                className="p-1.5 rounded-md text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors"
-                title="Log de atividade"
-              >
-                <Activity className="w-4 h-4" />
+              <button onClick={() => navigate("/calendario")} className="p-2 rounded-md text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors">
+                <CalendarDays className="w-4 h-4" />
               </button>
-              <button
-                onClick={() => navigate("/config")}
-                className="p-1.5 rounded-md text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors"
-                title="Configuracoes"
-              >
+              <button onClick={() => navigate("/config")} className="p-2 rounded-md text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors">
                 <Settings className="w-4 h-4" />
               </button>
-              <span className="font-mono text-sm text-muted-foreground tabular-nums">{clock}</span>
             </div>
           </div>
-          <p className="text-xs text-muted-foreground font-mono tracking-widest mt-1">
-            {brasiliaDateString()}
-          </p>
         </header>
 
         {/* Weather */}
@@ -205,9 +176,7 @@ const Index = () => {
                 return (
                   <>
                     <EIcon className="w-3.5 h-3.5 text-primary" />
-                    <span className="font-mono text-[11px] tracking-wider text-primary">
-                      {cfg.label}
-                    </span>
+                    <span className="font-mono text-[11px] tracking-wider text-primary">{cfg.label}</span>
                   </>
                 );
               })()}
@@ -220,61 +189,30 @@ const Index = () => {
               </button>
             </div>
 
-            {/* Monday Goals Review */}
-            {showMondayReview && (
-              <MondayGoalsReview onDismiss={() => setShowMondayReview(false)} />
-            )}
+            {showMondayReview && <MondayGoalsReview onDismiss={() => setShowMondayReview(false)} />}
+            {showFridayReport && <FridayWeeklyReport onDismiss={() => setShowFridayReport(false)} />}
 
-            {/* Friday Weekly Report */}
-            {showFridayReport && (
-              <FridayWeeklyReport onDismiss={() => setShowFridayReport(false)} />
-            )}
-
-            {/* Normal content when no review/report showing */}
             {!showMondayReview && !showFridayReport && (
               <>
-                {/* Module Nav */}
                 <div className="mb-6">
                   <ModuleNav current={activeNav} onSelect={handleModulo} />
                 </div>
 
-                {/* Module Content */}
                 {activeNav === "trabalho" && (
                   <ModuleOnboardingGuard modulo="trabalho">
-                    <WorkModule
-                      energy={current_energy}
-                      tasks={getFilteredTasks("trabalho", current_energy)}
-                      allTasks={state.tasks}
-                      onComplete={handleCompleteTask}
-                      onDelegate={handleDelegate}
-                      onPush={handlePush}
-                    />
+                    <WorkModule energy={current_energy} tasks={getFilteredTasks("trabalho", current_energy)} allTasks={state.tasks} onComplete={handleCompleteTask} onDelegate={handleDelegate} onPush={handlePush} />
                   </ModuleOnboardingGuard>
                 )}
-
                 {activeNav === "casa" && (
                   <ModuleOnboardingGuard modulo="casa">
                     <HomeModule energy={current_energy} />
                   </ModuleOnboardingGuard>
                 )}
-
                 {activeNav === "saude" && (
                   <ModuleOnboardingGuard modulo="saude">
-                    <HealthModule
-                      energy={current_energy}
-                      medicamentos={state.medicamentos}
-                      registros_humor={state.registros_humor}
-                      registros_sono={state.registros_sono}
-                      onTakeMed={handleTakeMed}
-                      isMedTaken={isMedTakenToday}
-                      onMood={handleMood}
-                      onSleep={handleSleep}
-                      onAddMed={handleAddMed}
-                      todayHumor={todayHumor}
-                    />
+                    <HealthModule energy={current_energy} medicamentos={state.medicamentos} registros_humor={state.registros_humor} registros_sono={state.registros_sono} onTakeMed={handleTakeMed} isMedTaken={isMedTakenToday} onMood={handleMood} onSleep={handleSleep} onAddMed={handleAddMed} todayHumor={todayHumor} />
                   </ModuleOnboardingGuard>
                 )}
-
                 {activeNav === "metas" && <MetasModule />}
               </>
             )}
@@ -292,13 +230,7 @@ const Index = () => {
         </button>
       )}
 
-      <QuickCapture
-        open={captureOpen}
-        onClose={() => setCaptureOpen(false)}
-        onActionComplete={() => {
-          // Invalidate relevant queries after AI action
-        }}
-      />
+      <QuickCapture open={captureOpen} onClose={() => setCaptureOpen(false)} onActionComplete={() => {}} />
     </div>
   );
 };

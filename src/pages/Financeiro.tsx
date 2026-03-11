@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useFinancialStore } from "@/lib/financial-store";
-import { ArrowLeft, ChevronLeft, ChevronRight, Calendar, LayoutGrid } from "lucide-react";
+import { ArrowLeft, ChevronLeft, ChevronRight, LayoutGrid } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { mesAbreviado } from "@/lib/currency";
 import { SaldosTab } from "@/components/financeiro/SaldosTab";
@@ -10,7 +10,6 @@ import { HorizonteTab } from "@/components/financeiro/HorizonteTab";
 import { CarteiraTab } from "@/components/financeiro/CarteiraTab";
 import { LancamentoModal } from "@/components/financeiro/LancamentoModal";
 import { ModuleOnboardingGuard } from "@/components/ModuleOnboardingGuard";
-import { Briefcase } from "lucide-react";
 
 type FinTab = "saldos" | "totais" | "tags" | "carteira" | "horizonte";
 
@@ -35,6 +34,13 @@ export default function Financeiro() {
     else setMes(mes + 1);
   };
 
+  const goToToday = () => {
+    setAno(now.getFullYear());
+    setMes(now.getMonth() + 1);
+  };
+
+  const isCurrentMonth = ano === now.getFullYear() && mes === now.getMonth() + 1;
+
   const tabs: { key: FinTab; label: string }[] = [
     { key: "saldos", label: "SALDOS" },
     { key: "totais", label: "TOTAIS" },
@@ -48,30 +54,30 @@ export default function Financeiro() {
       <div className="max-w-lg mx-auto px-4 py-4 pb-24">
         {/* Header */}
         <header className="flex items-center justify-between mb-4">
-          <div className="flex items-center gap-2">
-            <button onClick={() => navigate("/")} className="p-1.5 rounded-md hover:bg-secondary transition-colors">
-              <ArrowLeft className="w-4 h-4" />
-            </button>
-            <button className="font-mono text-[10px] text-muted-foreground px-2 py-1 rounded-md hover:bg-secondary">
-              <Calendar className="w-3.5 h-3.5" />
-            </button>
-          </div>
+          <button onClick={() => navigate("/")} className="p-2 -ml-2 rounded-md hover:bg-secondary transition-colors">
+            <ArrowLeft className="w-4 h-4" />
+          </button>
 
-          <div className="flex items-center gap-2">
-            <button onClick={prevMonth} className="p-1.5 rounded-md hover:bg-secondary transition-colors">
+          <div className="flex items-center gap-1">
+            <button onClick={prevMonth} className="p-2 rounded-md hover:bg-secondary transition-colors">
               <ChevronLeft className="w-4 h-4" />
             </button>
-            <span className="font-mono text-sm font-bold tracking-tight min-w-[70px] text-center">
+            <button 
+              onClick={goToToday}
+              className={`font-mono text-sm font-bold tracking-tight min-w-[80px] text-center px-2 py-1 rounded-md transition-colors ${
+                !isCurrentMonth ? "hover:bg-secondary" : ""
+              }`}
+            >
               {mesAbreviado(mes)}/{String(ano).slice(2)}
-            </span>
-            <button onClick={nextMonth} className="p-1.5 rounded-md hover:bg-secondary transition-colors">
+            </button>
+            <button onClick={nextMonth} className="p-2 rounded-md hover:bg-secondary transition-colors">
               <ChevronRight className="w-4 h-4" />
             </button>
           </div>
 
           <button
-            onClick={() => setTab("horizonte")}
-            className={`p-1.5 rounded-md transition-colors ${tab === "horizonte" ? "bg-primary text-primary-foreground" : "hover:bg-secondary"}`}
+            onClick={() => setTab(tab === "horizonte" ? "saldos" : "horizonte")}
+            className={`p-2 -mr-2 rounded-md transition-colors ${tab === "horizonte" ? "bg-primary text-primary-foreground" : "hover:bg-secondary"}`}
           >
             <LayoutGrid className="w-4 h-4" />
           </button>
@@ -84,7 +90,7 @@ export default function Financeiro() {
               <button
                 key={t.key}
                 onClick={() => setTab(t.key)}
-                className={`flex-1 py-2 rounded-md font-mono text-xs font-medium tracking-wider transition-all ${
+                className={`flex-1 py-2.5 rounded-md font-mono text-xs font-medium tracking-wider transition-all ${
                   tab === t.key ? "bg-card text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
                 }`}
               >
@@ -103,11 +109,7 @@ export default function Financeiro() {
         )}
 
         {tab === "totais" && (
-          <TotaisTab
-            consolidacao={store.consolidacao}
-            ano={ano}
-            mes={mes}
-          />
+          <TotaisTab consolidacao={store.consolidacao} ano={ano} mes={mes} />
         )}
 
         {tab === "tags" && (
@@ -146,9 +148,7 @@ export default function Financeiro() {
       {/* Edit modal */}
       {editDay !== null && (
         <LancamentoModal
-          ano={ano}
-          mes={mes}
-          dia={editDay}
+          ano={ano} mes={mes} dia={editDay}
           lancamentos={store.lancamentos}
           tags={store.tags}
           onSave={(data) => { store.upsertLancamento.mutate(data); setEditDay(null); }}
@@ -159,9 +159,7 @@ export default function Financeiro() {
       {/* Quick entry modal */}
       {quickEntry && (
         <LancamentoModal
-          ano={ano}
-          mes={mes}
-          dia={new Date().getDate()}
+          ano={ano} mes={mes} dia={new Date().getDate()}
           lancamentos={store.lancamentos}
           tags={store.tags}
           onSave={(data) => { store.upsertLancamento.mutate(data); setQuickEntry(false); }}
