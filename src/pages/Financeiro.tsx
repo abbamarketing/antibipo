@@ -39,6 +39,7 @@ export default function Financeiro() {
     { key: "saldos", label: "SALDOS" },
     { key: "totais", label: "TOTAIS" },
     { key: "tags", label: "TAGS" },
+    { key: "carteira", label: "DOCS" },
   ];
 
   return (
