@@ -177,7 +177,7 @@ export function QuickCapture({ open, onClose, onActionComplete }: QuickCapturePr
         }
 
         case "trabalho": {
-          // Find client by name if provided
+          // Find or auto-create client by name
           let clienteId = null;
           if (dados.cliente_nome) {
             const { data: clienteMatch } = await supabase
@@ -186,7 +186,21 @@ export function QuickCapture({ open, onClose, onActionComplete }: QuickCapturePr
               .ilike("nome", `%${dados.cliente_nome}%`)
               .limit(1)
               .maybeSingle();
-            clienteId = clienteMatch?.id || null;
+            
+            if (clienteMatch) {
+              clienteId = clienteMatch.id;
+            } else {
+              // Auto-create client
+              const { data: newCliente } = await supabase
+                .from("clientes")
+                .insert({ nome: dados.cliente_nome, tipo: "recorrente", status: "ativo" })
+                .select("id")
+                .single();
+              clienteId = newCliente?.id || null;
+              if (clienteId) {
+                toast.info(`Cliente "${dados.cliente_nome}" criado automaticamente`);
+              }
+            }
           }
 
           // Create main task
@@ -342,6 +356,55 @@ export function QuickCapture({ open, onClose, onActionComplete }: QuickCapturePr
     }
   };
 
+  // Build AI context from user data
+  const buildContext = async (): Promise<string> => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return "";
+
+      const todayStr = brasiliaISO();
+
+      const [
+        { data: profile },
+        { data: recentLogs },
+        { data: summaries },
+        { data: clientes },
+        { data: pendingTasks },
+        { data: lastHumor },
+        { data: lastSono },
+      ] = await Promise.all([
+        supabase.from("profiles").select("nome, trabalho_tipo, trabalho_equipe, trabalho_clientes_ativos, objetivo_saude").eq("user_id", user.id).maybeSingle(),
+        supabase.from("activity_log").select("acao, detalhes").eq("user_id", user.id).order("criado_em", { ascending: false }).limit(10),
+        supabase.from("configuracoes").select("valor").eq("user_id", user.id).like("chave", "resumo_logs_%").order("updated_at", { ascending: false }).limit(2),
+        supabase.from("clientes").select("nome, tipo, status").eq("status", "ativo").limit(20),
+        supabase.from("tasks").select("titulo, status, urgencia, dono").in("status", ["hoje", "em_andamento", "aguardando"]).limit(10),
+        supabase.from("registros_humor").select("valor, notas").eq("data", todayStr).maybeSingle(),
+        supabase.from("registros_sono").select("horario_dormir, horario_acordar, qualidade").eq("data", todayStr).maybeSingle(),
+      ]);
+
+      const parts: string[] = [];
+      if (profile?.nome) parts.push(`Nome: ${profile.nome}`);
+      if (profile?.trabalho_tipo) parts.push(`Trabalho: ${profile.trabalho_tipo}, equipe: ${profile.trabalho_equipe || "solo"}`);
+      if (clientes?.length) parts.push(`Clientes ativos: ${clientes.map((c: any) => `${c.nome} (${c.tipo})`).join(", ")}`);
+      if (pendingTasks?.length) parts.push(`Tarefas pendentes: ${pendingTasks.map((t: any) => `${t.titulo} [${t.status}]`).join(", ")}`);
+      if (lastHumor) parts.push(`Humor hoje: ${lastHumor.valor}/5`);
+      if (lastSono) parts.push(`Sono: ${lastSono.qualidade ? `qualidade ${lastSono.qualidade}/3` : "registrado"}`);
+      if (summaries?.length) {
+        const latestSummary = (summaries[0] as any)?.valor?.resumo;
+        if (latestSummary) parts.push(`Ultimo resumo IA: ${latestSummary}`);
+      }
+      if (recentLogs?.length) {
+        const recent = recentLogs.slice(0, 5).map((l: any) => l.acao).join(", ");
+        parts.push(`Acoes recentes: ${recent}`);
+      }
+
+      return parts.join("\n");
+    } catch (e) {
+      console.error("Context build failed:", e);
+      return "";
+    }
+  };
+
   const handleSubmit = async () => {
     // Clean up interim brackets before submitting
     const text = input.replace(/\s*\[.*?\]$/, "").trim();
@@ -353,8 +416,9 @@ export function QuickCapture({ open, onClose, onActionComplete }: QuickCapturePr
     setLastResponse("");
 
     try {
+      const context = await buildContext();
       const { data, error } = await supabase.functions.invoke("parse-command", {
-        body: { message: text },
+        body: { message: text, context },
       });
 
       if (error) throw error;

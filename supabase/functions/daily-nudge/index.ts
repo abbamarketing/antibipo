@@ -24,12 +24,10 @@ serve(async (req) => {
       });
     }
 
-    // Fetch yesterday's activity
     const yesterday = new Date();
     yesterday.setDate(yesterday.getDate() - 1);
     const yesterdayStr = yesterday.toISOString().split("T")[0];
-
-    // Fetch last 7 days for weekly context
+    const todayStr = new Date().toISOString().split("T")[0];
     const weekAgo = new Date();
     weekAgo.setDate(weekAgo.getDate() - 7);
     const weekAgoStr = weekAgo.toISOString().split("T")[0];
@@ -40,6 +38,15 @@ serve(async (req) => {
       { data: diary },
       { data: weekDiary },
       { data: metas },
+      { data: yesterdayHumor },
+      { data: weekHumor },
+      { data: yesterdaySono },
+      { data: yesterdayMeds },
+      { data: yesterdayExercicio },
+      { data: pendingTasks },
+      { data: completedYesterday },
+      { data: profile },
+      { data: latestSummary },
     ] = await Promise.all([
       supabase.from("activity_log").select("acao, detalhes")
         .gte("criado_em", `${yesterdayStr}T00:00:00`)
@@ -58,14 +65,33 @@ serve(async (req) => {
         .order("created_at", { ascending: false }).limit(10),
       supabase.from("metas_pessoais").select("titulo, progresso, status")
         .eq("user_id", user.id).eq("status", "ativa").limit(5),
+      // Well-being data
+      supabase.from("registros_humor").select("valor, notas").eq("data", yesterdayStr).maybeSingle(),
+      supabase.from("registros_humor").select("valor, data")
+        .gte("data", weekAgoStr).lte("data", yesterdayStr)
+        .order("data", { ascending: false }),
+      supabase.from("registros_sono").select("horario_dormir, horario_acordar, duracao_min, qualidade")
+        .eq("data", yesterdayStr).maybeSingle(),
+      supabase.from("registros_medicamento").select("tomado, medicamento_id")
+        .eq("data", yesterdayStr),
+      supabase.from("bm_exercicios").select("tipo, duracao_min, intensidade")
+        .eq("data", yesterdayStr),
+      supabase.from("tasks").select("titulo, status, urgencia")
+        .in("status", ["hoje", "em_andamento", "aguardando"]).limit(5),
+      supabase.from("tasks").select("titulo")
+        .eq("status", "feito")
+        .gte("feito_em", `${yesterdayStr}T00:00:00`)
+        .lt("feito_em", `${todayStr}T00:00:00`),
+      supabase.from("profiles").select("nome, objetivo_saude")
+        .eq("user_id", user.id).maybeSingle(),
+      supabase.from("configuracoes").select("valor")
+        .eq("user_id", user.id).like("chave", "resumo_logs_%")
+        .order("updated_at", { ascending: false }).limit(1),
     ]);
 
-    // Summarize actions into counts
     const summarize = (logs: any[]) => {
       const counts: Record<string, number> = {};
-      for (const l of logs) {
-        counts[l.acao] = (counts[l.acao] || 0) + 1;
-      }
+      for (const l of logs) counts[l.acao] = (counts[l.acao] || 0) + 1;
       return Object.entries(counts).map(([k, v]) => `${k}: ${v}x`).join(", ");
     };
 
@@ -75,8 +101,36 @@ serve(async (req) => {
     const weekDiaryText = (weekDiary || []).map(d => `[${d.data}] ${d.texto}`).join("\n");
     const metasText = (metas || []).map(m => `${m.titulo} (${m.progresso}%)`).join(", ");
 
-    const hasData = (yesterdayLogs?.length || 0) > 0 || (diary?.length || 0) > 0;
+    // Build well-being context
+    const wellBeing: string[] = [];
+    if (yesterdayHumor) wellBeing.push(`Humor ontem: ${yesterdayHumor.valor}/5${yesterdayHumor.notas ? ` (${yesterdayHumor.notas})` : ""}`);
+    if (weekHumor?.length) {
+      const avg = weekHumor.reduce((s: number, h: any) => s + h.valor, 0) / weekHumor.length;
+      wellBeing.push(`Humor médio semana: ${avg.toFixed(1)}/5 (${weekHumor.length} registros)`);
+    }
+    if (yesterdaySono) {
+      const sonoInfo = [];
+      if (yesterdaySono.duracao_min) sonoInfo.push(`${Math.round(yesterdaySono.duracao_min / 60)}h`);
+      if (yesterdaySono.qualidade) sonoInfo.push(`qualidade ${yesterdaySono.qualidade}/3`);
+      if (sonoInfo.length) wellBeing.push(`Sono ontem: ${sonoInfo.join(", ")}`);
+    }
+    if (yesterdayMeds?.length) {
+      const taken = yesterdayMeds.filter((m: any) => m.tomado).length;
+      wellBeing.push(`Medicamentos ontem: ${taken}/${yesterdayMeds.length} tomados`);
+    }
+    if (yesterdayExercicio?.length) {
+      const totalMin = yesterdayExercicio.reduce((s: number, e: any) => s + e.duracao_min, 0);
+      const tipos = yesterdayExercicio.map((e: any) => e.tipo).join(", ");
+      wellBeing.push(`Exercício ontem: ${totalMin}min (${tipos})`);
+    }
+    if (completedYesterday?.length) {
+      wellBeing.push(`Tarefas concluídas ontem: ${completedYesterday.length} (${completedYesterday.map((t: any) => t.titulo).join(", ")})`);
+    }
+    if (pendingTasks?.length) {
+      wellBeing.push(`Pendentes hoje: ${pendingTasks.map((t: any) => `${t.titulo} [urg:${t.urgencia}]`).join(", ")}`);
+    }
 
+    const hasData = (yesterdayLogs?.length || 0) > 0 || (diary?.length || 0) > 0 || wellBeing.length > 0;
     if (!hasData) {
       return new Response(JSON.stringify({ message: "Novo dia, novas possibilidades. Vamos nessa!" }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -90,6 +144,9 @@ serve(async (req) => {
       });
     }
 
+    const memoryContext = (latestSummary as any)?.[0]?.valor?.resumo || "";
+    const nome = profile?.nome || "usuário";
+
     const aiResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
       headers: {
@@ -101,23 +158,32 @@ serve(async (req) => {
         messages: [
           {
             role: "system",
-            content: `Você gera UMA frase curta (máx 15 palavras) que relata algo CONCRETO que o usuário fez ontem.
+            content: `Você gera UMA frase curta (máx 20 palavras) para ${nome} que relata algo CONCRETO de ontem.
 NÃO seja motivacional genérico. Seja factual e específico.
-Use dados reais: tarefas concluídas, exercícios feitos, medicamentos tomados, entradas de diário.
-Se houver contexto semanal, reconheça padrões de consistência ou evolução.
-Tom: parceiro, factual, direto. Sem emojis, sem aspas, sem exclamação exagerada.
+Use dados reais: tarefas concluídas, exercícios, medicamentos, sono, humor.
+Cruze módulos quando possível: "treinou e fechou 3 tarefas, humor subiu pra 4".
+Se o sono foi ruim ou humor baixo, seja empático sem ser dramático.
+Se há padrão de consistência na semana, reconheça.
+Tom: parceiro, factual, direto. Sem emojis, sem aspas.
 
-BOM: "Ontem você fechou 3 tarefas e treinou, quinto dia seguido"
-BOM: "Tomou todos os remédios e registrou como se sentiu, isso importa"
-BOM: "Semana com 4 dias de exercício, ontem não foi exceção"
-RUIM: "Você é incrível, continue assim!" (vazio demais)
-RUIM: "Novo dia, novas possibilidades" (genérico)
-
-Se as metas tiverem progresso, mencione. Se o humor subiu, note.`,
+BOM: "Ontem fechou 3 tarefas, treinou 30min e humor subiu pra 4"
+BOM: "Tomou todos os remédios e dormiu 7h, quarta noite boa seguida"
+BOM: "Dia mais leve no trabalho, aproveitou pra treinar e registrar no diário"
+RUIM: "Você é incrível!" (vazio)
+RUIM: "Novo dia, novas possibilidades" (genérico)`,
           },
           {
             role: "user",
-            content: `ONTEM: ${yesterdaySummary}\nDiário ontem: ${diaryText || "nenhum"}\n\nSEMANA ANTERIOR: ${weekSummary || "sem dados"}\nDiário da semana: ${weekDiaryText || "nenhum"}\n\nMetas ativas: ${metasText || "nenhuma"}`,
+            content: `ONTEM:
+Ações: ${yesterdaySummary || "nenhuma"}
+Diário: ${diaryText || "nenhum"}
+Bem-estar: ${wellBeing.join("; ") || "sem dados"}
+
+SEMANA:
+Ações: ${weekSummary || "sem dados"}
+Diário: ${weekDiaryText || "nenhum"}
+Metas ativas: ${metasText || "nenhuma"}
+${memoryContext ? `\nMemória IA: ${memoryContext}` : ""}`,
           },
         ],
       }),
