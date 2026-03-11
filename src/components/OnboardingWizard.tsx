@@ -212,8 +212,10 @@ export function OnboardingWizard({ modulo, onComplete, isRefresh }: OnboardingWi
         <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto">
           <Icon className="w-6 h-6 text-primary" />
         </div>
-        <h2 className="font-mono text-lg font-bold">{config.title}</h2>
-        <p className="text-sm text-muted-foreground font-body">{config.subtitle}</p>
+        <h2 className="font-mono text-lg font-bold">{isRefresh ? "Check-in mensal" : config.title}</h2>
+        <p className="text-sm text-muted-foreground font-body">
+          {isRefresh ? "Faz 30 dias. Algo mudou? Atualize rapidamente." : config.subtitle}
+        </p>
       </div>
 
       {/* Progress */}
