@@ -2,18 +2,21 @@ import { useEffect, useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useFlowStore } from "@/lib/store";
 import { startTimeThemeWatcher } from "@/lib/time-theme";
-import { brasiliaTimeString, brasiliaDateString } from "@/lib/brasilia";
+import { brasiliaTimeString, brasiliaDateString, brasiliaTime } from "@/lib/brasilia";
 import { logActivity } from "@/lib/activity-log";
 import { EnergyStateSelector } from "@/components/EnergyStateSelector";
 import { MedAlert } from "@/components/MedAlert";
-import { ModuleNav } from "@/components/ModuleNav";
+import { ModuleNav, type NavModulo } from "@/components/ModuleNav";
 import { WorkModule } from "@/components/WorkModule";
 import { HomeModule } from "@/components/HomeModule";
 import { HealthModule } from "@/components/HealthModule";
+import { MetasModule } from "@/components/MetasModule";
 import { QuickCapture } from "@/components/QuickCapture";
 import { WeatherWidget } from "@/components/WeatherWidget";
 import { NotificationManager } from "@/components/NotificationManager";
 import { ModuleOnboardingGuard } from "@/components/ModuleOnboardingGuard";
+import { MondayGoalsReview } from "@/components/MondayGoalsReview";
+import { FridayWeeklyReport } from "@/components/FridayWeeklyReport";
 import { Plus, Activity, Zap, Sun, Battery, Wallet, LogOut } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
@@ -38,6 +41,9 @@ const Index = () => {
   const navigate = useNavigate();
   const [captureOpen, setCaptureOpen] = useState(false);
   const [clock, setClock] = useState(brasiliaTimeString());
+  const [activeNav, setActiveNav] = useState<NavModulo>("trabalho");
+  const [showMondayReview, setShowMondayReview] = useState(false);
+  const [showFridayReport, setShowFridayReport] = useState(false);
 
   useEffect(() => {
     const cleanup = startTimeThemeWatcher();
@@ -92,6 +98,22 @@ const Index = () => {
   const handleSleep = (type: "dormir" | "acordar", qualidade?: 1 | 2 | 3) => {
     registrarSono(type, qualidade);
     logActivity(type === "dormir" ? "sono_dormir" : "sono_acordar", { qualidade, hora: brasiliaTimeString() });
+    
+    // Trigger Monday/Friday modals on "acordei"
+    if (type === "acordar") {
+      const hoje = brasiliaTime();
+      const dia = hoje.getDay();
+      const sessionKey = `flow_review_${hoje.toISOString().split("T")[0]}`;
+      
+      if (dia === 1 && !sessionStorage.getItem(`${sessionKey}_monday`)) {
+        sessionStorage.setItem(`${sessionKey}_monday`, "1");
+        setShowMondayReview(true);
+      }
+      if (dia === 5 && !sessionStorage.getItem(`${sessionKey}_friday`)) {
+        sessionStorage.setItem(`${sessionKey}_friday`, "1");
+        setShowFridayReport(true);
+      }
+    }
   };
 
   const handleCapture = async (data: Parameters<typeof addTask>[0]) => {
@@ -99,8 +121,9 @@ const Index = () => {
     logActivity("tarefa_capturada", { titulo: data.titulo, modulo: data.modulo, urgencia: data.urgencia, hora: brasiliaTimeString() });
   };
 
-  const handleModulo = (m: typeof current_modulo) => {
-    setModulo(m);
+  const handleModulo = (m: NavModulo) => {
+    setActiveNav(m);
+    if (m !== "metas") setModulo(m as typeof current_modulo);
   };
 
   const handleAddMed = (med: Parameters<typeof addMedicamento>[0]) => {
@@ -190,46 +213,63 @@ const Index = () => {
               </button>
             </div>
 
-            {/* Module Nav */}
-            <div className="mb-6">
-              <ModuleNav current={current_modulo} onSelect={handleModulo} />
-            </div>
-
-            {/* Module Content */}
-            {current_modulo === "trabalho" && (
-              <ModuleOnboardingGuard modulo="trabalho">
-                <WorkModule
-                  energy={current_energy}
-                  tasks={getFilteredTasks("trabalho", current_energy)}
-                  allTasks={state.tasks}
-                  onComplete={handleCompleteTask}
-                  onDelegate={handleDelegate}
-                  onPush={handlePush}
-                />
-              </ModuleOnboardingGuard>
+            {/* Monday Goals Review */}
+            {showMondayReview && (
+              <MondayGoalsReview onDismiss={() => setShowMondayReview(false)} />
             )}
 
-            {current_modulo === "casa" && (
-              <ModuleOnboardingGuard modulo="casa">
-                <HomeModule energy={current_energy} />
-              </ModuleOnboardingGuard>
+            {/* Friday Weekly Report */}
+            {showFridayReport && (
+              <FridayWeeklyReport onDismiss={() => setShowFridayReport(false)} />
             )}
 
-            {current_modulo === "saude" && (
-              <ModuleOnboardingGuard modulo="saude">
-                <HealthModule
-                  energy={current_energy}
-                  medicamentos={state.medicamentos}
-                  registros_humor={state.registros_humor}
-                  registros_sono={state.registros_sono}
-                  onTakeMed={handleTakeMed}
-                  isMedTaken={isMedTakenToday}
-                  onMood={handleMood}
-                  onSleep={handleSleep}
-                  onAddMed={handleAddMed}
-                  todayHumor={todayHumor}
-                />
-              </ModuleOnboardingGuard>
+            {/* Normal content when no review/report showing */}
+            {!showMondayReview && !showFridayReport && (
+              <>
+                {/* Module Nav */}
+                <div className="mb-6">
+                  <ModuleNav current={activeNav} onSelect={handleModulo} />
+                </div>
+
+                {/* Module Content */}
+                {activeNav === "trabalho" && (
+                  <ModuleOnboardingGuard modulo="trabalho">
+                    <WorkModule
+                      energy={current_energy}
+                      tasks={getFilteredTasks("trabalho", current_energy)}
+                      allTasks={state.tasks}
+                      onComplete={handleCompleteTask}
+                      onDelegate={handleDelegate}
+                      onPush={handlePush}
+                    />
+                  </ModuleOnboardingGuard>
+                )}
+
+                {activeNav === "casa" && (
+                  <ModuleOnboardingGuard modulo="casa">
+                    <HomeModule energy={current_energy} />
+                  </ModuleOnboardingGuard>
+                )}
+
+                {activeNav === "saude" && (
+                  <ModuleOnboardingGuard modulo="saude">
+                    <HealthModule
+                      energy={current_energy}
+                      medicamentos={state.medicamentos}
+                      registros_humor={state.registros_humor}
+                      registros_sono={state.registros_sono}
+                      onTakeMed={handleTakeMed}
+                      isMedTaken={isMedTakenToday}
+                      onMood={handleMood}
+                      onSleep={handleSleep}
+                      onAddMed={handleAddMed}
+                      todayHumor={todayHumor}
+                    />
+                  </ModuleOnboardingGuard>
+                )}
+
+                {activeNav === "metas" && <MetasModule />}
+              </>
             )}
           </>
         )}
