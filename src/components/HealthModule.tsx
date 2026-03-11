@@ -46,6 +46,7 @@ export function HealthModule({
   const [medHorario, setMedHorario] = useState("08:00");
 
   const bemEstar = useBemEstarStore();
+  const { profile, idade, pesoAtual } = useProfileStore();
   const todaySono = registros_sono.find((r) => r.data === today());
 
   const handleAddMed = () => {
