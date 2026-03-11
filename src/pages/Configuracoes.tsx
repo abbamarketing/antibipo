@@ -5,6 +5,66 @@ import { useNavigate } from "react-router-dom";
 import { ArrowLeft, RotateCcw, LogOut, Bell, User, Trash2, Shield, ScrollText, BookOpen, Brain } from "lucide-react";
 import { getAIStats, resetAIStats } from "@/lib/ai-stats";
 
+function AIProviderStats() {
+  const stats = getAIStats();
+  const total = stats.gemini_direct + stats.lovable_ai;
+  const geminiPct = total > 0 ? Math.round((stats.gemini_direct / total) * 100) : 0;
+  const lovablePct = total > 0 ? 100 - geminiPct : 0;
+
+  return (
+    <section className="bg-card rounded-lg border p-4 mb-4">
+      <div className="flex items-center gap-2 mb-3">
+        <Brain className="w-4 h-4 text-muted-foreground" />
+        <h2 className="font-mono text-xs font-semibold tracking-wider">USO DE IA</h2>
+      </div>
+      {total === 0 ? (
+        <p className="font-mono text-[10px] text-muted-foreground/60 py-2">
+          Nenhuma chamada de IA registrada nesta sessão.
+        </p>
+      ) : (
+        <div className="space-y-3">
+          <div className="flex items-center justify-between py-1">
+            <span className="font-mono text-xs text-muted-foreground">Total de chamadas</span>
+            <span className="font-mono text-xs font-bold">{total}</span>
+          </div>
+
+          {/* Gemini Direct bar */}
+          <div>
+            <div className="flex items-center justify-between mb-1">
+              <span className="font-mono text-[10px] text-muted-foreground">Gemini (Google OAuth)</span>
+              <span className="font-mono text-[10px] font-medium">{geminiPct}% ({stats.gemini_direct})</span>
+            </div>
+            <div className="w-full h-2 bg-secondary rounded-full overflow-hidden">
+              <div className="h-full bg-blue-500 rounded-full transition-all" style={{ width: `${geminiPct}%` }} />
+            </div>
+          </div>
+
+          {/* Lovable AI bar */}
+          <div>
+            <div className="flex items-center justify-between mb-1">
+              <span className="font-mono text-[10px] text-muted-foreground">Lovable AI Gateway</span>
+              <span className="font-mono text-[10px] font-medium">{lovablePct}% ({stats.lovable_ai})</span>
+            </div>
+            <div className="w-full h-2 bg-secondary rounded-full overflow-hidden">
+              <div className="h-full bg-primary rounded-full transition-all" style={{ width: `${lovablePct}%` }} />
+            </div>
+          </div>
+
+          <p className="font-mono text-[9px] text-muted-foreground/50 pt-1">
+            Gemini Direct = cota gratuita via Google OAuth • Lovable AI = gateway pago
+          </p>
+          <button
+            onClick={() => { resetAIStats(); window.location.reload(); }}
+            className="font-mono text-[10px] text-muted-foreground hover:text-foreground transition-colors"
+          >
+            Resetar contadores
+          </button>
+        </div>
+      )}
+    </section>
+  );
+}
+
 export default function Configuracoes() {
   const navigate = useNavigate();
   const { profile, updateProfile } = useProfileStore();
