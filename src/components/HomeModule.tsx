@@ -85,7 +85,7 @@ export function HomeModule({ energy }: HomeModuleProps) {
             </p>
           </div>
           <div className="bg-card rounded-lg border p-6 text-center space-y-4">
-            <p className="text-sm font-body">Quer limpar outro cômodo ou parar?</p>
+            <p className="text-sm font-body">Próximo cômodo?</p>
             <div className="flex gap-3 justify-center">
               <button
                 onClick={() => {
