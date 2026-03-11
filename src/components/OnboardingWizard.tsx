@@ -161,7 +161,7 @@ const moduloConfig: Record<ModuloOnboarding, { icon: typeof Heart; title: string
   },
 };
 
-export function OnboardingWizard({ modulo, onComplete }: OnboardingWizardProps) {
+export function OnboardingWizard({ modulo, onComplete, isRefresh }: OnboardingWizardProps) {
   const { updateProfile } = useProfileStore();
   const config = moduloConfig[modulo];
   const [step, setStep] = useState(0);
