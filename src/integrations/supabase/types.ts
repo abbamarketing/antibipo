@@ -14,7 +14,226 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      clientes: {
+        Row: {
+          contato: string | null
+          criado_em: string
+          data_renovacao: string | null
+          id: string
+          nome: string
+          status: string
+          valor_mensal: number | null
+        }
+        Insert: {
+          contato?: string | null
+          criado_em?: string
+          data_renovacao?: string | null
+          id?: string
+          nome: string
+          status?: string
+          valor_mensal?: number | null
+        }
+        Update: {
+          contato?: string | null
+          criado_em?: string
+          data_renovacao?: string | null
+          id?: string
+          nome?: string
+          status?: string
+          valor_mensal?: number | null
+        }
+        Relationships: []
+      }
+      medicamentos: {
+        Row: {
+          criado_em: string
+          dose: string
+          estoque: number
+          horarios: string[]
+          id: string
+          instrucoes: string | null
+          nome: string
+        }
+        Insert: {
+          criado_em?: string
+          dose?: string
+          estoque?: number
+          horarios?: string[]
+          id?: string
+          instrucoes?: string | null
+          nome: string
+        }
+        Update: {
+          criado_em?: string
+          dose?: string
+          estoque?: number
+          horarios?: string[]
+          id?: string
+          instrucoes?: string | null
+          nome?: string
+        }
+        Relationships: []
+      }
+      registros_humor: {
+        Row: {
+          data: string
+          id: string
+          notas: string | null
+          valor: number
+        }
+        Insert: {
+          data?: string
+          id?: string
+          notas?: string | null
+          valor: number
+        }
+        Update: {
+          data?: string
+          id?: string
+          notas?: string | null
+          valor?: number
+        }
+        Relationships: []
+      }
+      registros_medicamento: {
+        Row: {
+          data: string
+          horario_previsto: string
+          horario_tomado: string | null
+          id: string
+          medicamento_id: string
+          tomado: boolean
+        }
+        Insert: {
+          data?: string
+          horario_previsto: string
+          horario_tomado?: string | null
+          id?: string
+          medicamento_id: string
+          tomado?: boolean
+        }
+        Update: {
+          data?: string
+          horario_previsto?: string
+          horario_tomado?: string | null
+          id?: string
+          medicamento_id?: string
+          tomado?: boolean
+        }
+        Relationships: [
+          {
+            foreignKeyName: "registros_medicamento_medicamento_id_fkey"
+            columns: ["medicamento_id"]
+            isOneToOne: false
+            referencedRelation: "medicamentos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      registros_sono: {
+        Row: {
+          data: string
+          duracao_min: number | null
+          horario_acordar: string | null
+          horario_dormir: string | null
+          id: string
+          qualidade: number | null
+        }
+        Insert: {
+          data?: string
+          duracao_min?: number | null
+          horario_acordar?: string | null
+          horario_dormir?: string | null
+          id?: string
+          qualidade?: number | null
+        }
+        Update: {
+          data?: string
+          duracao_min?: number | null
+          horario_acordar?: string | null
+          horario_dormir?: string | null
+          id?: string
+          qualidade?: number | null
+        }
+        Relationships: []
+      }
+      sessoes_energia: {
+        Row: {
+          data: string
+          estado: Database["public"]["Enums"]["energy_state"]
+          hora_inicio: string
+          id: string
+        }
+        Insert: {
+          data?: string
+          estado: Database["public"]["Enums"]["energy_state"]
+          hora_inicio?: string
+          id?: string
+        }
+        Update: {
+          data?: string
+          estado?: Database["public"]["Enums"]["energy_state"]
+          hora_inicio?: string
+          id?: string
+        }
+        Relationships: []
+      }
+      tasks: {
+        Row: {
+          cliente_id: string | null
+          criado_em: string
+          dono: Database["public"]["Enums"]["task_owner"]
+          estado_ideal: Database["public"]["Enums"]["estado_ideal_type"]
+          feito_em: string | null
+          id: string
+          impacto: number
+          modulo: Database["public"]["Enums"]["task_modulo"]
+          status: Database["public"]["Enums"]["task_status"]
+          tempo_min: number
+          tipo: Database["public"]["Enums"]["task_tipo"]
+          titulo: string
+          urgencia: number
+        }
+        Insert: {
+          cliente_id?: string | null
+          criado_em?: string
+          dono?: Database["public"]["Enums"]["task_owner"]
+          estado_ideal?: Database["public"]["Enums"]["estado_ideal_type"]
+          feito_em?: string | null
+          id?: string
+          impacto?: number
+          modulo?: Database["public"]["Enums"]["task_modulo"]
+          status?: Database["public"]["Enums"]["task_status"]
+          tempo_min?: number
+          tipo?: Database["public"]["Enums"]["task_tipo"]
+          titulo: string
+          urgencia?: number
+        }
+        Update: {
+          cliente_id?: string | null
+          criado_em?: string
+          dono?: Database["public"]["Enums"]["task_owner"]
+          estado_ideal?: Database["public"]["Enums"]["estado_ideal_type"]
+          feito_em?: string | null
+          id?: string
+          impacto?: number
+          modulo?: Database["public"]["Enums"]["task_modulo"]
+          status?: Database["public"]["Enums"]["task_status"]
+          tempo_min?: number
+          tipo?: Database["public"]["Enums"]["task_tipo"]
+          titulo?: string
+          urgencia?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tasks_cliente_id_fkey"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "clientes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
@@ -23,7 +242,23 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
-      [_ in never]: never
+      energy_state: "foco_total" | "modo_leve" | "basico"
+      estado_ideal_type: "foco_total" | "modo_leve" | "basico" | "qualquer"
+      task_modulo: "trabalho" | "casa" | "saude"
+      task_owner: "eu" | "socio_medico" | "editor"
+      task_status:
+        | "backlog"
+        | "hoje"
+        | "em_andamento"
+        | "aguardando"
+        | "feito"
+        | "descartado"
+      task_tipo:
+        | "estrategico"
+        | "operacional"
+        | "delegavel"
+        | "administrativo"
+        | "domestico"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +385,26 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      energy_state: ["foco_total", "modo_leve", "basico"],
+      estado_ideal_type: ["foco_total", "modo_leve", "basico", "qualquer"],
+      task_modulo: ["trabalho", "casa", "saude"],
+      task_owner: ["eu", "socio_medico", "editor"],
+      task_status: [
+        "backlog",
+        "hoje",
+        "em_andamento",
+        "aguardando",
+        "feito",
+        "descartado",
+      ],
+      task_tipo: [
+        "estrategico",
+        "operacional",
+        "delegavel",
+        "administrativo",
+        "domestico",
+      ],
+    },
   },
 } as const
