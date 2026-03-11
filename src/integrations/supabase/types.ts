@@ -1180,7 +1180,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      reset_user_data: { Args: { p_user_id: string }; Returns: undefined }
     }
     Enums: {
       energy_state: "foco_total" | "modo_leve" | "basico"
