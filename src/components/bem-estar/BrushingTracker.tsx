@@ -40,7 +40,7 @@ export function BrushingTracker() {
   return (
     <div className="space-y-2">
       <h3 className="font-mono text-xs tracking-widest text-muted-foreground uppercase flex items-center gap-2">
-        🪥 Escovação
+        <Sparkles className="w-3.5 h-3.5" /> Escovação
       </h3>
       <div className="bg-card rounded-lg border p-4">
         <div className="flex gap-3">
