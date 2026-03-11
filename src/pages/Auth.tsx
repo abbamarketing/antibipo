@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { lovable } from "@/integrations/lovable/index";
 import { useNavigate } from "react-router-dom";
 import { Zap } from "lucide-react";
 
@@ -27,8 +26,16 @@ export default function AuthPage() {
 
   const handleGoogleLogin = async () => {
     setLoading(true);
-    const { error } = await lovable.auth.signInWithOAuth("google", {
-      redirect_uri: window.location.origin,
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: "google",
+      options: {
+        scopes: "https://www.googleapis.com/auth/generative-language",
+        queryParams: {
+          access_type: "offline",
+          prompt: "consent",
+        },
+        redirectTo: window.location.origin,
+      },
     });
     if (error) {
       console.error("Login error:", error);
@@ -48,7 +55,7 @@ export default function AuthPage() {
     <div className="min-h-screen bg-background flex items-center justify-center px-4">
       <div className="w-full max-w-sm space-y-8 text-center">
         <div>
-           <h1 className="font-mono text-2xl font-bold tracking-tight">AntiBipolaridade</h1>
+          <h1 className="font-mono text-2xl font-bold tracking-tight">AntiBipolaridade</h1>
           <p className="text-sm text-muted-foreground font-body mt-2">
             Sistema pessoal de produtividade e bem-estar.
           </p>
