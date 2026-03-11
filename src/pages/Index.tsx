@@ -17,7 +17,7 @@ import { NotificationManager } from "@/components/NotificationManager";
 import { ModuleOnboardingGuard } from "@/components/ModuleOnboardingGuard";
 import { MondayGoalsReview } from "@/components/MondayGoalsReview";
 import { FridayWeeklyReport } from "@/components/FridayWeeklyReport";
-import { Plus, Activity, Zap, Sun, Battery, Wallet, LogOut, CalendarDays } from "lucide-react";
+import { Plus, Activity, Zap, Sun, Battery, Wallet, Settings, CalendarDays } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 const Index = () => {
