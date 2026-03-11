@@ -100,40 +100,19 @@ export default function Configuracoes() {
   const handleResetAccount = async () => {
     if (!confirmReset) { setConfirmReset(true); return; }
 
-    // Reset all onboarding flags
-    updateProfile({
-      onboarding_saude: false,
-      onboarding_trabalho: false,
-      onboarding_casa: false,
-      onboarding_financeiro: false,
-      onboarding_saude_at: null,
-      onboarding_trabalho_at: null,
-      onboarding_casa_at: null,
-      onboarding_financeiro_at: null,
-      nome: null,
-      peso_kg: null,
-      altura_cm: null,
-      data_nascimento: null,
-      objetivo_saude: null,
-      trabalho_tipo: null,
-      trabalho_horas_dia: null,
-      trabalho_desafio: null,
-      trabalho_clientes_ativos: null,
-      trabalho_equipe: null,
-      casa_moradores: null,
-      casa_comodos: null,
-      casa_pets: null,
-      casa_frequencia_ideal: null,
-      casa_desafio: null,
-      financeiro_faixa_renda: null,
-      financeiro_objetivo: null,
-      financeiro_controla_gastos: null,
-      financeiro_principal_gasto: null,
-      financeiro_reserva: null,
-    } as any);
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
 
+    const { error } = await supabase.rpc("reset_user_data" as any, { p_user_id: user.id });
+    if (error) {
+      console.error("Reset failed:", error);
+      return;
+    }
+
+    // Clear local caches and reload fresh
+    localStorage.clear();
     setConfirmReset(false);
-    navigate("/");
+    window.location.href = "/";
   };
 
   const handleLogout = async () => {
