@@ -33,7 +33,7 @@ export function HomeModule({ energy }: HomeModuleProps) {
         <div>
           <h2 className="font-mono text-lg font-bold tracking-tight">Casa</h2>
           <p className="text-sm text-muted-foreground font-body mt-0.5">
-            Só o básico. 2 ações de 2 minutos. Já é vitória.
+            2 ações. 2 minutos.
           </p>
         </div>
         <div className="space-y-2">
