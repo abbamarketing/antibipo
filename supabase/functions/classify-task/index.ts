@@ -1,6 +1,4 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { callGeminiWithUserToken, getUserIdFromRequest, type GeminiOptions } from "../_shared/google-gemini.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -72,64 +70,41 @@ serve(async (req) => {
     const { titulo, notas } = await req.json();
     if (!titulo) throw new Error("titulo is required");
 
-    const userId = await getUserIdFromRequest(req);
     const userContent = `Classifique esta tarefa: "${titulo}"${notas ? `\nNotas adicionais: ${notas}` : ""}`;
 
-    const geminiOpts: GeminiOptions = {
-      messages: [
-        { role: "system", content: SYSTEM_PROMPT },
-        { role: "user", content: userContent },
-      ],
-      tools: TOOLS,
-      tool_choice: { type: "function", function: { name: "classify_task" } },
-    };
+    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
+    if (!LOVABLE_API_KEY) throw new Error("No AI provider available");
 
-    // Try user's Google token first (free Gemini)
-    let classification: any = null;
-    let ai_provider = "none";
-    if (userId) {
-      const supabaseAdmin = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
-      const result = await callGeminiWithUserToken(supabaseAdmin, userId, geminiOpts);
-      if (result?.toolCall) {
-        classification = JSON.parse(result.toolCall.arguments);
-        ai_provider = "gemini_direct";
-      }
+    const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${LOVABLE_API_KEY}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        model: "google/gemini-3-flash-preview",
+        messages: [
+          { role: "system", content: SYSTEM_PROMPT },
+          { role: "user", content: userContent },
+        ],
+        tools: TOOLS,
+        tool_choice: { type: "function", function: { name: "classify_task" } },
+      }),
+    });
+
+    if (!response.ok) {
+      const status = response.status;
+      if (status === 429) return new Response(JSON.stringify({ error: "Rate limit exceeded" }), { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      if (status === 402) return new Response(JSON.stringify({ error: "Payment required" }), { status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      throw new Error(`AI gateway returned ${status}`);
     }
 
-    // Fallback to Lovable AI Gateway
-    if (!classification) {
-      const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-      if (!LOVABLE_API_KEY) throw new Error("No AI provider available");
+    const result = await response.json();
+    const toolCall = result.choices?.[0]?.message?.tool_calls?.[0];
+    if (!toolCall?.function?.arguments) throw new Error("No classification returned");
+    const classification = JSON.parse(toolCall.function.arguments);
 
-      const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${LOVABLE_API_KEY}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          model: "google/gemini-3-flash-preview",
-          messages: geminiOpts.messages,
-          tools: TOOLS,
-          tool_choice: geminiOpts.tool_choice,
-        }),
-      });
-
-      if (!response.ok) {
-        const status = response.status;
-        if (status === 429) return new Response(JSON.stringify({ error: "Rate limit exceeded" }), { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } });
-        if (status === 402) return new Response(JSON.stringify({ error: "Payment required" }), { status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" } });
-        throw new Error(`AI gateway returned ${status}`);
-      }
-
-      ai_provider = "lovable_ai";
-      const result = await response.json();
-      const toolCall = result.choices?.[0]?.message?.tool_calls?.[0];
-      if (!toolCall?.function?.arguments) throw new Error("No classification returned");
-      classification = JSON.parse(toolCall.function.arguments);
-    }
-
-    return new Response(JSON.stringify({ classification, ai_provider }), {
+    return new Response(JSON.stringify({ classification, ai_provider: "lovable_ai" }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (e) {

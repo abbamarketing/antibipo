@@ -1,6 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { callGeminiWithUserToken, type GeminiOptions } from "../_shared/google-gemini.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -110,25 +109,6 @@ Tom: parceiro, factual, direto. Sem emojis, sem aspas.`;
 
     const userContent = `ONTEM:\nAções: ${yesterdaySummary || "nenhuma"}\nDiário: ${diaryText || "nenhum"}\nBem-estar: ${wellBeing.join("; ") || "sem dados"}\n\nSEMANA:\nAções: ${weekSummary || "sem dados"}\nDiário: ${weekDiaryText || "nenhum"}\nMetas ativas: ${metasText || "nenhuma"}${memoryContext ? `\nMemória IA: ${memoryContext}` : ""}`;
 
-    const geminiOpts: GeminiOptions = {
-      messages: [
-        { role: "system", content: systemContent },
-        { role: "user", content: userContent },
-      ],
-      model: "gemini-2.0-flash",
-    };
-
-    // Try user's Google token first
-    const supabaseAdmin = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
-    const geminiResult = await callGeminiWithUserToken(supabaseAdmin, user.id, geminiOpts);
-
-    if (geminiResult?.text) {
-      return new Response(JSON.stringify({ message: geminiResult.text.trim(), ai_provider: "gemini_direct" }), {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-
-    // Fallback to Lovable AI
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) {
       return new Response(JSON.stringify({ message: "Ontem foi produtivo. Hoje pode ser ainda melhor!", ai_provider: "none" }), {
@@ -139,7 +119,13 @@ Tom: parceiro, factual, direto. Sem emojis, sem aspas.`;
     const aiResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
       headers: { Authorization: `Bearer ${LOVABLE_API_KEY}`, "Content-Type": "application/json" },
-      body: JSON.stringify({ model: "google/gemini-2.5-flash-lite", messages: geminiOpts.messages }),
+      body: JSON.stringify({
+        model: "google/gemini-2.5-flash-lite",
+        messages: [
+          { role: "system", content: systemContent },
+          { role: "user", content: userContent },
+        ],
+      }),
     });
 
     if (!aiResponse.ok) {
