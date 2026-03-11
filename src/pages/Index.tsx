@@ -131,6 +131,7 @@ const Index = () => {
   };
 
   return (
+    <DayGate>
     <div className="min-h-screen bg-background">
       <NotificationManager
         medicamentos={state.medicamentos}
