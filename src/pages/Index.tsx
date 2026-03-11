@@ -197,31 +197,39 @@ const Index = () => {
 
             {/* Module Content */}
             {current_modulo === "trabalho" && (
-              <WorkModule
-                energy={current_energy}
-                tasks={getFilteredTasks("trabalho", current_energy)}
-                allTasks={state.tasks}
-                onComplete={handleCompleteTask}
-                onDelegate={handleDelegate}
-                onPush={handlePush}
-              />
+              <ModuleOnboardingGuard modulo="trabalho">
+                <WorkModule
+                  energy={current_energy}
+                  tasks={getFilteredTasks("trabalho", current_energy)}
+                  allTasks={state.tasks}
+                  onComplete={handleCompleteTask}
+                  onDelegate={handleDelegate}
+                  onPush={handlePush}
+                />
+              </ModuleOnboardingGuard>
             )}
 
-            {current_modulo === "casa" && <HomeModule energy={current_energy} />}
+            {current_modulo === "casa" && (
+              <ModuleOnboardingGuard modulo="casa">
+                <HomeModule energy={current_energy} />
+              </ModuleOnboardingGuard>
+            )}
 
             {current_modulo === "saude" && (
-              <HealthModule
-                energy={current_energy}
-                medicamentos={state.medicamentos}
-                registros_humor={state.registros_humor}
-                registros_sono={state.registros_sono}
-                onTakeMed={handleTakeMed}
-                isMedTaken={isMedTakenToday}
-                onMood={handleMood}
-                onSleep={handleSleep}
-                onAddMed={handleAddMed}
-                todayHumor={todayHumor}
-              />
+              <ModuleOnboardingGuard modulo="saude">
+                <HealthModule
+                  energy={current_energy}
+                  medicamentos={state.medicamentos}
+                  registros_humor={state.registros_humor}
+                  registros_sono={state.registros_sono}
+                  onTakeMed={handleTakeMed}
+                  isMedTaken={isMedTakenToday}
+                  onMood={handleMood}
+                  onSleep={handleSleep}
+                  onAddMed={handleAddMed}
+                  todayHumor={todayHumor}
+                />
+              </ModuleOnboardingGuard>
             )}
           </>
         )}
