@@ -27,7 +27,9 @@ export type ActivityAction =
   | "tracker_concluido"
   | "tracker_criado"
   | "mood_checkin"
-  | "analise_dia";
+  | "analise_dia"
+  | "tarefa_movida"
+  | "subtarefa_concluida";
 
 const CONSOLIDATION_THRESHOLD = 100;
 
