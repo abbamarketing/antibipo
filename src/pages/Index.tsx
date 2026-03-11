@@ -12,7 +12,7 @@ import { HealthModule } from "@/components/HealthModule";
 import { QuickCapture } from "@/components/QuickCapture";
 import { WeatherWidget } from "@/components/WeatherWidget";
 import { NotificationManager } from "@/components/NotificationManager";
-import { Plus, Activity, Zap, Sun, Battery } from "lucide-react";
+import { Plus, Activity, Zap, Sun, Battery, Wallet } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 const Index = () => {
@@ -119,7 +119,14 @@ const Index = () => {
         <header className="mb-6">
           <div className="flex items-center justify-between">
             <h1 className="font-mono text-xl font-bold tracking-tight">FLOW</h1>
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => navigate("/financeiro")}
+                className="p-1.5 rounded-md text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors"
+                title="Financeiro"
+              >
+                <Wallet className="w-4 h-4" />
+              </button>
               <button
                 onClick={() => navigate("/log")}
                 className="p-1.5 rounded-md text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors"
