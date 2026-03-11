@@ -1,5 +1,8 @@
 import { useEffect, useRef } from "react";
 import { Medicamento, today } from "@/lib/store";
+import { useCalendarStore } from "@/lib/calendar-store";
+import { useMetasStore } from "@/lib/metas-store";
+import { useCasaStore } from "@/lib/casa-store";
 
 interface NotificationManagerProps {
   medicamentos: Medicamento[];
@@ -22,7 +25,12 @@ function notify(title: string, body: string) {
 export function NotificationManager({ medicamentos, isMedTaken, hasEnergy }: NotificationManagerProps) {
   const lastMorning = useRef<string>("");
   const lastMedCheck = useRef<string>("");
+  const lastMeetingCheck = useRef<string>("");
   const lastInactivity = useRef<number>(Date.now());
+
+  const now = new Date();
+  const calStore = useCalendarStore(now.getFullYear(), now.getMonth() + 1);
+  const metasStore = useMetasStore();
 
   useEffect(() => {
     requestPermission();
@@ -35,17 +43,25 @@ export function NotificationManager({ medicamentos, isMedTaken, hasEnergy }: Not
       const hour = now.getHours();
       const todayStr = today();
 
-      // Morning notification between 7-9
       if (hour >= 7 && hour <= 9 && lastMorning.current !== todayStr && !hasEnergy) {
         lastMorning.current = todayStr;
-        notify("FLOW", "Selecione seu estado de energia para começar.");
+
+        // Count today's meetings
+        const meetings = calStore.todayMeetings.length;
+        const meetingMsg = meetings > 0 ? ` Voce tem ${meetings} reuniao(oes) hoje.` : "";
+
+        // Check pending goals
+        const pendingGoals = metasStore.metasAtivas.length;
+        const goalMsg = pendingGoals > 0 ? ` ${pendingGoals} metas ativas.` : "";
+
+        notify("FLOW", `Selecione seu estado de energia para comecar.${meetingMsg}${goalMsg}`);
       }
     };
 
     check();
     const interval = setInterval(check, 60000);
     return () => clearInterval(interval);
-  }, [hasEnergy]);
+  }, [hasEnergy, calStore.todayMeetings, metasStore.metasAtivas]);
 
   // Med reminders
   useEffect(() => {
@@ -62,10 +78,9 @@ export function NotificationManager({ medicamentos, isMedTaken, hasEnergy }: Not
           const medMinutes = parseInt(hh) * 60 + parseInt(mm);
           const nowMinutes = now.getHours() * 60 + now.getMinutes();
 
-          // Notify if within 5 min window and not taken
           if (nowMinutes >= medMinutes && nowMinutes <= medMinutes + 5 && !isMedTaken(med.id, h)) {
             lastMedCheck.current = checkKey;
-            notify("Medicação", `${med.nome} — ${med.dose} · ${h}`);
+            notify("Medicacao", `${med.nome} — ${med.dose} · ${h}`);
           }
         });
       });
@@ -75,6 +90,31 @@ export function NotificationManager({ medicamentos, isMedTaken, hasEnergy }: Not
     const interval = setInterval(check, 60000);
     return () => clearInterval(interval);
   }, [medicamentos, isMedTaken]);
+
+  // Meeting reminders — 15 min before
+  useEffect(() => {
+    const check = () => {
+      const now = new Date();
+      const nowMinutes = now.getHours() * 60 + now.getMinutes();
+      const todayStr = today();
+
+      calStore.todayMeetings.forEach((r) => {
+        const [hh, mm] = r.hora_inicio.split(":");
+        const meetMinutes = parseInt(hh) * 60 + parseInt(mm);
+        const diff = meetMinutes - nowMinutes;
+        const checkKey = `${todayStr}-${r.id}-${r.hora_inicio}`;
+
+        if (diff > 0 && diff <= (r.lembrete_min || 15) && lastMeetingCheck.current !== checkKey) {
+          lastMeetingCheck.current = checkKey;
+          notify("Reuniao em breve", `${r.titulo} — ${r.hora_inicio}${r.local ? ` · ${r.local}` : ""}`);
+        }
+      });
+    };
+
+    check();
+    const interval = setInterval(check, 60000);
+    return () => clearInterval(interval);
+  }, [calStore.todayMeetings]);
 
   // Inactivity check — if no interaction for 2h, ask about tasks
   useEffect(() => {
@@ -88,16 +128,35 @@ export function NotificationManager({ medicamentos, isMedTaken, hasEnergy }: Not
     const check = setInterval(() => {
       const elapsed = Date.now() - lastInactivity.current;
       if (elapsed > 2 * 60 * 60 * 1000 && hasEnergy) {
-        notify("FLOW", "Há um tempo sem atividade. Como estão as tarefas?");
-        lastInactivity.current = Date.now(); // reset to avoid spam
+        notify("FLOW", "Ha um tempo sem atividade. Como estao as tarefas?");
+        lastInactivity.current = Date.now();
       }
-    }, 15 * 60 * 1000); // check every 15min
+    }, 15 * 60 * 1000);
 
     return () => {
       window.removeEventListener("click", resetInactivity);
       window.removeEventListener("keydown", resetInactivity);
       clearInterval(check);
     };
+  }, [hasEnergy]);
+
+  // Evening reminder — weight and exercise check
+  useEffect(() => {
+    const check = () => {
+      const now = new Date();
+      const hour = now.getHours();
+      const todayStr = today();
+      const eveningKey = `flow_evening_${todayStr}`;
+
+      if (hour >= 20 && hour <= 21 && !sessionStorage.getItem(eveningKey) && hasEnergy) {
+        sessionStorage.setItem(eveningKey, "1");
+        notify("FLOW", "Registrou tudo hoje? Peso, exercicio e humor ajudam no acompanhamento.");
+      }
+    };
+
+    check();
+    const interval = setInterval(check, 5 * 60 * 1000);
+    return () => clearInterval(interval);
   }, [hasEnergy]);
 
   return null;
