@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useProfileStore, Profile } from "@/lib/profile-store";
 import { logActivity } from "@/lib/activity-log";
+import { seedTarefasCasa } from "@/lib/casa-seed";
 import { ChevronRight, User, Briefcase, Home, Heart, Wallet, X } from "lucide-react";
 
 type ModuloOnboarding = "saude" | "trabalho" | "casa" | "financeiro";
@@ -197,6 +198,16 @@ export function OnboardingWizard({ modulo, onComplete, isRefresh }: OnboardingWi
     console.log("Onboarding finish - saving:", profileUpdates);
     updateProfile(profileUpdates);
     logActivity("onboarding_concluido", { modulo, respostas: Object.keys(answers).length });
+
+    // Seed casa tasks after onboarding
+    if (modulo === "casa") {
+      seedTarefasCasa({
+        casa_comodos: answers.casa_comodos ? Number(answers.casa_comodos) : null,
+        casa_pets: answers.casa_pets ?? null,
+        casa_frequencia_ideal: answers.casa_frequencia_ideal ?? null,
+      });
+    }
+
     onComplete();
   };
 
