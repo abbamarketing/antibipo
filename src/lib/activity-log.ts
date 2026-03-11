@@ -17,7 +17,8 @@ export type ActivityAction =
   | "casa_comodo_concluido"
   | "captura_rapida"
   | "tarefa_casa_concluida"
-  | "item_compra_adicionado";
+  | "item_compra_adicionado"
+  | "diario_registrado";
 
 export async function logActivity(
   acao: ActivityAction,
