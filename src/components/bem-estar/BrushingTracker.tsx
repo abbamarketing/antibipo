@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { logActivity } from "@/lib/activity-log";
 import { brasiliaDateString } from "@/lib/brasilia";
-import { Check } from "lucide-react";
+import { Check, Sparkles } from "lucide-react";
 
 const BRUSHING_TIMES = [
   { id: "manha", label: "Manhã" },
