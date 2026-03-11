@@ -1,4 +1,5 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { callGeminiWithUserToken, type GeminiOptions } from "../_shared/google-gemini.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -12,34 +13,63 @@ Deno.serve(async (req) => {
     Deno.env.get("SUPABASE_URL")!,
     Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
   );
-  const lovableKey = Deno.env.get("LOVABLE_API_KEY");
 
   try {
     const body = await req.json().catch(() => ({}));
     const userId = body.user_id;
 
-    // If called with a specific user_id, do per-user consolidation (threshold-based)
     if (userId) {
-      return await consolidateForUser(supabase, lovableKey, userId);
+      return await consolidateForUser(supabase, userId);
     }
-
-    // Otherwise, do the scheduled weekly/monthly consolidation for all users
     return await scheduledConsolidation(supabase);
   } catch (e) {
     console.error("Consolidation error:", e);
-    return new Response(JSON.stringify({ error: e.message }), {
+    return new Response(JSON.stringify({ error: (e as Error).message }), {
       status: 500,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }
 });
 
-async function consolidateForUser(supabase: any, lovableKey: string | undefined, userId: string) {
-  // Fetch all activity logs for user
+async function generateSummary(supabase: any, userId: string, logs: any[], periodoInicio: string, periodoFim: string, actionCounts: Record<string, number>): Promise<string> {
+  const prompt = `Você é um assistente pessoal. Analise estes ${logs.length} registros de atividade e crie um mini-resumo de 2-3 frases sobre o que o usuário fez neste período. Seja factual e direto.\n\nPeríodo: ${periodoInicio} a ${periodoFim}\nAções: ${JSON.stringify(actionCounts)}\nDetalhes recentes: ${JSON.stringify(logs.slice(-10).map((l: any) => ({ acao: l.acao, detalhes: l.detalhes })))}\n\nResponda APENAS o resumo, sem introduções.`;
+
+  const geminiOpts: GeminiOptions = {
+    messages: [{ role: "user", content: prompt }],
+    model: "gemini-2.0-flash",
+  };
+
+  // Try user's Google token
+  const geminiResult = await callGeminiWithUserToken(supabase, userId, geminiOpts);
+  if (geminiResult?.text) return geminiResult.text;
+
+  // Fallback to Lovable AI
+  const lovableKey = Deno.env.get("LOVABLE_API_KEY");
+  if (lovableKey) {
+    try {
+      const aiResp = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+        method: "POST",
+        headers: { Authorization: `Bearer ${lovableKey}`, "Content-Type": "application/json" },
+        body: JSON.stringify({ model: "google/gemini-2.5-flash-lite", messages: [{ role: "user", content: prompt }] }),
+      });
+      if (aiResp.ok) {
+        const aiData = await aiResp.json();
+        const text = aiData.choices?.[0]?.message?.content;
+        if (text) return text;
+      }
+    } catch (e) {
+      console.error("Lovable AI fallback failed:", e);
+    }
+  }
+
+  // Static fallback
+  const topActions = Object.entries(actionCounts).sort((a, b) => b[1] - a[1]).slice(0, 5).map(([k, v]) => `${k}: ${v}x`).join(", ");
+  return `${logs.length} ações registradas. Principais: ${topActions}`;
+}
+
+async function consolidateForUser(supabase: any, userId: string) {
   const { data: logs, error: logsErr } = await supabase
-    .from("activity_log")
-    .select("*")
-    .eq("user_id", userId)
+    .from("activity_log").select("*").eq("user_id", userId)
     .order("criado_em", { ascending: true });
 
   if (logsErr) throw logsErr;
@@ -52,64 +82,17 @@ async function consolidateForUser(supabase: any, lovableKey: string | undefined,
   const actionCounts: Record<string, number> = {};
   const periodoInicio = logs[0].criado_em;
   const periodoFim = logs[logs.length - 1].criado_em;
+  for (const log of logs) actionCounts[log.acao] = (actionCounts[log.acao] || 0) + 1;
 
-  for (const log of logs) {
-    actionCounts[log.acao] = (actionCounts[log.acao] || 0) + 1;
-  }
+  const resumo = await generateSummary(supabase, userId, logs, periodoInicio, periodoFim, actionCounts);
 
-  // Generate AI summary
-  let resumo = "";
-  if (lovableKey) {
-    try {
-      const prompt = `Você é um assistente pessoal. Analise estes ${logs.length} registros de atividade e crie um mini-resumo de 2-3 frases sobre o que o usuário fez neste período. Seja factual e direto.
+  await supabase.from("configuracoes").upsert({
+    user_id: userId,
+    chave: `resumo_logs_${new Date().toISOString().split("T")[0]}`,
+    valor: { resumo, periodo_inicio: periodoInicio, periodo_fim: periodoFim, total_acoes: logs.length, acoes: actionCounts },
+    updated_at: new Date().toISOString(),
+  }, { onConflict: "user_id,chave" });
 
-Período: ${periodoInicio} a ${periodoFim}
-Ações: ${JSON.stringify(actionCounts)}
-Detalhes recentes: ${JSON.stringify(logs.slice(-10).map((l: any) => ({ acao: l.acao, detalhes: l.detalhes })))}
-
-Responda APENAS o resumo, sem introduções.`;
-
-      const aiResp = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${lovableKey}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          model: "google/gemini-2.5-flash-lite",
-          messages: [{ role: "user", content: prompt }],
-        }),
-      });
-
-      if (aiResp.ok) {
-        const aiData = await aiResp.json();
-        resumo = aiData.choices?.[0]?.message?.content || "";
-      }
-    } catch (e) {
-      console.error("AI summary failed:", e);
-    }
-  }
-
-  if (!resumo) {
-    const topActions = Object.entries(actionCounts)
-      .sort((a, b) => b[1] - a[1])
-      .slice(0, 5)
-      .map(([k, v]) => `${k}: ${v}x`)
-      .join(", ");
-    resumo = `${logs.length} ações registradas. Principais: ${topActions}`;
-  }
-
-  // Save to configuracoes
-  await supabase
-    .from("configuracoes")
-    .upsert({
-      user_id: userId,
-      chave: `resumo_logs_${new Date().toISOString().split("T")[0]}`,
-      valor: { resumo, periodo_inicio: periodoInicio, periodo_fim: periodoFim, total_acoes: logs.length, acoes: actionCounts },
-      updated_at: new Date().toISOString(),
-    }, { onConflict: "user_id,chave" });
-
-  // Save to log_consolidado
   await supabase.from("log_consolidado").insert({
     tipo: "activity_summary",
     periodo_inicio: periodoInicio.split("T")[0],
@@ -119,12 +102,10 @@ Responda APENAS o resumo, sem introduções.`;
     detalhes: logs.slice(-10).map((l: any) => ({ acao: l.acao, detalhes: l.detalhes })),
   });
 
-  // Delete processed logs
   const logIds = logs.map((l: any) => l.id);
   await supabase.from("activity_log").delete().in("id", logIds);
 
   console.log(`Consolidated ${logs.length} logs for user ${userId}`);
-
   return new Response(JSON.stringify({ success: true, consolidated: logs.length, resumo }), {
     headers: { ...corsHeaders, "Content-Type": "application/json" },
   });
@@ -137,68 +118,49 @@ async function scheduledConsolidation(supabase: any) {
   weekAgo.setDate(weekAgo.getDate() - 7);
   const weekAgoStr = weekAgo.toISOString().split("T")[0];
 
-  // Weekly consolidation
   const { data: existingWeekly } = await supabase
-    .from("log_consolidado")
-    .select("id")
-    .eq("tipo", "semanal")
-    .eq("periodo_fim", today)
-    .maybeSingle();
+    .from("log_consolidado").select("id").eq("tipo", "semanal").eq("periodo_fim", today).maybeSingle();
 
   if (!existingWeekly) {
     const { data: logs } = await supabase
-      .from("activity_log")
-      .select("*")
-      .gte("criado_em", weekAgo.toISOString())
-      .lte("criado_em", now.toISOString())
+      .from("activity_log").select("*")
+      .gte("criado_em", weekAgo.toISOString()).lte("criado_em", now.toISOString())
       .order("criado_em");
 
-    if (logs && logs.length > 0) {
+    if (logs?.length) {
       const acaoCounts: Record<string, number> = {};
       logs.forEach((l: any) => { acaoCounts[l.acao] = (acaoCounts[l.acao] || 0) + 1; });
-
-      const resumo = `Semana ${weekAgoStr} a ${today}: ${logs.length} ações. ` +
-        Object.entries(acaoCounts).map(([k, v]) => `${k}: ${v}`).join(", ");
 
       await supabase.from("log_consolidado").insert({
         tipo: "semanal",
         periodo_inicio: weekAgoStr,
         periodo_fim: today,
-        resumo,
+        resumo: `Semana ${weekAgoStr} a ${today}: ${logs.length} ações. ${Object.entries(acaoCounts).map(([k, v]) => `${k}: ${v}`).join(", ")}`,
         metricas: { total_acoes: logs.length, por_acao: acaoCounts },
         detalhes: logs.slice(0, 100),
       });
     }
   }
 
-  // Monthly consolidation
   const monthAgo = new Date(now);
   monthAgo.setDate(monthAgo.getDate() - 30);
   const monthAgoStr = monthAgo.toISOString().split("T")[0];
 
   const { data: weeklyLogs } = await supabase
-    .from("log_consolidado")
-    .select("*")
-    .eq("tipo", "semanal")
-    .gte("periodo_inicio", monthAgoStr)
-    .order("periodo_inicio");
+    .from("log_consolidado").select("*").eq("tipo", "semanal")
+    .gte("periodo_inicio", monthAgoStr).order("periodo_inicio");
 
   if (weeklyLogs && weeklyLogs.length >= 4) {
     const { data: existingMonthly } = await supabase
-      .from("log_consolidado")
-      .select("id")
-      .eq("tipo", "mensal")
-      .gte("periodo_fim", monthAgoStr)
-      .maybeSingle();
+      .from("log_consolidado").select("id").eq("tipo", "mensal")
+      .gte("periodo_fim", monthAgoStr).maybeSingle();
 
     if (!existingMonthly) {
       const mergedMetrics: Record<string, number> = {};
       let totalAcoes = 0;
       weeklyLogs.forEach((wl: any) => {
         const m = wl.metricas as any;
-        if (m?.por_acao) {
-          Object.entries(m.por_acao).forEach(([k, v]) => { mergedMetrics[k] = (mergedMetrics[k] || 0) + (v as number); });
-        }
+        if (m?.por_acao) Object.entries(m.por_acao).forEach(([k, v]) => { mergedMetrics[k] = (mergedMetrics[k] || 0) + (v as number); });
         totalAcoes += m?.total_acoes || 0;
       });
 
@@ -211,7 +173,6 @@ async function scheduledConsolidation(supabase: any) {
         detalhes: weeklyLogs.map((wl: any) => ({ id: wl.id, periodo: `${wl.periodo_inicio} - ${wl.periodo_fim}`, resumo: wl.resumo })),
       });
 
-      // Clean old logs
       await supabase.from("activity_log").delete().lt("criado_em", monthAgo.toISOString());
     }
   }
