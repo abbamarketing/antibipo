@@ -1,0 +1,1 @@
+ALTER TABLE public.clientes ADD COLUMN IF NOT EXISTS tipo TEXT NOT NULL DEFAULT 'recorrente';
