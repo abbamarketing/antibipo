@@ -1,5 +1,6 @@
 // Auto-generates default household tasks based on profile data
 import { supabase } from "@/integrations/supabase/client";
+import { QueryClient } from "@tanstack/react-query";
 
 type SeedTask = {
   comodo: string;
@@ -52,7 +53,7 @@ export async function seedTarefasCasa(profile: {
   casa_comodos?: number | null;
   casa_pets?: boolean | null;
   casa_frequencia_ideal?: string | null;
-}) {
+}, queryClient?: QueryClient) {
   // Check if already has tasks
   const { count } = await supabase
     .from("tarefas_casa" as any)
@@ -105,5 +106,9 @@ export async function seedTarefasCasa(profile: {
     console.error("Failed to seed casa tasks:", error);
   } else {
     console.log(`Seeded ${tarefas.length} casa tasks`);
+    // Invalidate cache so UI refreshes
+    if (queryClient) {
+      queryClient.invalidateQueries({ queryKey: ["tarefas_casa"] });
+    }
   }
 }

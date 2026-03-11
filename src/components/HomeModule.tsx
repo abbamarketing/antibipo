@@ -1,9 +1,12 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { useCasaStore } from "@/lib/casa-store";
 import { EnergyState } from "@/lib/store";
 import { logActivity } from "@/lib/activity-log";
 import { brasiliaTimeString } from "@/lib/brasilia";
 import { WeeklyTaskView } from "@/components/casa/WeeklyTaskView";
+import { seedTarefasCasa } from "@/lib/casa-seed";
+import { useProfileStore } from "@/lib/profile-store";
 import { CustomTrackers } from "@/components/CustomTrackers";
 import {
   Home,
@@ -22,6 +25,23 @@ interface HomeModuleProps {
 
 export function HomeModule({ energy }: HomeModuleProps) {
   const casa = useCasaStore();
+  const { profile } = useProfileStore();
+  const qc = useQueryClient();
+  const seededRef = useRef(false);
+
+  // Auto-seed tasks if table is empty but onboarding was done
+  useEffect(() => {
+    if (seededRef.current) return;
+    if (casa.tarefas.length === 0 && profile?.onboarding_casa) {
+      seededRef.current = true;
+      seedTarefasCasa({
+        casa_comodos: profile.casa_comodos,
+        casa_pets: profile.casa_pets,
+        casa_frequencia_ideal: profile.casa_frequencia_ideal,
+      }, qc);
+    }
+  }, [casa.tarefas.length, profile]);
+
   const [activeTab, setActiveTab] = useState<"tarefas" | "compras">("tarefas");
   const [showAddTask, setShowAddTask] = useState(false);
   const [showAddItem, setShowAddItem] = useState(false);
