@@ -14,24 +14,14 @@ import {
   X,
   History,
 } from "lucide-react";
-import { formatDistanceToNow } from "date-fns";
-import { ptBR } from "date-fns/locale";
 
 interface HomeModuleProps {
   energy: EnergyState;
 }
 
-const frequenciaLabel: Record<string, string> = {
-  diario: "Diário",
-  semanal: "Semanal",
-  quinzenal: "Quinzenal",
-  mensal: "Mensal",
-};
-
 export function HomeModule({ energy }: HomeModuleProps) {
   const casa = useCasaStore();
   const [activeTab, setActiveTab] = useState<"tarefas" | "compras">("tarefas");
-  const [selectedComodo, setSelectedComodo] = useState<string | null>(null);
   const [showAddTask, setShowAddTask] = useState(false);
   const [showAddItem, setShowAddItem] = useState(false);
   const [newTaskComodo, setNewTaskComodo] = useState("");
@@ -41,18 +31,6 @@ export function HomeModule({ energy }: HomeModuleProps) {
   const [newItemNome, setNewItemNome] = useState("");
   const [newItemQtd, setNewItemQtd] = useState("");
   const [newItemCat, setNewItemCat] = useState("mercado");
-
-  const handleCompletarTarefa = (t: typeof casa.tarefas[0]) => {
-    casa.completarTarefa({
-      tarefa_casa_id: t.id,
-      comodo: t.comodo,
-      tarefa: t.tarefa,
-    });
-    logActivity("tarefa_casa_concluida", {
-      comodo: t.comodo,
-      tarefa: t.tarefa,
-      hora: brasiliaTimeString(),
-    });
   };
 
   const handleAddTask = () => {
