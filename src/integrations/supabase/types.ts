@@ -21,6 +21,7 @@ export type Database = {
           criado_em: string
           detalhes: Json | null
           id: string
+          user_id: string | null
         }
         Insert: {
           acao: string
@@ -28,6 +29,7 @@ export type Database = {
           criado_em?: string
           detalhes?: Json | null
           id?: string
+          user_id?: string | null
         }
         Update: {
           acao?: string
@@ -35,6 +37,7 @@ export type Database = {
           criado_em?: string
           detalhes?: Json | null
           id?: string
+          user_id?: string | null
         }
         Relationships: []
       }
@@ -299,6 +302,33 @@ export type Database = {
           status?: string
           tipo?: string
           valor_mensal?: number | null
+        }
+        Relationships: []
+      }
+      configuracoes: {
+        Row: {
+          chave: string
+          created_at: string | null
+          id: string
+          updated_at: string | null
+          user_id: string
+          valor: Json | null
+        }
+        Insert: {
+          chave: string
+          created_at?: string | null
+          id?: string
+          updated_at?: string | null
+          user_id: string
+          valor?: Json | null
+        }
+        Update: {
+          chave?: string
+          created_at?: string | null
+          id?: string
+          updated_at?: string | null
+          user_id?: string
+          valor?: Json | null
         }
         Relationships: []
       }
