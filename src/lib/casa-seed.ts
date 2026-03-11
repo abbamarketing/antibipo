@@ -53,7 +53,7 @@ export async function seedTarefasCasa(profile: {
   casa_comodos?: number | null;
   casa_pets?: boolean | null;
   casa_frequencia_ideal?: string | null;
-}) {
+}, queryClient?: QueryClient) {
   // Check if already has tasks
   const { count } = await supabase
     .from("tarefas_casa" as any)
