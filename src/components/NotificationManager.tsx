@@ -70,7 +70,7 @@ export function NotificationManager({ medicamentos, isMedTaken, hasEnergy }: Not
         const pendingGoals = metasStore.metasAtivas.length;
         const goalMsg = pendingGoals > 0 ? ` ${pendingGoals} metas ativas.` : "";
 
-        notify("FLOW", `Selecione seu estado de energia para comecar.${meetingMsg}${goalMsg}`);
+        notify("AntiBipolaridade", `Selecione seu estado de energia para comecar.${meetingMsg}${goalMsg}`);
       }
     };
 
