@@ -65,6 +65,7 @@ async function reverseGeocode(lat: number, lon: number): Promise<string> {
 
 export function WeatherWidget() {
   const { data: weather, isLoading } = useQuery<WeatherData>({
+  const { data: weather, isLoading, isError } = useQuery<WeatherData>({
     queryKey: ["weather"],
     queryFn: async () => {
       let lat = -16.735;
