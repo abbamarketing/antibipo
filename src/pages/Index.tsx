@@ -103,7 +103,7 @@ const Index = () => {
     if (type === "acordar") {
       const hoje = brasiliaTime();
       const dia = hoje.getDay();
-      const sessionKey = `flow_review_${hoje.toISOString().split("T")[0]}`;
+      const sessionKey = `ab_review_${hoje.toISOString().split("T")[0]}`;
       
       if (dia === 1 && !sessionStorage.getItem(`${sessionKey}_monday`)) {
         sessionStorage.setItem(`${sessionKey}_monday`, "1");
