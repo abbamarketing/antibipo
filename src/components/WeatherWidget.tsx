@@ -134,57 +134,61 @@ export function WeatherWidget() {
   const CurrentIcon = weatherIcon(weather.currentCode);
 
   return (
-    <div className="bg-card rounded-lg border p-4">
-      <div className="flex items-start justify-between mb-4">
-        <div>
-          <p className="font-mono text-[10px] tracking-widest text-muted-foreground uppercase">
-            {weather.city}
-          </p>
-          <div className="flex items-end gap-1 mt-1">
-            <span className="text-4xl font-mono font-bold leading-none">{weather.currentTemp}°</span>
+    <div className="bg-card rounded-lg border">
+      {/* Collapsed / Header - always visible */}
+      <button
+        onClick={toggleExpanded}
+        className="w-full flex items-center justify-between p-3 hover:bg-secondary/30 transition-colors rounded-lg"
+      >
+        <div className="flex items-center gap-3">
+          <CurrentIcon className="w-5 h-5 text-primary" />
+          <span className="font-mono text-sm font-bold">{weather.currentTemp}°</span>
+          <span className="text-xs text-muted-foreground">{weatherLabel(weather.currentCode)}</span>
+          <span className="font-mono text-[10px] text-muted-foreground">· {weather.city}</span>
+        </div>
+        {expanded ? <ChevronUp className="w-4 h-4 text-muted-foreground" /> : <ChevronDown className="w-4 h-4 text-muted-foreground" />}
+      </button>
+
+      {/* Expanded content */}
+      {expanded && (
+        <div className="px-4 pb-4">
+          <div className="flex gap-4 mb-4 text-muted-foreground">
+            <div className="flex items-center gap-1">
+              <Droplets className="w-3 h-3" />
+              <span className="font-mono text-[10px]">{weather.humidity}%</span>
+            </div>
+            <div className="flex items-center gap-1">
+              <Wind className="w-3 h-3" />
+              <span className="font-mono text-[10px]">{weather.windSpeed} km/h</span>
+            </div>
+            <span className="font-mono text-[10px]">Sensação {weather.feelsLike}°</span>
           </div>
-          <p className="text-sm text-muted-foreground font-body mt-1">
-            {weatherLabel(weather.currentCode)}
-          </p>
-        </div>
-        <CurrentIcon className="w-10 h-10 text-primary mt-1" />
-      </div>
 
-      <div className="flex gap-4 mb-4 text-muted-foreground">
-        <div className="flex items-center gap-1">
-          <Droplets className="w-3 h-3" />
-          <span className="font-mono text-[10px]">{weather.humidity}%</span>
+          <div className="border-t pt-3">
+            <div className="flex justify-between">
+              {weather.forecast.map((d, i) => {
+                const Icon = weatherIcon(d.code);
+                const isToday = i === 0;
+                return (
+                  <div
+                    key={d.day + i}
+                    className={`flex flex-col items-center gap-0.5 ${isToday ? "text-foreground" : "text-muted-foreground"}`}
+                  >
+                    <span className={`font-mono text-[9px] uppercase tracking-wider ${isToday ? "font-bold text-primary" : ""}`}>
+                      {isToday ? "hoje" : d.day}
+                    </span>
+                    <Icon className={`w-4 h-4 ${isToday ? "text-primary" : ""}`} />
+                    <div className="flex gap-0.5 font-mono text-[9px]">
+                      <span className="font-medium">{d.tempMax}°</span>
+                      <span className="text-muted-foreground/60">{d.tempMin}°</span>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
         </div>
-        <div className="flex items-center gap-1">
-          <Wind className="w-3 h-3" />
-          <span className="font-mono text-[10px]">{weather.windSpeed} km/h</span>
-        </div>
-        <span className="font-mono text-[10px]">Sensação {weather.feelsLike}°</span>
-      </div>
-
-      <div className="border-t pt-3">
-        <div className="flex justify-between">
-          {weather.forecast.map((d, i) => {
-            const Icon = weatherIcon(d.code);
-            const isToday = i === 0;
-            return (
-              <div
-                key={d.day + i}
-                className={`flex flex-col items-center gap-0.5 ${isToday ? "text-foreground" : "text-muted-foreground"}`}
-              >
-                <span className={`font-mono text-[9px] uppercase tracking-wider ${isToday ? "font-bold text-primary" : ""}`}>
-                  {isToday ? "hoje" : d.day}
-                </span>
-                <Icon className={`w-4 h-4 ${isToday ? "text-primary" : ""}`} />
-                <div className="flex gap-0.5 font-mono text-[9px]">
-                  <span className="font-medium">{d.tempMax}°</span>
-                  <span className="text-muted-foreground/60">{d.tempMin}°</span>
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      </div>
+      )}
     </div>
   );
 }
