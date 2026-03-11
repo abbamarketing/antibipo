@@ -449,6 +449,51 @@ export type Database = {
         }
         Relationships: []
       }
+      metas_pessoais: {
+        Row: {
+          created_at: string | null
+          data_alvo: string
+          data_inicio: string
+          descricao: string | null
+          id: string
+          notas_progresso: Json | null
+          prazo: string
+          progresso: number | null
+          status: string | null
+          titulo: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          data_alvo: string
+          data_inicio?: string
+          descricao?: string | null
+          id?: string
+          notas_progresso?: Json | null
+          prazo: string
+          progresso?: number | null
+          status?: string | null
+          titulo: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          data_alvo?: string
+          data_inicio?: string
+          descricao?: string | null
+          id?: string
+          notas_progresso?: Json | null
+          prazo?: string
+          progresso?: number | null
+          status?: string | null
+          titulo?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           altura_cm: number | null
@@ -684,6 +729,48 @@ export type Database = {
           horario_dormir?: string | null
           id?: string
           qualidade?: number | null
+        }
+        Relationships: []
+      }
+      reports_semanais: {
+        Row: {
+          created_at: string | null
+          destaques: string[] | null
+          dificuldades: string[] | null
+          id: string
+          metas_update: Json | null
+          metricas: Json | null
+          nota_semana: number | null
+          reflexao: string | null
+          semana_fim: string
+          semana_inicio: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          destaques?: string[] | null
+          dificuldades?: string[] | null
+          id?: string
+          metas_update?: Json | null
+          metricas?: Json | null
+          nota_semana?: number | null
+          reflexao?: string | null
+          semana_fim: string
+          semana_inicio: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          destaques?: string[] | null
+          dificuldades?: string[] | null
+          id?: string
+          metas_update?: Json | null
+          metricas?: Json | null
+          nota_semana?: number | null
+          reflexao?: string | null
+          semana_fim?: string
+          semana_inicio?: string
+          user_id?: string
         }
         Relationships: []
       }
