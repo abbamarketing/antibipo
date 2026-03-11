@@ -1,292 +1,311 @@
-// FLOW v2 — Local state management
-import { useState, useEffect, useCallback } from "react";
+// FLOW v2 — Supabase-backed store with React Query
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { useCallback, useState } from "react";
+import type { Database } from "@/integrations/supabase/types";
 
-export type EnergyState = "foco_total" | "modo_leve" | "basico";
-export type Modulo = "trabalho" | "casa" | "saude";
-export type TaskType = "estrategico" | "operacional" | "delegavel" | "administrativo" | "domestico";
-export type TaskStatus = "backlog" | "hoje" | "em_andamento" | "aguardando" | "feito" | "descartado";
-export type TaskOwner = "eu" | "socio_medico" | "editor";
-export type Urgency = 1 | 2 | 3; // 1=talvez, 2=esta semana, 3=hoje
+// Re-export types from DB enums
+export type EnergyState = Database["public"]["Enums"]["energy_state"];
+export type Modulo = Database["public"]["Enums"]["task_modulo"];
+export type TaskType = Database["public"]["Enums"]["task_tipo"];
+export type TaskStatus = Database["public"]["Enums"]["task_status"];
+export type TaskOwner = Database["public"]["Enums"]["task_owner"];
+export type EstadoIdeal = Database["public"]["Enums"]["estado_ideal_type"];
+export type Urgency = 1 | 2 | 3;
 
-export interface Task {
-  id: string;
-  titulo: string;
-  modulo: Modulo;
-  tipo: TaskType;
-  estado_ideal: EnergyState | "qualquer";
-  urgencia: Urgency;
-  impacto: 1 | 2 | 3;
-  tempo_min: number;
-  dono: TaskOwner;
-  cliente_id?: string;
-  status: TaskStatus;
-  criado_em: string;
-  feito_em?: string;
-}
-
-export interface Medicamento {
-  id: string;
-  nome: string;
-  dose: string;
-  horarios: string[];
-  instrucoes?: string;
-  estoque: number;
-}
-
-export interface RegistroMedicamento {
-  id: string;
-  medicamento_id: string;
-  data: string;
-  horario_previsto: string;
-  horario_tomado?: string;
-  tomado: boolean;
-}
-
-export interface RegistroSono {
-  id: string;
-  data: string;
-  horario_dormir?: string;
-  horario_acordar?: string;
-  duracao_min?: number;
-  qualidade?: 1 | 2 | 3; // 1=pesado, 2=normal, 3=leve
-}
-
-export interface RegistroHumor {
-  id: string;
-  data: string;
-  valor: number; // -2 a +2
-  notas?: string;
-}
-
-export interface SessaoEnergia {
-  id: string;
-  data: string;
-  estado: EnergyState;
-  hora_inicio: string;
-}
-
-export interface FlowState {
-  tasks: Task[];
-  medicamentos: Medicamento[];
-  registros_medicamento: RegistroMedicamento[];
-  registros_sono: RegistroSono[];
-  registros_humor: RegistroHumor[];
-  sessoes_energia: SessaoEnergia[];
-  current_energy: EnergyState | null;
-  current_modulo: Modulo;
-}
-
-const STORAGE_KEY = "flow_v2_state";
-
-const defaultState: FlowState = {
-  tasks: [],
-  medicamentos: [],
-  registros_medicamento: [],
-  registros_sono: [],
-  registros_humor: [],
-  sessoes_energia: [],
-  current_energy: null,
-  current_modulo: "trabalho",
-};
-
-function loadState(): FlowState {
-  try {
-    const saved = localStorage.getItem(STORAGE_KEY);
-    if (saved) {
-      const parsed = JSON.parse(saved);
-      return { ...defaultState, ...parsed };
-    }
-  } catch {
-    // ignore
-  }
-  return defaultState;
-}
-
-function saveState(state: FlowState) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-}
-
-export function uuid(): string {
-  return crypto.randomUUID();
-}
+export type Task = Database["public"]["Tables"]["tasks"]["Row"];
+export type Medicamento = Database["public"]["Tables"]["medicamentos"]["Row"];
+export type RegistroMedicamento = Database["public"]["Tables"]["registros_medicamento"]["Row"];
+export type RegistroSono = Database["public"]["Tables"]["registros_sono"]["Row"];
+export type RegistroHumor = Database["public"]["Tables"]["registros_humor"]["Row"];
+export type SessaoEnergia = Database["public"]["Tables"]["sessoes_energia"]["Row"];
 
 export function today(): string {
   return new Date().toISOString().split("T")[0];
 }
 
 export function useFlowStore() {
-  const [state, setState] = useState<FlowState>(loadState);
+  const qc = useQueryClient();
+  const [currentEnergy, setCurrentEnergyLocal] = useState<EnergyState | null>(null);
+  const [currentModulo, setCurrentModulo] = useState<Modulo>("trabalho");
 
-  useEffect(() => {
-    saveState(state);
-  }, [state]);
+  // ===== QUERIES =====
+  const { data: tasks = [] } = useQuery({
+    queryKey: ["tasks"],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("tasks").select("*").order("criado_em", { ascending: false });
+      if (error) throw error;
+      return data;
+    },
+  });
 
-  const update = useCallback((updater: (s: FlowState) => FlowState) => {
-    setState((prev) => updater(prev));
-  }, []);
+  const { data: medicamentos = [] } = useQuery({
+    queryKey: ["medicamentos"],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("medicamentos").select("*");
+      if (error) throw error;
+      return data;
+    },
+  });
 
-  const setEnergy = useCallback((energy: EnergyState) => {
-    update((s) => ({
-      ...s,
-      current_energy: energy,
-      sessoes_energia: [
-        ...s.sessoes_energia,
-        { id: uuid(), data: today(), estado: energy, hora_inicio: new Date().toISOString() },
-      ],
-    }));
-  }, [update]);
+  const { data: registrosMed = [] } = useQuery({
+    queryKey: ["registros_medicamento", today()],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("registros_medicamento").select("*").eq("data", today());
+      if (error) throw error;
+      return data;
+    },
+  });
 
-  const setModulo = useCallback((modulo: Modulo) => {
-    update((s) => ({ ...s, current_modulo: modulo }));
-  }, [update]);
+  const { data: registrosHumor = [] } = useQuery({
+    queryKey: ["registros_humor"],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("registros_humor").select("*").order("data", { ascending: false }).limit(30);
+      if (error) throw error;
+      return data;
+    },
+  });
 
-  const addTask = useCallback((task: Omit<Task, "id" | "criado_em" | "status">) => {
-    update((s) => ({
-      ...s,
-      tasks: [...s.tasks, { ...task, id: uuid(), criado_em: new Date().toISOString(), status: "backlog" }],
-    }));
-  }, [update]);
+  const { data: registrosSono = [] } = useQuery({
+    queryKey: ["registros_sono"],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("registros_sono").select("*").order("data", { ascending: false }).limit(30);
+      if (error) throw error;
+      return data;
+    },
+  });
 
-  const updateTask = useCallback((id: string, changes: Partial<Task>) => {
-    update((s) => ({
-      ...s,
-      tasks: s.tasks.map((t) => (t.id === id ? { ...t, ...changes } : t)),
-    }));
-  }, [update]);
+  // ===== MUTATIONS =====
+  const addTaskMut = useMutation({
+    mutationFn: async (task: Database["public"]["Tables"]["tasks"]["Insert"]) => {
+      const { data, error } = await supabase.from("tasks").insert(task).select().single();
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["tasks"] }),
+  });
 
-  const completeTask = useCallback((id: string) => {
-    updateTask(id, { status: "feito", feito_em: new Date().toISOString() });
-  }, [updateTask]);
+  const updateTaskMut = useMutation({
+    mutationFn: async ({ id, changes }: { id: string; changes: Database["public"]["Tables"]["tasks"]["Update"] }) => {
+      const { error } = await supabase.from("tasks").update(changes).eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["tasks"] }),
+  });
 
-  const addMedicamento = useCallback((med: Omit<Medicamento, "id">) => {
-    update((s) => ({
-      ...s,
-      medicamentos: [...s.medicamentos, { ...med, id: uuid() }],
-    }));
-  }, [update]);
+  const addMedMut = useMutation({
+    mutationFn: async (med: Database["public"]["Tables"]["medicamentos"]["Insert"]) => {
+      const { error } = await supabase.from("medicamentos").insert(med);
+      if (error) throw error;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["medicamentos"] }),
+  });
 
-  const registrarMedicamento = useCallback((medicamento_id: string, horario_previsto: string) => {
-    update((s) => ({
-      ...s,
-      registros_medicamento: [
-        ...s.registros_medicamento,
-        {
-          id: uuid(),
-          medicamento_id,
-          data: today(),
-          horario_previsto,
-          horario_tomado: new Date().toISOString(),
-          tomado: true,
-        },
-      ],
-    }));
-  }, [update]);
+  const takeMedMut = useMutation({
+    mutationFn: async ({ medicamento_id, horario_previsto }: { medicamento_id: string; horario_previsto: string }) => {
+      const { error } = await supabase.from("registros_medicamento").insert({
+        medicamento_id,
+        horario_previsto,
+        horario_tomado: new Date().toISOString(),
+        tomado: true,
+      });
+      if (error) throw error;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["registros_medicamento"] }),
+  });
 
-  const registrarHumor = useCallback((valor: number, notas?: string) => {
-    update((s) => {
+  const moodMut = useMutation({
+    mutationFn: async ({ valor, notas }: { valor: number; notas?: string }) => {
+      const { error } = await supabase.from("registros_humor").upsert(
+        { data: today(), valor, notas },
+        { onConflict: "data" }
+      );
+      if (error) throw error;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["registros_humor"] }),
+  });
+
+  const sleepMut = useMutation({
+    mutationFn: async ({ type, qualidade }: { type: "dormir" | "acordar"; qualidade?: 1 | 2 | 3 }) => {
       const todayStr = today();
-      const existing = s.registros_humor.findIndex((r) => r.data === todayStr);
-      const registro: RegistroHumor = { id: uuid(), data: todayStr, valor, notas };
-      if (existing >= 0) {
-        const updated = [...s.registros_humor];
-        updated[existing] = registro;
-        return { ...s, registros_humor: updated };
-      }
-      return { ...s, registros_humor: [...s.registros_humor, registro] };
-    });
-  }, [update]);
+      const { data: existing } = await supabase.from("registros_sono").select("*").eq("data", todayStr).maybeSingle();
 
-  const registrarSono = useCallback((type: "dormir" | "acordar", qualidade?: 1 | 2 | 3) => {
-    update((s) => {
-      const todayStr = today();
-      const existing = s.registros_sono.find((r) => r.data === todayStr);
       if (type === "dormir") {
         if (existing) {
-          return {
-            ...s,
-            registros_sono: s.registros_sono.map((r) =>
-              r.data === todayStr ? { ...r, horario_dormir: new Date().toISOString() } : r
-            ),
-          };
+          await supabase.from("registros_sono").update({ horario_dormir: new Date().toISOString() }).eq("id", existing.id);
+        } else {
+          await supabase.from("registros_sono").insert({ data: todayStr, horario_dormir: new Date().toISOString() });
         }
-        return {
-          ...s,
-          registros_sono: [...s.registros_sono, { id: uuid(), data: todayStr, horario_dormir: new Date().toISOString() }],
-        };
       } else {
         const now = new Date();
         if (existing) {
           const duracao = existing.horario_dormir
             ? Math.round((now.getTime() - new Date(existing.horario_dormir).getTime()) / 60000)
             : undefined;
-          return {
-            ...s,
-            registros_sono: s.registros_sono.map((r) =>
-              r.data === todayStr
-                ? { ...r, horario_acordar: now.toISOString(), duracao_min: duracao, qualidade }
-                : r
-            ),
-          };
+          await supabase.from("registros_sono").update({
+            horario_acordar: now.toISOString(),
+            duracao_min: duracao,
+            qualidade,
+          }).eq("id", existing.id);
+        } else {
+          await supabase.from("registros_sono").insert({
+            data: todayStr,
+            horario_acordar: now.toISOString(),
+            qualidade,
+          });
         }
-        return {
-          ...s,
-          registros_sono: [
-            ...s.registros_sono,
-            { id: uuid(), data: todayStr, horario_acordar: now.toISOString(), qualidade },
-          ],
-        };
       }
-    });
-  }, [update]);
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["registros_sono"] }),
+  });
 
-  // Check if medication was taken today
-  const isMedTakenToday = useCallback((medicamento_id: string, horario: string) => {
-    return state.registros_medicamento.some(
-      (r) => r.medicamento_id === medicamento_id && r.data === today() && r.horario_previsto === horario && r.tomado
-    );
-  }, [state.registros_medicamento]);
+  const energyMut = useMutation({
+    mutationFn: async (estado: EnergyState) => {
+      await supabase.from("sessoes_energia").insert({ estado, data: today() });
+    },
+  });
+
+  // ===== DERIVED =====
+  const setEnergy = useCallback((energy: EnergyState) => {
+    setCurrentEnergyLocal(energy);
+    energyMut.mutate(energy);
+  }, [energyMut]);
+
+  const setModulo = useCallback((modulo: Modulo) => {
+    setCurrentModulo(modulo);
+  }, []);
+
+  const addTask = useCallback(
+    (task: Omit<Database["public"]["Tables"]["tasks"]["Insert"], "id" | "criado_em">) => {
+      addTaskMut.mutate(task);
+    },
+    [addTaskMut]
+  );
+
+  const completeTask = useCallback(
+    (id: string) => {
+      updateTaskMut.mutate({ id, changes: { status: "feito", feito_em: new Date().toISOString() } });
+    },
+    [updateTaskMut]
+  );
+
+  const updateTask = useCallback(
+    (id: string, changes: Database["public"]["Tables"]["tasks"]["Update"]) => {
+      updateTaskMut.mutate({ id, changes });
+    },
+    [updateTaskMut]
+  );
+
+  const addMedicamento = useCallback(
+    (med: Omit<Database["public"]["Tables"]["medicamentos"]["Insert"], "id">) => {
+      addMedMut.mutate(med);
+    },
+    [addMedMut]
+  );
+
+  const registrarMedicamento = useCallback(
+    (medicamento_id: string, horario_previsto: string) => {
+      takeMedMut.mutate({ medicamento_id, horario_previsto });
+    },
+    [takeMedMut]
+  );
+
+  const registrarHumor = useCallback(
+    (valor: number, notas?: string) => {
+      moodMut.mutate({ valor, notas });
+    },
+    [moodMut]
+  );
+
+  const registrarSono = useCallback(
+    (type: "dormir" | "acordar", qualidade?: 1 | 2 | 3) => {
+      sleepMut.mutate({ type, qualidade });
+    },
+    [sleepMut]
+  );
+
+  const isMedTakenToday = useCallback(
+    (medicamento_id: string, horario: string) => {
+      return registrosMed.some(
+        (r) => r.medicamento_id === medicamento_id && r.horario_previsto === horario && r.tomado
+      );
+    },
+    [registrosMed]
+  );
 
   const pendingMeds = useCallback(() => {
-    const todayStr = today();
     const currentHour = new Date().getHours();
-    return state.medicamentos.flatMap((med) =>
+    return medicamentos.flatMap((med) =>
       med.horarios
         .filter((h) => {
           const hour = parseInt(h.split(":")[0]);
-          return hour <= currentHour && !state.registros_medicamento.some(
-            (r) => r.medicamento_id === med.id && r.data === todayStr && r.horario_previsto === h && r.tomado
+          return hour <= currentHour && !registrosMed.some(
+            (r) => r.medicamento_id === med.id && r.horario_previsto === h && r.tomado
           );
         })
         .map((h) => ({ medicamento: med, horario: h }))
     );
-  }, [state.medicamentos, state.registros_medicamento]);
+  }, [medicamentos, registrosMed]);
 
-  // Get tasks filtered by energy state for a module
-  const getFilteredTasks = useCallback((modulo: Modulo, energy: EnergyState) => {
-    const activeTasks = state.tasks.filter(
-      (t) => t.modulo === modulo && t.status !== "feito" && t.status !== "descartado"
-    );
+  const getFilteredTasks = useCallback(
+    (modulo: Modulo, energy: EnergyState) => {
+      const active = tasks.filter(
+        (t) => t.modulo === modulo && t.status !== "feito" && t.status !== "descartado"
+      );
+      const matching = active.filter(
+        (t) => t.estado_ideal === "qualquer" || t.estado_ideal === energy
+      );
+      matching.sort((a, b) => b.urgencia - a.urgencia || b.impacto - a.impacto);
+      const limit = energy === "foco_total" ? 3 : 1;
+      return matching.slice(0, limit);
+    },
+    [tasks]
+  );
 
-    const matchesEnergy = (t: Task) =>
-      t.estado_ideal === "qualquer" || t.estado_ideal === energy;
+  const todayHumor = registrosHumor.find((r) => r.data === today());
 
-    const filtered = activeTasks.filter(matchesEnergy);
+  // AI classify function
+  const classifyTask = useCallback(async (taskId: string, titulo: string) => {
+    try {
+      const { data, error } = await supabase.functions.invoke("classify-task", {
+        body: { titulo },
+      });
+      if (error) throw error;
+      if (data?.classification) {
+        updateTaskMut.mutate({ id: taskId, changes: data.classification });
+      }
+    } catch (e) {
+      console.error("AI classification failed:", e);
+    }
+  }, [updateTaskMut]);
 
-    // Sort by urgency desc, then impacto desc
-    filtered.sort((a, b) => b.urgencia - a.urgencia || b.impacto - a.impacto);
-
-    // Limit based on energy
-    const limit = energy === "foco_total" ? 3 : 1;
-    return filtered.slice(0, limit);
-  }, [state.tasks]);
-
-  const todayHumor = state.registros_humor.find((r) => r.data === today());
+  // Add task with AI classification
+  const addTaskWithAI = useCallback(
+    async (task: Omit<Database["public"]["Tables"]["tasks"]["Insert"], "id" | "criado_em">) => {
+      const { data, error } = await supabase.from("tasks").insert(task).select().single();
+      if (error) throw error;
+      if (data) {
+        qc.invalidateQueries({ queryKey: ["tasks"] });
+        // Classify in background
+        classifyTask(data.id, data.titulo);
+      }
+    },
+    [qc, classifyTask]
+  );
 
   return {
-    state,
+    state: {
+      tasks,
+      medicamentos,
+      registros_medicamento: registrosMed,
+      registros_humor: registrosHumor,
+      registros_sono: registrosSono,
+      current_energy: currentEnergy,
+      current_modulo: currentModulo,
+    },
     setEnergy,
     setModulo,
-    addTask,
+    addTask: addTaskWithAI,
     updateTask,
     completeTask,
     addMedicamento,
