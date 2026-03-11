@@ -421,48 +421,61 @@ export function QuickCapture({ open, onClose, onActionComplete }: QuickCapturePr
 
         {/* Input */}
         <div className="p-4 pt-2">
-          <div className="flex items-end gap-2">
-            {/* Mic button */}
-            <button
-              onClick={toggleListening}
-              className={`p-3 rounded-lg transition-all ${
-                isListening
-                  ? "bg-red-500 text-white animate-pulse"
-                  : "bg-secondary text-secondary-foreground hover:bg-secondary/80"
-              }`}
-              title={isListening ? "Parar gravacao" : "Gravar audio"}
-            >
-              {isListening ? <MicOff className="w-4 h-4" /> : <Mic className="w-4 h-4" />}
-            </button>
+          {isListening ? (
+            /* Recording state — prominent finalize button */
+            <div className="space-y-3">
+              <div className="bg-background border rounded-lg p-3 min-h-[64px] flex items-center">
+                <p className="text-sm font-body text-muted-foreground whitespace-pre-wrap">
+                  {input || "Ouvindo..."}
+                </p>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
+                <span className="font-mono text-[10px] text-red-500 tracking-wider flex-1">GRAVANDO</span>
+                <button
+                  onClick={() => {
+                    stopListening();
+                  }}
+                  className="px-5 py-2.5 rounded-lg bg-primary text-primary-foreground font-mono text-xs tracking-wider hover:opacity-90 transition-opacity flex items-center gap-2"
+                >
+                  <MicOff className="w-3.5 h-3.5" />
+                  FINALIZAR
+                </button>
+              </div>
+            </div>
+          ) : (
+            /* Normal input state */
+            <div className="flex items-end gap-2">
+              <button
+                onClick={startListening}
+                className="p-3 rounded-lg bg-secondary text-secondary-foreground hover:bg-secondary/80 transition-all"
+                title="Gravar audio"
+              >
+                <Mic className="w-4 h-4" />
+              </button>
 
-            <textarea
-              ref={inputRef}
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              placeholder={isListening ? "Ouvindo..." : "fale sobre seu dia, registre gastos, agende reunioes..."}
-              className="flex-1 bg-background border rounded-lg p-3 text-sm font-body resize-none h-16 focus:outline-none focus:ring-1 focus:ring-primary placeholder:text-muted-foreground/40"
-              onKeyDown={(e) => {
-                if (e.key === "Enter" && !e.shiftKey) {
-                  e.preventDefault();
-                  handleSubmit();
-                }
-              }}
-              disabled={feedback === "loading"}
-            />
+              <textarea
+                ref={inputRef}
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                placeholder="fale sobre seu dia, registre gastos, agende reunioes..."
+                className="flex-1 bg-background border rounded-lg p-3 text-sm font-body resize-none h-16 focus:outline-none focus:ring-1 focus:ring-primary placeholder:text-muted-foreground/40"
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && !e.shiftKey) {
+                    e.preventDefault();
+                    handleSubmit();
+                  }
+                }}
+                disabled={feedback === "loading"}
+              />
 
-            <button
-              onClick={handleSubmit}
-              disabled={!input.replace(/\s*\[.*?\]$/, "").trim() || feedback === "loading"}
-              className="p-3 rounded-lg bg-primary text-primary-foreground disabled:opacity-40 hover:opacity-90 transition-opacity"
-            >
-              <Send className="w-4 h-4" />
-            </button>
-          </div>
-
-          {isListening && (
-            <div className="flex items-center gap-2 mt-2">
-              <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
-              <span className="font-mono text-[10px] text-red-500 tracking-wider">GRAVANDO</span>
+              <button
+                onClick={handleSubmit}
+                disabled={!input.replace(/\s*\[.*?\]$/, "").trim() || feedback === "loading"}
+                className="p-3 rounded-lg bg-primary text-primary-foreground disabled:opacity-40 hover:opacity-90 transition-opacity"
+              >
+                <Send className="w-4 h-4" />
+              </button>
             </div>
           )}
         </div>
