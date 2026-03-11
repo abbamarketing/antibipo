@@ -197,7 +197,10 @@ export function OnboardingWizard({ modulo, onComplete }: OnboardingWizardProps) 
   };
 
   const handleSkipAll = () => {
-    updateProfile({ [`onboarding_${modulo}`]: true } as any);
+    updateProfile({
+      [`onboarding_${modulo}`]: true,
+      [`onboarding_${modulo}_at`]: new Date().toISOString(),
+    } as any);
     onComplete();
   };
 
