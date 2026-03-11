@@ -26,7 +26,7 @@ serve(async (req) => {
         messages: [
           {
             role: "system",
-            content: `Você é um classificador de tarefas para o sistema FLOW. Recebe o título de uma tarefa e retorna a classificação usando tool calling.
+            content: `Você é um classificador de tarefas para o sistema AntiBipolaridade. Recebe o título de uma tarefa e retorna a classificação usando tool calling.
 
 Contexto do usuário:
 - Empreendedor, dono de agência de vídeo para clínicas médicas
