@@ -1,10 +1,12 @@
 import { useState } from "react";
 import { EnergyState, Medicamento, RegistroHumor, RegistroSono, today } from "@/lib/store";
 import { useBemEstarStore } from "@/lib/bem-estar-store";
+import { useProfileStore } from "@/lib/profile-store";
 import { Pill, Moon, Sun, SmilePlus, Check, Plus, Frown, Meh, Smile, Laugh, Angry } from "lucide-react";
 import { MealSection } from "@/components/bem-estar/MealSection";
 import { ExerciseSection } from "@/components/bem-estar/ExerciseSection";
 import { WeeklyDashboard } from "@/components/bem-estar/WeeklyDashboard";
+import { WeightTracker } from "@/components/bem-estar/WeightTracker";
 
 interface HealthModuleProps {
   energy: EnergyState;
