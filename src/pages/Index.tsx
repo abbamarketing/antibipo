@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useFlowStore } from "@/lib/store";
 import { startTimeThemeWatcher } from "@/lib/time-theme";
-import { brasiliaDateString, brasiliaTime } from "@/lib/brasilia";
+import { brasiliaTimeString, brasiliaDateString, brasiliaTime } from "@/lib/brasilia";
 import { logActivity } from "@/lib/activity-log";
 import { EnergyStateSelector } from "@/components/EnergyStateSelector";
 import { MedAlert } from "@/components/MedAlert";
