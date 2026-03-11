@@ -4,6 +4,7 @@ import { EnergyState } from "@/lib/store";
 import { logActivity } from "@/lib/activity-log";
 import { brasiliaTimeString } from "@/lib/brasilia";
 import { WeeklyTaskView } from "@/components/casa/WeeklyTaskView";
+import { CustomTrackers } from "@/components/CustomTrackers";
 import {
   Home,
   Check,
@@ -298,6 +299,9 @@ export function HomeModule({ energy }: HomeModuleProps) {
           )}
         </div>
       )}
+
+      {/* Custom Trackers for casa module */}
+      <CustomTrackers modulo="casa" />
     </div>
   );
 }

@@ -23,7 +23,9 @@ export type ActivityAction =
   | "onboarding_concluido"
   | "peso_registrado"
   | "exercicio_registrado"
-  | "refeicao_registrada";
+  | "refeicao_registrada"
+  | "tracker_concluido"
+  | "tracker_criado";
 
 const CONSOLIDATION_THRESHOLD = 100;
 

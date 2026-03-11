@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import { EnergyState, Task } from "@/lib/store";
 import { TaskCard } from "./TaskCard";
+import { CustomTrackers } from "@/components/CustomTrackers";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
 import {
@@ -420,6 +421,9 @@ function PomodoroBar({
           </button>
         </div>
       </div>
+
+      {/* Custom Trackers for trabalho module */}
+      <CustomTrackers modulo="trabalho" />
     </div>
   );
 }
