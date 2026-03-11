@@ -177,7 +177,7 @@ export function QuickCapture({ open, onClose, onActionComplete }: QuickCapturePr
         }
 
         case "trabalho": {
-          // Find client by name if provided
+          // Find or auto-create client by name
           let clienteId = null;
           if (dados.cliente_nome) {
             const { data: clienteMatch } = await supabase
@@ -186,7 +186,21 @@ export function QuickCapture({ open, onClose, onActionComplete }: QuickCapturePr
               .ilike("nome", `%${dados.cliente_nome}%`)
               .limit(1)
               .maybeSingle();
-            clienteId = clienteMatch?.id || null;
+            
+            if (clienteMatch) {
+              clienteId = clienteMatch.id;
+            } else {
+              // Auto-create client
+              const { data: newCliente } = await supabase
+                .from("clientes")
+                .insert({ nome: dados.cliente_nome, tipo: "recorrente", status: "ativo" })
+                .select("id")
+                .single();
+              clienteId = newCliente?.id || null;
+              if (clienteId) {
+                toast.info(`Cliente "${dados.cliente_nome}" criado automaticamente`);
+              }
+            }
           }
 
           // Create main task
