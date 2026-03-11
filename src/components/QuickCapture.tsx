@@ -349,6 +349,46 @@ export function QuickCapture({ open, onClose, onActionComplete }: QuickCapturePr
           });
           break;
         }
+
+        case "criar_tracker": {
+          const { data: { user } } = await supabase.auth.getUser();
+          if (!user) throw new Error("Nao autenticado");
+
+          const trackerTipo = dados.tracker_tipo || "recorrente";
+          let config: Record<string, any> = {};
+
+          if (trackerTipo === "recorrente") {
+            config = { frequencia_dias: dados.tracker_frequencia_dias || 7 };
+          } else if (trackerTipo === "checklist") {
+            const itens = (dados.tracker_checklist_itens || []).map((label: string, i: number) => ({
+              id: `item_${i}`,
+              label,
+            }));
+            config = { itens, reseta_diario: true };
+          } else if (trackerTipo === "meta") {
+            config = { alvo: dados.tracker_meta_alvo || 1, unidade: dados.tracker_meta_unidade || "unidades", atual: 0 };
+          } else if (trackerTipo === "alerta") {
+            config = { data_alvo: dados.tracker_data_alvo || "", lembrete_dias_antes: dados.tracker_lembrete_dias || 3, recorrente: false };
+          }
+
+          await supabase.from("custom_trackers" as any).insert({
+            user_id: user.id,
+            titulo: dados.tracker_titulo || dados.titulo || input,
+            tipo: trackerTipo,
+            modulo: dados.tracker_modulo || dados.modulo || "saude",
+            secao: dados.tracker_secao || "geral",
+            config,
+            ativo: true,
+          } as any);
+
+          logActivity("tracker_criado", {
+            titulo: dados.tracker_titulo,
+            tipo: trackerTipo,
+            modulo: dados.tracker_modulo,
+            secao: dados.tracker_secao,
+          });
+          break;
+        }
       }
     } catch (err) {
       console.error("Action execution error:", err);
