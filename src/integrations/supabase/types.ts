@@ -579,9 +579,13 @@ export type Database = {
           nome: string | null
           objetivo_saude: string | null
           onboarding_casa: boolean | null
+          onboarding_casa_at: string | null
           onboarding_financeiro: boolean | null
+          onboarding_financeiro_at: string | null
           onboarding_saude: boolean | null
+          onboarding_saude_at: string | null
           onboarding_trabalho: boolean | null
+          onboarding_trabalho_at: string | null
           peso_kg: number | null
           trabalho_clientes_ativos: number | null
           trabalho_desafio: string | null
@@ -609,9 +613,13 @@ export type Database = {
           nome?: string | null
           objetivo_saude?: string | null
           onboarding_casa?: boolean | null
+          onboarding_casa_at?: string | null
           onboarding_financeiro?: boolean | null
+          onboarding_financeiro_at?: string | null
           onboarding_saude?: boolean | null
+          onboarding_saude_at?: string | null
           onboarding_trabalho?: boolean | null
+          onboarding_trabalho_at?: string | null
           peso_kg?: number | null
           trabalho_clientes_ativos?: number | null
           trabalho_desafio?: string | null
@@ -639,9 +647,13 @@ export type Database = {
           nome?: string | null
           objetivo_saude?: string | null
           onboarding_casa?: boolean | null
+          onboarding_casa_at?: string | null
           onboarding_financeiro?: boolean | null
+          onboarding_financeiro_at?: string | null
           onboarding_saude?: boolean | null
+          onboarding_saude_at?: string | null
           onboarding_trabalho?: boolean | null
+          onboarding_trabalho_at?: string | null
           peso_kg?: number | null
           trabalho_clientes_ativos?: number | null
           trabalho_desafio?: string | null
