@@ -142,8 +142,8 @@ export function HealthModule({
         )}
       </div>
 
-      {/* Escovação */}
-      <BrushingTracker />
+      {/* Custom Trackers (módulos pré-scriptados) */}
+      <CustomTrackers modulo="saude" />
 
       {/* Humor */}
       {showMood && (
