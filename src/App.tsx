@@ -8,6 +8,7 @@ import Index from "./pages/Index.tsx";
 import ActivityLogPage from "./pages/ActivityLog.tsx";
 import Financeiro from "./pages/Financeiro.tsx";
 import Calendario from "./pages/Calendario.tsx";
+import Configuracoes from "./pages/Configuracoes.tsx";
 import AuthPage from "./pages/Auth.tsx";
 import NotFound from "./pages/NotFound.tsx";
 
@@ -25,6 +26,7 @@ const App = () => (
           <Route path="/log" element={<AuthGuard><ActivityLogPage /></AuthGuard>} />
           <Route path="/financeiro" element={<AuthGuard><Financeiro /></AuthGuard>} />
           <Route path="/calendario" element={<AuthGuard><Calendario /></AuthGuard>} />
+          <Route path="/config" element={<AuthGuard><Configuracoes /></AuthGuard>} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>

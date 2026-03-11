@@ -17,7 +17,7 @@ import { NotificationManager } from "@/components/NotificationManager";
 import { ModuleOnboardingGuard } from "@/components/ModuleOnboardingGuard";
 import { MondayGoalsReview } from "@/components/MondayGoalsReview";
 import { FridayWeeklyReport } from "@/components/FridayWeeklyReport";
-import { Plus, Activity, Zap, Sun, Battery, Wallet, LogOut, CalendarDays } from "lucide-react";
+import { Plus, Activity, Zap, Sun, Battery, Wallet, Settings, CalendarDays } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 const Index = () => {
@@ -167,11 +167,11 @@ const Index = () => {
                 <Activity className="w-4 h-4" />
               </button>
               <button
-                onClick={async () => { await supabase.auth.signOut(); navigate("/auth"); }}
+                onClick={() => navigate("/config")}
                 className="p-1.5 rounded-md text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors"
-                title="Sair"
+                title="Configuracoes"
               >
-                <LogOut className="w-4 h-4" />
+                <Settings className="w-4 h-4" />
               </button>
               <span className="font-mono text-sm text-muted-foreground tabular-nums">{clock}</span>
             </div>

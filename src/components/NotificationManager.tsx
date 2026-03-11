@@ -34,6 +34,22 @@ export function NotificationManager({ medicamentos, isMedTaken, hasEnergy }: Not
 
   useEffect(() => {
     requestPermission();
+
+    // Welcome notification on first PWA open
+    const welcomed = localStorage.getItem("flow_welcomed");
+    if (!welcomed && "Notification" in window) {
+      const checkPerm = () => {
+        if (Notification.permission === "granted") {
+          localStorage.setItem("flow_welcomed", "1");
+          setTimeout(() => {
+            notify("Bem-vindo ao FLOW", "App instalado com sucesso. Suas notificacoes estao ativas.");
+          }, 2000);
+        }
+      };
+      // Check immediately and also after a delay (user might grant permission)
+      checkPerm();
+      setTimeout(checkPerm, 5000);
+    }
   }, []);
 
   // Morning reminder — once per day
