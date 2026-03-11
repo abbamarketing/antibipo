@@ -1,5 +1,6 @@
 // Auto-generates default household tasks based on profile data
 import { supabase } from "@/integrations/supabase/client";
+import { QueryClient } from "@tanstack/react-query";
 
 type SeedTask = {
   comodo: string;
