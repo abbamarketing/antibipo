@@ -1,5 +1,4 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { callGeminiWithUserToken, type GeminiOptions } from "../_shared/google-gemini.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -31,20 +30,9 @@ Deno.serve(async (req) => {
   }
 });
 
-async function generateSummary(supabase: any, userId: string, logs: any[], periodoInicio: string, periodoFim: string, actionCounts: Record<string, number>): Promise<string> {
+async function generateSummary(logs: any[], periodoInicio: string, periodoFim: string, actionCounts: Record<string, number>): Promise<string> {
   const prompt = `Você é um assistente pessoal. Analise estes ${logs.length} registros de atividade e crie um mini-resumo de 2-3 frases sobre o que o usuário fez neste período. Seja factual e direto.\n\nPeríodo: ${periodoInicio} a ${periodoFim}\nAções: ${JSON.stringify(actionCounts)}\nDetalhes recentes: ${JSON.stringify(logs.slice(-10).map((l: any) => ({ acao: l.acao, detalhes: l.detalhes })))}\n\nResponda APENAS o resumo, sem introduções.`;
 
-  const geminiOpts: GeminiOptions = {
-    messages: [{ role: "user", content: prompt }],
-    model: "gemini-2.0-flash",
-  };
-
-  // Try user's Google token
-  let ai_provider = "none";
-  const geminiResult = await callGeminiWithUserToken(supabase, userId, geminiOpts);
-  if (geminiResult?.text) { ai_provider = "gemini_direct"; return geminiResult.text; }
-
-  // Fallback to Lovable AI
   const lovableKey = Deno.env.get("LOVABLE_API_KEY");
   if (lovableKey) {
     try {
@@ -59,7 +47,7 @@ async function generateSummary(supabase: any, userId: string, logs: any[], perio
         if (text) return text;
       }
     } catch (e) {
-      console.error("Lovable AI fallback failed:", e);
+      console.error("AI summary failed:", e);
     }
   }
 
@@ -85,7 +73,7 @@ async function consolidateForUser(supabase: any, userId: string) {
   const periodoFim = logs[logs.length - 1].criado_em;
   for (const log of logs) actionCounts[log.acao] = (actionCounts[log.acao] || 0) + 1;
 
-  const resumo = await generateSummary(supabase, userId, logs, periodoInicio, periodoFim, actionCounts);
+  const resumo = await generateSummary(logs, periodoInicio, periodoFim, actionCounts);
 
   await supabase.from("configuracoes").upsert({
     user_id: userId,

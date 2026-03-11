@@ -2,63 +2,125 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useProfileStore } from "@/lib/profile-store";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, RotateCcw, LogOut, Bell, User, Trash2, Shield, ScrollText, BookOpen, Brain } from "lucide-react";
-import { getAIStats, resetAIStats } from "@/lib/ai-stats";
+import { ArrowLeft, RotateCcw, LogOut, Bell, User, Shield, ScrollText, BookOpen, Key, Eye, EyeOff } from "lucide-react";
 
-function AIProviderStats() {
-  const stats = getAIStats();
-  const total = stats.gemini_direct + stats.lovable_ai;
-  const geminiPct = total > 0 ? Math.round((stats.gemini_direct / total) * 100) : 0;
-  const lovablePct = total > 0 ? 100 - geminiPct : 0;
+function AIKeySettings() {
+  const [apiKey, setApiKey] = useState("");
+  const [savedKey, setSavedKey] = useState<string | null>(null);
+  const [showKey, setShowKey] = useState(false);
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    (async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+      const { data } = await supabase
+        .from("configuracoes" as any)
+        .select("valor")
+        .eq("user_id", user.id)
+        .eq("chave", "ai_api_key")
+        .maybeSingle();
+      if (data) {
+        const key = (data as any).valor?.key || "";
+        setSavedKey(key);
+        setApiKey(key);
+      }
+    })();
+  }, []);
+
+  const handleSave = async () => {
+    setSaving(true);
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) { setSaving(false); return; }
+
+    const trimmed = apiKey.trim();
+    await supabase.from("configuracoes" as any).upsert({
+      user_id: user.id,
+      chave: "ai_api_key",
+      valor: { key: trimmed, provider: "custom", updated_at: new Date().toISOString() },
+      updated_at: new Date().toISOString(),
+    } as any, { onConflict: "user_id,chave" });
+
+    setSavedKey(trimmed);
+    setSaving(false);
+  };
+
+  const handleRemove = async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+    await supabase.from("configuracoes" as any).delete().eq("user_id", user.id).eq("chave", "ai_api_key");
+    setApiKey("");
+    setSavedKey(null);
+  };
+
+  const maskedKey = savedKey ? `${savedKey.slice(0, 8)}...${savedKey.slice(-4)}` : null;
 
   return (
     <section className="bg-card rounded-lg border p-4 mb-4">
       <div className="flex items-center gap-2 mb-3">
-        <Brain className="w-4 h-4 text-muted-foreground" />
-        <h2 className="font-mono text-xs font-semibold tracking-wider">USO DE IA</h2>
+        <Key className="w-4 h-4 text-muted-foreground" />
+        <h2 className="font-mono text-xs font-semibold tracking-wider">CHAVE DE IA</h2>
       </div>
-      {total === 0 ? (
-        <p className="font-mono text-[10px] text-muted-foreground/60 py-2">
-          Nenhuma chamada de IA registrada nesta sessão.
-        </p>
+
+      <p className="font-mono text-[10px] text-muted-foreground/70 mb-3 leading-relaxed">
+        Configure sua API key para funcionalidades de IA (classificação de tarefas, nudges, análises).
+        A chave é armazenada de forma segura no seu perfil.
+      </p>
+
+      {savedKey && !showKey ? (
+        <div className="space-y-2">
+          <div className="flex items-center justify-between bg-secondary/50 rounded-md px-3 py-2">
+            <span className="font-mono text-xs text-foreground/80">{maskedKey}</span>
+            <div className="flex items-center gap-1">
+              <button onClick={() => setShowKey(true)} className="p-1 hover:bg-secondary rounded transition-colors">
+                <Eye className="w-3.5 h-3.5 text-muted-foreground" />
+              </button>
+            </div>
+          </div>
+          <div className="flex gap-2">
+            <button onClick={() => setShowKey(true)} className="font-mono text-[10px] text-primary hover:text-primary/80 transition-colors">
+              Editar
+            </button>
+            <button onClick={handleRemove} className="font-mono text-[10px] text-destructive hover:text-destructive/80 transition-colors">
+              Remover
+            </button>
+          </div>
+        </div>
       ) : (
-        <div className="space-y-3">
-          <div className="flex items-center justify-between py-1">
-            <span className="font-mono text-xs text-muted-foreground">Total de chamadas</span>
-            <span className="font-mono text-xs font-bold">{total}</span>
+        <div className="space-y-2">
+          <div className="relative">
+            <input
+              type={showKey ? "text" : "password"}
+              value={apiKey}
+              onChange={(e) => setApiKey(e.target.value)}
+              placeholder="sk-... ou AIza..."
+              className="w-full bg-secondary/50 border border-border rounded-md px-3 py-2 font-mono text-xs text-foreground placeholder:text-muted-foreground/40 focus:outline-none focus:ring-1 focus:ring-primary"
+              maxLength={256}
+            />
+            <button
+              onClick={() => setShowKey(!showKey)}
+              className="absolute right-2 top-1/2 -translate-y-1/2 p-1 hover:bg-secondary rounded transition-colors"
+            >
+              {showKey ? <EyeOff className="w-3.5 h-3.5 text-muted-foreground" /> : <Eye className="w-3.5 h-3.5 text-muted-foreground" />}
+            </button>
           </div>
-
-          {/* Gemini Direct bar */}
-          <div>
-            <div className="flex items-center justify-between mb-1">
-              <span className="font-mono text-[10px] text-muted-foreground">Gemini (Google OAuth)</span>
-              <span className="font-mono text-[10px] font-medium">{geminiPct}% ({stats.gemini_direct})</span>
-            </div>
-            <div className="w-full h-2 bg-secondary rounded-full overflow-hidden">
-              <div className="h-full bg-accent rounded-full transition-all" style={{ width: `${geminiPct}%` }} />
-            </div>
+          <div className="flex gap-2">
+            <button
+              onClick={handleSave}
+              disabled={saving || !apiKey.trim()}
+              className="font-mono text-[10px] bg-primary text-primary-foreground px-3 py-1 rounded-md hover:bg-primary/90 transition-colors disabled:opacity-50"
+            >
+              {saving ? "Salvando..." : "Salvar"}
+            </button>
+            {savedKey && (
+              <button
+                onClick={() => { setShowKey(false); setApiKey(savedKey); }}
+                className="font-mono text-[10px] text-muted-foreground hover:text-foreground transition-colors"
+              >
+                Cancelar
+              </button>
+            )}
           </div>
-
-          {/* Lovable AI bar */}
-          <div>
-            <div className="flex items-center justify-between mb-1">
-              <span className="font-mono text-[10px] text-muted-foreground">Lovable AI Gateway</span>
-              <span className="font-mono text-[10px] font-medium">{lovablePct}% ({stats.lovable_ai})</span>
-            </div>
-            <div className="w-full h-2 bg-secondary rounded-full overflow-hidden">
-              <div className="h-full bg-primary rounded-full transition-all" style={{ width: `${lovablePct}%` }} />
-            </div>
-          </div>
-
-          <p className="font-mono text-[9px] text-muted-foreground/50 pt-1">
-            Gemini Direct = cota gratuita via Google OAuth • Lovable AI = gateway pago
-          </p>
-          <button
-            onClick={() => { resetAIStats(); window.location.reload(); }}
-            className="font-mono text-[10px] text-muted-foreground hover:text-foreground transition-colors"
-          >
-            Resetar contadores
-          </button>
         </div>
       )}
     </section>
@@ -67,9 +129,8 @@ function AIProviderStats() {
 
 export default function Configuracoes() {
   const navigate = useNavigate();
-  const { profile, updateProfile } = useProfileStore();
+  const { profile } = useProfileStore();
   const [confirmReset, setConfirmReset] = useState(false);
-  const [confirmDelete, setConfirmDelete] = useState(false);
   const [resumos, setResumos] = useState<any[]>([]);
   const [logCount, setLogCount] = useState<number | null>(null);
 
@@ -77,8 +138,6 @@ export default function Configuracoes() {
     (async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
-
-      // Fetch consolidated summaries
       const { data: configs } = await supabase
         .from("configuracoes" as any)
         .select("*")
@@ -87,8 +146,6 @@ export default function Configuracoes() {
         .order("created_at", { ascending: false })
         .limit(10);
       if (configs) setResumos(configs as any[]);
-
-      // Fetch current log count
       const { count } = await supabase
         .from("activity_log" as any)
         .select("*", { count: "exact", head: true })
@@ -99,17 +156,10 @@ export default function Configuracoes() {
 
   const handleResetAccount = async () => {
     if (!confirmReset) { setConfirmReset(true); return; }
-
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return;
-
     const { error } = await supabase.rpc("reset_user_data" as any, { p_user_id: user.id });
-    if (error) {
-      console.error("Reset failed:", error);
-      return;
-    }
-
-    // Clear local caches and reload fresh
+    if (error) { console.error("Reset failed:", error); return; }
     localStorage.clear();
     setConfirmReset(false);
     window.location.href = "/";
@@ -139,7 +189,6 @@ export default function Configuracoes() {
   return (
     <div className="min-h-screen bg-background">
       <div className="max-w-lg mx-auto px-4 py-4 pb-24">
-        {/* Header */}
         <header className="flex items-center gap-2 mb-6">
           <button onClick={() => navigate("/")} className="p-1.5 rounded-md hover:bg-secondary transition-colors">
             <ArrowLeft className="w-4 h-4" />
@@ -147,7 +196,7 @@ export default function Configuracoes() {
           <h1 className="font-mono text-sm font-bold tracking-wider">CONFIGURACOES</h1>
         </header>
 
-        {/* Profile info */}
+        {/* Profile */}
         <section className="bg-card rounded-lg border p-4 mb-4">
           <div className="flex items-center gap-2 mb-3">
             <User className="w-4 h-4 text-muted-foreground" />
@@ -161,7 +210,7 @@ export default function Configuracoes() {
           {infoRow("Trabalho", profile?.trabalho_tipo)}
         </section>
 
-        {/* Onboarding status */}
+        {/* Onboarding */}
         <section className="bg-card rounded-lg border p-4 mb-4">
           <div className="flex items-center gap-2 mb-3">
             <Shield className="w-4 h-4 text-muted-foreground" />
@@ -222,8 +271,8 @@ export default function Configuracoes() {
           )}
         </section>
 
-        {/* AI Provider Stats */}
-        <AIProviderStats />
+        {/* AI API Key */}
+        <AIKeySettings />
 
         {/* Documentation */}
         <section className="mb-4">
@@ -264,7 +313,7 @@ export default function Configuracoes() {
                 {confirmReset ? "Confirmar reset? Clique novamente" : "Resetar conta"}
               </p>
               <p className="font-mono text-[10px] text-muted-foreground">
-                Reinicia onboarding e limpa dados do perfil
+                Apaga TODOS os dados e reinicia do zero
               </p>
             </div>
           </button>
@@ -281,7 +330,6 @@ export default function Configuracoes() {
           </button>
         </section>
 
-        {/* Version */}
         <p className="text-center font-mono text-[9px] text-muted-foreground/30 mt-8">AntiBipolaridade v2.0</p>
       </div>
     </div>
