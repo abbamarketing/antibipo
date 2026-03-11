@@ -58,7 +58,7 @@ export default function Configuracoes() {
     if ("Notification" in window) {
       const perm = await Notification.requestPermission();
       if (perm === "granted") {
-        new Notification("FLOW", { body: "Notificacoes ativadas com sucesso.", icon: "/pwa-192.png" });
+        new Notification("AntiBipolaridade", { body: "Notificacoes ativadas com sucesso.", icon: "/pwa-192.png" });
       }
     }
   };
