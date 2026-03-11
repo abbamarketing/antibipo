@@ -213,9 +213,7 @@ const Index = () => {
             {!showMondayReview && !showFridayReport && (
               <>
                 {/* Unified Daily Tasks - always visible */}
-                <div className="mb-6">
-                  <DailyTasksView energy={current_energy!} lastMoodValue={lastMoodValue} />
-                </div>
+                  <UnifiedKanban energy={current_energy!} lastMoodValue={lastMoodValue} />
 
                 {/* Dashboard */}
                 <div className="mb-6">
