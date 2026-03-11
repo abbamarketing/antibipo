@@ -1,15 +1,17 @@
-import { Modulo } from "@/lib/store";
-import { Briefcase, Home, Heart } from "lucide-react";
+import { Briefcase, Home, Heart, Target } from "lucide-react";
+
+export type NavModulo = "trabalho" | "casa" | "saude" | "metas";
 
 interface ModuleNavProps {
-  current: Modulo;
-  onSelect: (m: Modulo) => void;
+  current: NavModulo;
+  onSelect: (m: NavModulo) => void;
 }
 
-const modules = [
-  { key: "trabalho" as Modulo, label: "TRABALHO", icon: Briefcase },
-  { key: "casa" as Modulo, label: "CASA", icon: Home },
-  { key: "saude" as Modulo, label: "SAÚDE", icon: Heart },
+const modules: { key: NavModulo; label: string; icon: typeof Briefcase }[] = [
+  { key: "trabalho", label: "TRABALHO", icon: Briefcase },
+  { key: "casa", label: "CASA", icon: Home },
+  { key: "saude", label: "SAÚDE", icon: Heart },
+  { key: "metas", label: "METAS", icon: Target },
 ];
 
 export function ModuleNav({ current, onSelect }: ModuleNavProps) {
