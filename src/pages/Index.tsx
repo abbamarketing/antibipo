@@ -131,13 +131,10 @@ const Index = () => {
       <div className="max-w-lg mx-auto px-4 py-4 pb-24">
         {/* Header */}
         <header className="mb-5">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="font-mono text-sm font-bold tracking-tight">AB</h1>
-              <p className="text-[10px] text-muted-foreground font-mono tracking-widest mt-0.5">
-                {brasiliaDateString()}
-              </p>
-            </div>
+          <div className="flex items-center justify-between mb-2">
+            <p className="text-[10px] text-muted-foreground font-mono tracking-widest">
+              {brasiliaDateString()}
+            </p>
             <div className="flex items-center gap-1">
               <button onClick={() => navigate("/financeiro")} className="p-2 rounded-md text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors">
                 <Wallet className="w-4 h-4" />
@@ -153,6 +150,7 @@ const Index = () => {
               </button>
             </div>
           </div>
+          <DailyNudge />
         </header>
 
         {/* Weather */}
