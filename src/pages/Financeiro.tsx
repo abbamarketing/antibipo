@@ -49,7 +49,7 @@ export default function Financeiro() {
   ];
 
   return (
-    <ModuleOnboardingGuard modulo="financeiro">
+    <ModuleOnboardingGuard modulo="financeiro" fullPage>
     <div className="min-h-screen bg-background">
       <div className="max-w-lg mx-auto px-4 py-4 pb-24">
         {/* Header */}
