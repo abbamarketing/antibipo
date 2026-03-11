@@ -51,9 +51,9 @@ export function DailyTasksView({ energy, lastMoodValue }: DailyTasksViewProps) {
         });
       });
 
-    // Casa tasks due today
+    // Casa tasks due today — limited to avoid accumulation
     const today = new Date();
-    const dayOfWeek = today.getDay();
+    const casaDue: UnifiedTask[] = [];
     casa.tarefas
       .filter((t) => t.ativo !== false)
       .forEach((t) => {
@@ -63,7 +63,7 @@ export function DailyTasksView({ energy, lastMoodValue }: DailyTasksViewProps) {
         const freqDays = t.frequencia === "diario" ? 1 : t.frequencia === "semanal" ? 7 : t.frequencia === "quinzenal" ? 15 : 30;
         const isDue = daysSince >= freqDays;
         if (isDue) {
-          items.push({
+          casaDue.push({
             id: `casa_${t.id}`,
             titulo: `${t.tarefa} (${t.comodo})`,
             modulo: "casa",
@@ -74,6 +74,10 @@ export function DailyTasksView({ energy, lastMoodValue }: DailyTasksViewProps) {
           });
         }
       });
+    // Sort casa by urgency and limit to max 3 per day to avoid overload
+    casaDue.sort((a, b) => b.urgencia - a.urgencia);
+    const maxCasa = energy === "foco_total" ? 5 : energy === "modo_leve" ? 3 : 2;
+    items.push(...casaDue.slice(0, maxCasa));
 
     // Trackers due today (recorrente + checklist)
     trackers
