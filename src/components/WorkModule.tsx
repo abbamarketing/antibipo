@@ -343,7 +343,7 @@ export function WorkModule({ energy, tasks, allTasks, onComplete, onDelegate, on
                   ) : (
                     colTasks.map((task) => (
                       <div key={task.id} className="space-y-1">
-                        <TaskCard task={task} onComplete={onComplete} onDelegate={onDelegate} onPush={onPush} />
+                        <TaskCard task={task} clienteName={task.cliente_id ? clienteMap[task.cliente_id] : undefined} subtasks={subtaskMap[task.id]} onComplete={onComplete} onDelegate={onDelegate} onPush={onPush} />
                         {!pomodoroActive && (
                           <button
                             onClick={() => startPomodoro(task.id)}
