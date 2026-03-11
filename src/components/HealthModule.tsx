@@ -7,7 +7,7 @@ import { MealSection } from "@/components/bem-estar/MealSection";
 import { ExerciseSection } from "@/components/bem-estar/ExerciseSection";
 import { WeeklyDashboard } from "@/components/bem-estar/WeeklyDashboard";
 import { WeightTracker } from "@/components/bem-estar/WeightTracker";
-import { BrushingTracker } from "@/components/bem-estar/BrushingTracker";
+import { CustomTrackers } from "@/components/CustomTrackers";
 
 interface HealthModuleProps {
   energy: EnergyState;
