@@ -160,6 +160,9 @@ const Index = () => {
           <WeatherWidget />
         </div>
 
+        {/* Today's events */}
+        <TodayEvents />
+
         {/* Med Alert */}
         {pending.length > 0 && (
           <div className="mb-4">
