@@ -29,6 +29,10 @@ export type Profile = {
   onboarding_trabalho: boolean | null;
   onboarding_casa: boolean | null;
   onboarding_financeiro: boolean | null;
+  onboarding_saude_at: string | null;
+  onboarding_trabalho_at: string | null;
+  onboarding_casa_at: string | null;
+  onboarding_financeiro_at: string | null;
 };
 
 export type RegistroPeso = {
@@ -102,10 +106,24 @@ export function useProfileStore() {
     },
   });
 
+  const THIRTY_DAYS_MS = 30 * 24 * 60 * 60 * 1000;
+  const ADAPTIVE_MODULES: string[] = ["trabalho", "saude"];
+
   const isOnboardingDone = useCallback(
     (modulo: "saude" | "trabalho" | "casa" | "financeiro") => {
       if (!profile) return false;
-      return !!profile[`onboarding_${modulo}` as keyof Profile];
+      const done = !!profile[`onboarding_${modulo}` as keyof Profile];
+      if (!done) return false;
+
+      // For adaptive modules, check if 30 days have passed
+      if (ADAPTIVE_MODULES.includes(modulo)) {
+        const lastAt = profile[`onboarding_${modulo}_at` as keyof Profile] as string | null;
+        if (lastAt) {
+          const elapsed = Date.now() - new Date(lastAt).getTime();
+          if (elapsed > THIRTY_DAYS_MS) return false; // Time for refresh
+        }
+      }
+      return true;
     },
     [profile]
   );

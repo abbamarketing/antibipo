@@ -7,6 +7,7 @@ type ModuloOnboarding = "saude" | "trabalho" | "casa" | "financeiro";
 interface OnboardingWizardProps {
   modulo: ModuloOnboarding;
   onComplete: () => void;
+  isRefresh?: boolean;
 }
 
 type Question = {
@@ -160,7 +161,7 @@ const moduloConfig: Record<ModuloOnboarding, { icon: typeof Heart; title: string
   },
 };
 
-export function OnboardingWizard({ modulo, onComplete }: OnboardingWizardProps) {
+export function OnboardingWizard({ modulo, onComplete, isRefresh }: OnboardingWizardProps) {
   const { updateProfile } = useProfileStore();
   const config = moduloConfig[modulo];
   const [step, setStep] = useState(0);
@@ -190,13 +191,17 @@ export function OnboardingWizard({ modulo, onComplete }: OnboardingWizardProps) 
     const profileUpdates: Partial<Profile> = {
       ...answers,
       [`onboarding_${modulo}`]: true,
+      [`onboarding_${modulo}_at`]: new Date().toISOString(),
     } as any;
     updateProfile(profileUpdates);
     onComplete();
   };
 
   const handleSkipAll = () => {
-    updateProfile({ [`onboarding_${modulo}`]: true } as any);
+    updateProfile({
+      [`onboarding_${modulo}`]: true,
+      [`onboarding_${modulo}_at`]: new Date().toISOString(),
+    } as any);
     onComplete();
   };
 
@@ -207,8 +212,10 @@ export function OnboardingWizard({ modulo, onComplete }: OnboardingWizardProps) 
         <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto">
           <Icon className="w-6 h-6 text-primary" />
         </div>
-        <h2 className="font-mono text-lg font-bold">{config.title}</h2>
-        <p className="text-sm text-muted-foreground font-body">{config.subtitle}</p>
+        <h2 className="font-mono text-lg font-bold">{isRefresh ? "Check-in mensal" : config.title}</h2>
+        <p className="text-sm text-muted-foreground font-body">
+          {isRefresh ? "Faz 30 dias. Algo mudou? Atualize rapidamente." : config.subtitle}
+        </p>
       </div>
 
       {/* Progress */}

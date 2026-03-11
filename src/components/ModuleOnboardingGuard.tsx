@@ -10,16 +10,20 @@ interface ModuleOnboardingGuardProps {
 }
 
 export function ModuleOnboardingGuard({ modulo, children }: ModuleOnboardingGuardProps) {
-  const { isOnboardingDone, profileLoading } = useProfileStore();
+  const { isOnboardingDone, profileLoading, profile } = useProfileStore();
   const [justCompleted, setJustCompleted] = useState(false);
 
   if (profileLoading) return null;
 
-  if (!isOnboardingDone(modulo) && !justCompleted) {
+  const wasDoneBefore = !!profile?.[`onboarding_${modulo}` as keyof typeof profile];
+  const needsOnboarding = !isOnboardingDone(modulo) && !justCompleted;
+
+  if (needsOnboarding) {
     return (
       <OnboardingWizard
         modulo={modulo}
         onComplete={() => setJustCompleted(true)}
+        isRefresh={wasDoneBefore}
       />
     );
   }
