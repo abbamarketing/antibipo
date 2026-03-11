@@ -1,9 +1,11 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useCasaStore } from "@/lib/casa-store";
 import { EnergyState } from "@/lib/store";
 import { logActivity } from "@/lib/activity-log";
 import { brasiliaTimeString } from "@/lib/brasilia";
 import { WeeklyTaskView } from "@/components/casa/WeeklyTaskView";
+import { seedTarefasCasa } from "@/lib/casa-seed";
+import { useProfileStore } from "@/lib/profile-store";
 import { CustomTrackers } from "@/components/CustomTrackers";
 import {
   Home,
