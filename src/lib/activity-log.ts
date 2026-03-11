@@ -25,7 +25,9 @@ export type ActivityAction =
   | "exercicio_registrado"
   | "refeicao_registrada"
   | "tracker_concluido"
-  | "tracker_criado";
+  | "tracker_criado"
+  | "mood_checkin"
+  | "analise_dia";
 
 const CONSOLIDATION_THRESHOLD = 100;
 

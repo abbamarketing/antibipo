@@ -1,0 +1,1 @@
+CREATE UNIQUE INDEX IF NOT EXISTS log_consolidado_unique_period ON public.log_consolidado (tipo, periodo_inicio, periodo_fim);

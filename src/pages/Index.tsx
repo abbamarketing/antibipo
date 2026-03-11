@@ -19,6 +19,9 @@ import { MondayGoalsReview } from "@/components/MondayGoalsReview";
 import { FridayWeeklyReport } from "@/components/FridayWeeklyReport";
 import { TodayEvents } from "@/components/TodayEvents";
 import { DailyNudge } from "@/components/DailyNudge";
+import { DailyTasksView } from "@/components/DailyTasksView";
+import { MoodCheckIn } from "@/components/MoodCheckIn";
+import { ModuleDashboard } from "@/components/ModuleDashboard";
 import { Plus, Zap, Sun, Battery, Wallet, Settings, CalendarDays, Activity } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
@@ -35,11 +38,16 @@ const Index = () => {
   const [activeNav, setActiveNav] = useState<NavModulo>("trabalho");
   const [showMondayReview, setShowMondayReview] = useState(false);
   const [showFridayReport, setShowFridayReport] = useState(false);
+  const [lastMoodValue, setLastMoodValue] = useState<number | undefined>(todayHumor?.valor);
 
   useEffect(() => {
     const cleanup = startTimeThemeWatcher();
     return () => { cleanup(); };
   }, []);
+
+  useEffect(() => {
+    if (todayHumor?.valor !== undefined) setLastMoodValue(todayHumor.valor);
+  }, [todayHumor]);
 
   const pending = pendingMeds();
   const { current_energy, current_modulo } = state;
@@ -82,6 +90,7 @@ const Index = () => {
 
   const handleMood = (valor: number, notas?: string) => {
     registrarHumor(valor, notas);
+    setLastMoodValue(valor);
     logActivity("humor_registrado", { valor, notas, hora: brasiliaTimeString() });
   };
 
@@ -158,6 +167,9 @@ const Index = () => {
           <WeatherWidget />
         </div>
 
+        {/* Mood Check-In (every 3h) */}
+        <MoodCheckIn onMoodUpdated={(val) => setLastMoodValue(val)} />
+
         {/* Today's events */}
         <TodayEvents />
 
@@ -198,26 +210,43 @@ const Index = () => {
 
             {!showMondayReview && !showFridayReport && (
               <>
+                {/* Unified Daily Tasks - always visible */}
+                <div className="mb-6">
+                  <DailyTasksView energy={current_energy!} lastMoodValue={lastMoodValue} />
+                </div>
+
+                {/* Dashboard */}
+                <div className="mb-6">
+                  <ModuleDashboard />
+                </div>
+
                 <div className="mb-6">
                   <ModuleNav current={activeNav} onSelect={handleModulo} />
                 </div>
 
                 {activeNav === "trabalho" && (
                   <ModuleOnboardingGuard modulo="trabalho">
-                    <WorkModule energy={current_energy} tasks={getFilteredTasks("trabalho", current_energy)} allTasks={state.tasks} onComplete={handleCompleteTask} onDelegate={handleDelegate} onPush={handlePush} />
+                    <WorkModule energy={current_energy!} tasks={getFilteredTasks("trabalho", current_energy!)} allTasks={state.tasks} onComplete={handleCompleteTask} onDelegate={handleDelegate} onPush={handlePush} />
                   </ModuleOnboardingGuard>
                 )}
                 {activeNav === "casa" && (
                   <ModuleOnboardingGuard modulo="casa">
-                    <HomeModule energy={current_energy} />
+                    <HomeModule energy={current_energy!} />
                   </ModuleOnboardingGuard>
                 )}
                 {activeNav === "saude" && (
                   <ModuleOnboardingGuard modulo="saude">
-                    <HealthModule energy={current_energy} medicamentos={state.medicamentos} registros_humor={state.registros_humor} registros_sono={state.registros_sono} onTakeMed={handleTakeMed} isMedTaken={isMedTakenToday} onMood={handleMood} onSleep={handleSleep} onAddMed={handleAddMed} todayHumor={todayHumor} />
+                    <HealthModule energy={current_energy!} medicamentos={state.medicamentos} registros_humor={state.registros_humor} registros_sono={state.registros_sono} onTakeMed={handleTakeMed} isMedTaken={isMedTakenToday} onMood={handleMood} onSleep={handleSleep} onAddMed={handleAddMed} todayHumor={todayHumor} />
                   </ModuleOnboardingGuard>
                 )}
                 {activeNav === "metas" && <MetasModule />}
+
+                {/* Module-specific dashboard */}
+                {activeNav !== "metas" && (
+                  <div className="mt-6">
+                    <ModuleDashboard modulo={activeNav} />
+                  </div>
+                )}
               </>
             )}
           </>
