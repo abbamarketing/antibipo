@@ -289,7 +289,7 @@ export function useFlowStore() {
   const getFilteredTasks = useCallback(
     (modulo: Modulo, energy: EnergyState) => {
       const active = tasks.filter(
-        (t) => t.modulo === modulo && t.status !== "feito" && t.status !== "descartado"
+        (t: any) => t.modulo === modulo && t.status !== "feito" && t.status !== "descartado" && !t.parent_task_id
       );
       const matching = active.filter(
         (t) => t.estado_ideal === "qualquer" || t.estado_ideal === energy
