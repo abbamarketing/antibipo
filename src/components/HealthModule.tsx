@@ -64,8 +64,9 @@ export function HealthModule({
 
   const showMood = energy !== "basico";
   const showSleep = energy !== "basico";
-  const showExercise = true; // always show
-  const showMeals = true; // always show
+  const showWeight = true; // always show
+  const showExercise = true;
+  const showMeals = true;
   const showDashboard = energy === "foco_total";
 
   return (
