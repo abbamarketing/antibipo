@@ -213,46 +213,63 @@ const Index = () => {
               </button>
             </div>
 
-            {/* Module Nav */}
-            <div className="mb-6">
-              <ModuleNav current={current_modulo} onSelect={handleModulo} />
-            </div>
-
-            {/* Module Content */}
-            {current_modulo === "trabalho" && (
-              <ModuleOnboardingGuard modulo="trabalho">
-                <WorkModule
-                  energy={current_energy}
-                  tasks={getFilteredTasks("trabalho", current_energy)}
-                  allTasks={state.tasks}
-                  onComplete={handleCompleteTask}
-                  onDelegate={handleDelegate}
-                  onPush={handlePush}
-                />
-              </ModuleOnboardingGuard>
+            {/* Monday Goals Review */}
+            {showMondayReview && (
+              <MondayGoalsReview onDismiss={() => setShowMondayReview(false)} />
             )}
 
-            {current_modulo === "casa" && (
-              <ModuleOnboardingGuard modulo="casa">
-                <HomeModule energy={current_energy} />
-              </ModuleOnboardingGuard>
+            {/* Friday Weekly Report */}
+            {showFridayReport && (
+              <FridayWeeklyReport onDismiss={() => setShowFridayReport(false)} />
             )}
 
-            {current_modulo === "saude" && (
-              <ModuleOnboardingGuard modulo="saude">
-                <HealthModule
-                  energy={current_energy}
-                  medicamentos={state.medicamentos}
-                  registros_humor={state.registros_humor}
-                  registros_sono={state.registros_sono}
-                  onTakeMed={handleTakeMed}
-                  isMedTaken={isMedTakenToday}
-                  onMood={handleMood}
-                  onSleep={handleSleep}
-                  onAddMed={handleAddMed}
-                  todayHumor={todayHumor}
-                />
-              </ModuleOnboardingGuard>
+            {/* Normal content when no review/report showing */}
+            {!showMondayReview && !showFridayReport && (
+              <>
+                {/* Module Nav */}
+                <div className="mb-6">
+                  <ModuleNav current={activeNav} onSelect={handleModulo} />
+                </div>
+
+                {/* Module Content */}
+                {activeNav === "trabalho" && (
+                  <ModuleOnboardingGuard modulo="trabalho">
+                    <WorkModule
+                      energy={current_energy}
+                      tasks={getFilteredTasks("trabalho", current_energy)}
+                      allTasks={state.tasks}
+                      onComplete={handleCompleteTask}
+                      onDelegate={handleDelegate}
+                      onPush={handlePush}
+                    />
+                  </ModuleOnboardingGuard>
+                )}
+
+                {activeNav === "casa" && (
+                  <ModuleOnboardingGuard modulo="casa">
+                    <HomeModule energy={current_energy} />
+                  </ModuleOnboardingGuard>
+                )}
+
+                {activeNav === "saude" && (
+                  <ModuleOnboardingGuard modulo="saude">
+                    <HealthModule
+                      energy={current_energy}
+                      medicamentos={state.medicamentos}
+                      registros_humor={state.registros_humor}
+                      registros_sono={state.registros_sono}
+                      onTakeMed={handleTakeMed}
+                      isMedTaken={isMedTakenToday}
+                      onMood={handleMood}
+                      onSleep={handleSleep}
+                      onAddMed={handleAddMed}
+                      todayHumor={todayHumor}
+                    />
+                  </ModuleOnboardingGuard>
+                )}
+
+                {activeNav === "metas" && <MetasModule />}
+              </>
             )}
           </>
         )}
