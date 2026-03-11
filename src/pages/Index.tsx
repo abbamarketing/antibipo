@@ -13,6 +13,7 @@ import { HealthModule } from "@/components/HealthModule";
 import { QuickCapture } from "@/components/QuickCapture";
 import { WeatherWidget } from "@/components/WeatherWidget";
 import { NotificationManager } from "@/components/NotificationManager";
+import { ModuleOnboardingGuard } from "@/components/ModuleOnboardingGuard";
 import { Plus, Activity, Zap, Sun, Battery, Wallet, LogOut } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
