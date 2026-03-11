@@ -56,7 +56,6 @@ const Index = () => {
   const handleSetEnergy = (energy: typeof current_energy) => {
     if (!energy) return;
     setEnergy(energy);
-    logActivity("energia_selecionada", { estado: energy, hora: brasiliaTimeString() });
   };
 
   const handleCompleteTask = (id: string) => {
@@ -100,7 +99,6 @@ const Index = () => {
 
   const handleModulo = (m: typeof current_modulo) => {
     setModulo(m);
-    logActivity("modulo_alterado", { modulo: m, hora: brasiliaTimeString() });
   };
 
   const handleAddMed = (med: Parameters<typeof addMedicamento>[0]) => {
