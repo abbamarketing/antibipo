@@ -27,9 +27,21 @@ export function WeatherWidget() {
   const { data: forecast, isLoading } = useQuery<DayForecast[]>({
     queryKey: ["weather"],
     queryFn: async () => {
-      // Open-Meteo free API — São Paulo coordinates
+      // Montes Claros, MG coordinates (fallback)
+      let lat = -16.735;
+      let lon = -43.8617;
+
+      // Try geolocation
+      try {
+        const pos = await new Promise<GeolocationPosition>((resolve, reject) =>
+          navigator.geolocation.getCurrentPosition(resolve, reject, { timeout: 5000 })
+        );
+        lat = pos.coords.latitude;
+        lon = pos.coords.longitude;
+      } catch {}
+
       const res = await fetch(
-        "https://api.open-meteo.com/v1/forecast?latitude=-23.55&longitude=-46.63&daily=weather_code,temperature_2m_max,temperature_2m_min&timezone=America/Sao_Paulo&forecast_days=7"
+        `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&daily=weather_code,temperature_2m_max,temperature_2m_min&timezone=America/Sao_Paulo&forecast_days=7`
       );
       const data = await res.json();
       return data.daily.time.map((date: string, i: number) => ({
