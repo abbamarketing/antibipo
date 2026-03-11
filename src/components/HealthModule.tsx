@@ -1,10 +1,12 @@
 import { useState } from "react";
 import { EnergyState, Medicamento, RegistroHumor, RegistroSono, today } from "@/lib/store";
 import { useBemEstarStore } from "@/lib/bem-estar-store";
+import { useProfileStore } from "@/lib/profile-store";
 import { Pill, Moon, Sun, SmilePlus, Check, Plus, Frown, Meh, Smile, Laugh, Angry } from "lucide-react";
 import { MealSection } from "@/components/bem-estar/MealSection";
 import { ExerciseSection } from "@/components/bem-estar/ExerciseSection";
 import { WeeklyDashboard } from "@/components/bem-estar/WeeklyDashboard";
+import { WeightTracker } from "@/components/bem-estar/WeightTracker";
 
 interface HealthModuleProps {
   energy: EnergyState;
@@ -44,6 +46,7 @@ export function HealthModule({
   const [medHorario, setMedHorario] = useState("08:00");
 
   const bemEstar = useBemEstarStore();
+  const { profile, idade, pesoAtual } = useProfileStore();
   const todaySono = registros_sono.find((r) => r.data === today());
 
   const handleAddMed = () => {
@@ -61,24 +64,33 @@ export function HealthModule({
 
   const showMood = energy !== "basico";
   const showSleep = energy !== "basico";
-  const showExercise = true; // always show
-  const showMeals = true; // always show
+  const showWeight = true; // always show
+  const showExercise = true;
+  const showMeals = true;
   const showDashboard = energy === "foco_total";
 
   return (
     <div className="space-y-6 animate-fade-in">
       <div>
-        <h2 className="font-mono text-lg font-bold tracking-tight">Saúde & Bem-Estar</h2>
+        <h2 className="font-mono text-lg font-bold tracking-tight">
+          {profile?.nome ? `${profile.nome}, sua saúde` : "Saúde & Bem-Estar"}
+        </h2>
         <p className="text-sm text-muted-foreground font-body mt-0.5">
           {energy === "basico"
             ? "Medicação e registros rápidos."
             : energy === "modo_leve"
             ? "Medicação, humor, alimentação e exercício."
-            : "Visão completa: medicação, humor, sono, alimentação, exercício e dashboard."}
+            : "Visão completa: medicação, humor, sono, peso, alimentação, exercício e dashboard."}
         </p>
+        {idade && (
+          <p className="text-[10px] font-mono text-muted-foreground mt-1">
+            {idade} anos
+          </p>
+        )}
       </div>
 
-      {/* Medicação */}
+      {/* Peso */}
+      {showWeight && <WeightTracker />}
       <div className="space-y-2">
         <div className="flex items-center justify-between">
           <h3 className="font-mono text-xs tracking-widest text-muted-foreground uppercase flex items-center gap-2">

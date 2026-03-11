@@ -8,6 +8,7 @@ import { TotaisTab } from "@/components/financeiro/TotaisTab";
 import { TagsTab } from "@/components/financeiro/TagsTab";
 import { HorizonteTab } from "@/components/financeiro/HorizonteTab";
 import { LancamentoModal } from "@/components/financeiro/LancamentoModal";
+import { ModuleOnboardingGuard } from "@/components/ModuleOnboardingGuard";
 
 type FinTab = "saldos" | "totais" | "tags" | "horizonte";
 
@@ -39,6 +40,7 @@ export default function Financeiro() {
   ];
 
   return (
+    <ModuleOnboardingGuard modulo="financeiro">
     <div className="min-h-screen bg-background">
       <div className="max-w-lg mx-auto px-4 py-4 pb-24">
         {/* Header */}
@@ -162,5 +164,6 @@ export default function Financeiro() {
         />
       )}
     </div>
+    </ModuleOnboardingGuard>
   );
 }
