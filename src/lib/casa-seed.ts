@@ -106,5 +106,9 @@ export async function seedTarefasCasa(profile: {
     console.error("Failed to seed casa tasks:", error);
   } else {
     console.log(`Seeded ${tarefas.length} casa tasks`);
+    // Invalidate cache so UI refreshes
+    if (queryClient) {
+      queryClient.invalidateQueries({ queryKey: ["tarefas_casa"] });
+    }
   }
 }
