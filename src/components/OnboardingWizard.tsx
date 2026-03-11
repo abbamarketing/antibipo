@@ -190,6 +190,7 @@ export function OnboardingWizard({ modulo, onComplete }: OnboardingWizardProps) 
     const profileUpdates: Partial<Profile> = {
       ...answers,
       [`onboarding_${modulo}`]: true,
+      [`onboarding_${modulo}_at`]: new Date().toISOString(),
     } as any;
     updateProfile(profileUpdates);
     onComplete();
