@@ -332,6 +332,45 @@ export type Database = {
         }
         Relationships: []
       }
+      custom_trackers: {
+        Row: {
+          ativo: boolean
+          config: Json
+          created_at: string | null
+          id: string
+          modulo: string
+          secao: string
+          tipo: string
+          titulo: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          ativo?: boolean
+          config?: Json
+          created_at?: string | null
+          id?: string
+          modulo?: string
+          secao?: string
+          tipo?: string
+          titulo: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          ativo?: boolean
+          config?: Json
+          created_at?: string | null
+          id?: string
+          modulo?: string
+          secao?: string
+          tipo?: string
+          titulo?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       diario_entradas: {
         Row: {
           created_at: string
@@ -1097,6 +1136,41 @@ export type Database = {
             columns: ["parent_task_id"]
             isOneToOne: false
             referencedRelation: "tasks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tracker_registros: {
+        Row: {
+          created_at: string | null
+          dados: Json | null
+          data: string
+          id: string
+          tracker_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          dados?: Json | null
+          data?: string
+          id?: string
+          tracker_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          dados?: Json | null
+          data?: string
+          id?: string
+          tracker_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tracker_registros_tracker_id_fkey"
+            columns: ["tracker_id"]
+            isOneToOne: false
+            referencedRelation: "custom_trackers"
             referencedColumns: ["id"]
           },
         ]
