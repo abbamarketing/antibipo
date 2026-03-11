@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { X } from "lucide-react";
+import { X, Dumbbell, Footprints, Flame, PersonStanding, Waves, Bike, Pencil } from "lucide-react";
 
 interface ExerciseModalProps {
   onClose: () => void;
@@ -13,13 +13,13 @@ interface ExerciseModalProps {
 }
 
 const tipos = [
-  { key: "academia", label: "Academia", emoji: "🏋️" },
-  { key: "caminhada", label: "Caminhada", emoji: "🚶" },
-  { key: "corrida", label: "Corrida", emoji: "🏃" },
-  { key: "yoga", label: "Yoga", emoji: "🧘" },
-  { key: "natacao", label: "Natação", emoji: "🏊" },
-  { key: "bike", label: "Bike", emoji: "🚴" },
-  { key: "outro", label: "Outro", emoji: "✏️" },
+  { key: "academia", label: "Academia", icon: Dumbbell },
+  { key: "caminhada", label: "Caminhada", icon: Footprints },
+  { key: "corrida", label: "Corrida", icon: Flame },
+  { key: "yoga", label: "Yoga", icon: PersonStanding },
+  { key: "natacao", label: "Natacao", icon: Waves },
+  { key: "bike", label: "Bike", icon: Bike },
+  { key: "outro", label: "Outro", icon: Pencil },
 ];
 
 const duracoes = [15, 20, 30, 45, 60, 90];
