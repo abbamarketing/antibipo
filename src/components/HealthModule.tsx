@@ -72,17 +72,25 @@ export function HealthModule({
   return (
     <div className="space-y-6 animate-fade-in">
       <div>
-        <h2 className="font-mono text-lg font-bold tracking-tight">Saúde & Bem-Estar</h2>
+        <h2 className="font-mono text-lg font-bold tracking-tight">
+          {profile?.nome ? `${profile.nome}, sua saúde` : "Saúde & Bem-Estar"}
+        </h2>
         <p className="text-sm text-muted-foreground font-body mt-0.5">
           {energy === "basico"
             ? "Medicação e registros rápidos."
             : energy === "modo_leve"
             ? "Medicação, humor, alimentação e exercício."
-            : "Visão completa: medicação, humor, sono, alimentação, exercício e dashboard."}
+            : "Visão completa: medicação, humor, sono, peso, alimentação, exercício e dashboard."}
         </p>
+        {idade && (
+          <p className="text-[10px] font-mono text-muted-foreground mt-1">
+            {idade} anos
+          </p>
+        )}
       </div>
 
-      {/* Medicação */}
+      {/* Peso */}
+      {showWeight && <WeightTracker />}
       <div className="space-y-2">
         <div className="flex items-center justify-between">
           <h3 className="font-mono text-xs tracking-widest text-muted-foreground uppercase flex items-center gap-2">
