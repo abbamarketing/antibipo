@@ -99,7 +99,6 @@ const Index = () => {
 
   const handleModulo = (m: typeof current_modulo) => {
     setModulo(m);
-    logActivity("modulo_alterado", { modulo: m, hora: brasiliaTimeString() });
   };
 
   const handleAddMed = (med: Parameters<typeof addMedicamento>[0]) => {
