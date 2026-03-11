@@ -60,20 +60,23 @@ export function ExerciseModal({ onClose, onSave }: ExerciseModalProps) {
         <div>
           <label className="text-[10px] font-mono text-muted-foreground uppercase tracking-wider">Tipo</label>
           <div className="grid grid-cols-4 gap-2 mt-1.5">
-            {tipos.map((t) => (
-              <button
-                key={t.key}
-                onClick={() => setTipo(t.key)}
-                className={`flex flex-col items-center gap-1 p-2.5 rounded-lg text-xs transition-all ${
-                  tipo === t.key
-                    ? "bg-primary/10 ring-1 ring-primary"
-                    : "bg-secondary hover:bg-secondary/80"
-                }`}
-              >
-                <span className="text-lg">{t.emoji}</span>
-                <span className="font-mono text-[9px]">{t.label}</span>
-              </button>
-            ))}
+            {tipos.map((t) => {
+              const Icon = t.icon;
+              return (
+                <button
+                  key={t.key}
+                  onClick={() => setTipo(t.key)}
+                  className={`flex flex-col items-center gap-1 p-2.5 rounded-lg text-xs transition-all ${
+                    tipo === t.key
+                      ? "bg-primary/10 ring-1 ring-primary"
+                      : "bg-secondary hover:bg-secondary/80"
+                  }`}
+                >
+                  <Icon className="w-4 h-4" />
+                  <span className="font-mono text-[9px]">{t.label}</span>
+                </button>
+              );
+            })}
           </div>
         </div>
 
