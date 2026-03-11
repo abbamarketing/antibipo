@@ -2,3 +2,9 @@ project_id = "addiqiwhllmwlkpvxvdl"
 
 [functions.classify-task]
 verify_jwt = false
+
+[functions.consolidate-logs]
+verify_jwt = false
+
+[functions.parse-command]
+verify_jwt = false
