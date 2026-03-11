@@ -302,6 +302,45 @@ export type Database = {
         }
         Relationships: []
       }
+      diario_entradas: {
+        Row: {
+          created_at: string
+          data: string
+          fonte: string
+          humor_detectado: number | null
+          id: string
+          impacto_metas: Json | null
+          sentimento: string | null
+          tags_extraidas: string[] | null
+          texto: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          data?: string
+          fonte?: string
+          humor_detectado?: number | null
+          id?: string
+          impacto_metas?: Json | null
+          sentimento?: string | null
+          tags_extraidas?: string[] | null
+          texto: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          data?: string
+          fonte?: string
+          humor_detectado?: number | null
+          id?: string
+          impacto_metas?: Json | null
+          sentimento?: string | null
+          tags_extraidas?: string[] | null
+          texto?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       fc_consolidacao: {
         Row: {
           ano: number
