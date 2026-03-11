@@ -121,8 +121,9 @@ const Index = () => {
     logActivity("tarefa_capturada", { titulo: data.titulo, modulo: data.modulo, urgencia: data.urgencia, hora: brasiliaTimeString() });
   };
 
-  const handleModulo = (m: typeof current_modulo) => {
-    setModulo(m);
+  const handleModulo = (m: NavModulo) => {
+    setActiveNav(m);
+    if (m !== "metas") setModulo(m as typeof current_modulo);
   };
 
   const handleAddMed = (med: Parameters<typeof addMedicamento>[0]) => {
