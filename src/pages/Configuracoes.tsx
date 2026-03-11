@@ -183,6 +183,9 @@ export default function Configuracoes() {
           )}
         </section>
 
+        {/* AI Provider Stats */}
+        <AIProviderStats />
+
         {/* Documentation */}
         <section className="mb-4">
           <button
