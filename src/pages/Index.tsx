@@ -37,8 +37,7 @@ const Index = () => {
 
   useEffect(() => {
     const cleanup = startTimeThemeWatcher();
-    const clockInterval = setInterval(() => setClock(brasiliaTimeString()), 30000);
-    return () => { cleanup(); clearInterval(clockInterval); };
+    return () => { cleanup(); };
   }, []);
 
   const pending = pendingMeds();
