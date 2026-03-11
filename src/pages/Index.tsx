@@ -41,6 +41,9 @@ const Index = () => {
   const navigate = useNavigate();
   const [captureOpen, setCaptureOpen] = useState(false);
   const [clock, setClock] = useState(brasiliaTimeString());
+  const [activeNav, setActiveNav] = useState<NavModulo>("trabalho");
+  const [showMondayReview, setShowMondayReview] = useState(false);
+  const [showFridayReport, setShowFridayReport] = useState(false);
 
   useEffect(() => {
     const cleanup = startTimeThemeWatcher();
