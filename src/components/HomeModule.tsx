@@ -64,7 +64,7 @@ export function HomeModule({ energy }: HomeModuleProps) {
         </div>
         {completedBasic.size === basicTasks.length && (
           <p className="text-sm text-primary font-mono text-center mt-4 animate-fade-in">
-            Feito. O app não mostra mais nada de casa.
+            Concluído.
           </p>
         )}
       </div>
