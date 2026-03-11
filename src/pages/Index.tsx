@@ -175,24 +175,6 @@ const Index = () => {
               </button>
               <span className="font-mono text-sm text-muted-foreground tabular-nums">{clock}</span>
             </div>
-                <Wallet className="w-4 h-4" />
-              </button>
-              <button
-                onClick={() => navigate("/log")}
-                className="p-1.5 rounded-md text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors"
-                title="Log de atividade"
-              >
-                <Activity className="w-4 h-4" />
-              </button>
-              <button
-                onClick={async () => { await supabase.auth.signOut(); navigate("/auth"); }}
-                className="p-1.5 rounded-md text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors"
-                title="Sair"
-              >
-                <LogOut className="w-4 h-4" />
-              </button>
-              <span className="font-mono text-sm text-muted-foreground tabular-nums">{clock}</span>
-            </div>
           </div>
           <p className="text-xs text-muted-foreground font-mono tracking-widest mt-1">
             {brasiliaDateString()}
