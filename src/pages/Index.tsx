@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useFlowStore } from "@/lib/store";
 import { startTimeThemeWatcher } from "@/lib/time-theme";
