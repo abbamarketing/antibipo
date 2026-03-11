@@ -121,6 +121,8 @@ export default function Financeiro() {
           />
         )}
 
+        {tab === "carteira" && <CarteiraTab />}
+
         {tab === "horizonte" && (
           <HorizonteTab
             currentAno={ano}
