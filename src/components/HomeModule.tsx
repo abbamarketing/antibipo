@@ -26,6 +26,7 @@ interface HomeModuleProps {
 export function HomeModule({ energy }: HomeModuleProps) {
   const casa = useCasaStore();
   const { profile } = useProfileStore();
+  const qc = useQueryClient();
   const seededRef = useRef(false);
 
   // Auto-seed tasks if table is empty but onboarding was done
@@ -37,7 +38,7 @@ export function HomeModule({ energy }: HomeModuleProps) {
         casa_comodos: profile.casa_comodos,
         casa_pets: profile.casa_pets,
         casa_frequencia_ideal: profile.casa_frequencia_ideal,
-      });
+      }, qc);
     }
   }, [casa.tarefas.length, profile]);
 
