@@ -16,7 +16,7 @@ const TOOLS = [
       parameters: {
         type: "object",
         properties: {
-          tipo: { type: "string", enum: ["financeiro", "calendario", "casa", "trabalho", "saude_exercicio", "saude_medicamento", "saude_peso", "saude_humor", "compras", "meta", "diario"], description: "Tipo da acao detectada" },
+          tipo: { type: "string", enum: ["financeiro", "calendario", "casa", "trabalho", "saude_exercicio", "saude_medicamento", "saude_peso", "saude_humor", "compras", "meta", "diario", "criar_tracker"], description: "Tipo da acao detectada" },
           resposta: { type: "string", description: "Confirmacao curta e amigavel para o usuario (max 80 chars)" },
           dados: {
             type: "object",
@@ -46,6 +46,17 @@ const TOOLS = [
               meta_titulo: { type: "string" }, meta_prazo: { type: "string", enum: ["1_mes", "6_meses", "1_ano"] },
               diario_texto: { type: "string" }, diario_humor: { type: "number" },
               diario_sentimento: { type: "string" }, diario_tags: { type: "array", items: { type: "string" } },
+              // Tracker creation fields
+              tracker_titulo: { type: "string", description: "Nome do tracker" },
+              tracker_tipo: { type: "string", enum: ["recorrente", "checklist", "meta", "alerta"], description: "Tipo do modulo pre-scriptado" },
+              tracker_modulo: { type: "string", enum: ["saude", "casa", "trabalho"], description: "Modulo onde o tracker aparece" },
+              tracker_secao: { type: "string", description: "Secao dentro do modulo (ex: higiene, rotina, lembretes)" },
+              tracker_frequencia_dias: { type: "number", description: "Frequencia em dias para tipo recorrente" },
+              tracker_checklist_itens: { type: "array", items: { type: "string" }, description: "Itens do checklist" },
+              tracker_meta_alvo: { type: "number", description: "Valor alvo para tipo meta" },
+              tracker_meta_unidade: { type: "string", description: "Unidade da meta (ex: livros, kg, km)" },
+              tracker_data_alvo: { type: "string", description: "Data alvo para alertas YYYY-MM-DD" },
+              tracker_lembrete_dias: { type: "number", description: "Dias antes para lembrar" },
             },
           },
         },
@@ -85,6 +96,18 @@ Regras:
 - "comprar" / "preciso comprar" / "lista" -> compras
 - "meta" / "objetivo" / "quero alcançar" -> meta
 - QUALQUER texto que seja relato pessoal, diario, documentacao do dia, reflexao, desabafo -> diario
+
+REGRAS PARA CRIAR TRACKERS (modulos pre-scriptados):
+- "quero uma feature" / "criar rastreador" / "adicionar tracker" / "nova tarefa recorrente" / "me lembre de X a cada Y dias" -> criar_tracker
+- "a cada X dias" / "todo mes" / "toda semana" -> tipo recorrente com frequencia
+- "checklist de X" / "rotina de X" -> tipo checklist
+- "meta de X" / "quero atingir X" -> tipo meta  
+- "me avise quando" / "lembrete para" / "renovar X" -> tipo alerta
+- Detecte automaticamente o modulo (saude, casa, trabalho) e secao (higiene, rotina, lembretes, etc.)
+- Para recorrentes, extraia a frequencia em dias (semanal=7, quinzenal=15, mensal=30)
+- Para checklists, extraia os itens individuais
+- Para metas, extraia o valor alvo e unidade
+- Para alertas, extraia a data e dias de antecedencia
 
 REGRAS ESPECIAIS PARA TAREFAS DE TRABALHO:
 - Detecte o nome do cliente quando mencionado
