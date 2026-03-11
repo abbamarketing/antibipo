@@ -28,6 +28,7 @@ const App = () => (
           <Route path="/financeiro" element={<AuthGuard><Financeiro /></AuthGuard>} />
           <Route path="/calendario" element={<AuthGuard><Calendario /></AuthGuard>} />
           <Route path="/config" element={<AuthGuard><Configuracoes /></AuthGuard>} />
+          <Route path="/docs" element={<AuthGuard><Documentacao /></AuthGuard>} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
