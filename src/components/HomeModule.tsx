@@ -116,7 +116,7 @@ export function HomeModule({ energy }: HomeModuleProps) {
           <div>
             <h2 className="font-mono text-lg font-bold tracking-tight">Casa</h2>
           </div>
-          <p className="text-sm text-primary font-mono text-center">Bom trabalho. Descanse.</p>
+          <p className="text-sm text-muted-foreground font-mono text-center">Casa — concluído por agora.</p>
         </div>
       );
     }

@@ -64,10 +64,10 @@ export function HealthModule({
         <h2 className="font-mono text-lg font-bold tracking-tight">Saúde</h2>
         <p className="text-sm text-muted-foreground font-body mt-0.5">
           {energy === "basico"
-            ? "Só o remédio. Zero pressão."
+            ? "Medicação."
             : energy === "modo_leve"
-            ? "Confirme o remédio e registre o dia."
-            : "Registro completo. Remédio, humor e sono."}
+            ? "Medicação e registro."
+            : "Medicação, humor e sono."}
         </p>
       </div>
 
