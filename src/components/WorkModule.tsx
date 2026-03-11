@@ -12,9 +12,9 @@ interface WorkModuleProps {
 }
 
 const energyMessages: Record<EnergyState, string> = {
-  foco_total: "Energia alta. Até 3 tarefas estratégicas.",
-  modo_leve: "1 tarefa por vez. Sem pressa.",
-  basico: "Só o que trava alguém. Máximo 10 minutos.",
+  foco_total: "Até 3 tarefas estratégicas.",
+  modo_leve: "1 tarefa por vez.",
+  basico: "1 tarefa — a que trava alguém.",
 };
 
 export function WorkModule({ energy, tasks, allTasks, onComplete, onDelegate, onPush }: WorkModuleProps) {
@@ -38,7 +38,7 @@ export function WorkModule({ energy, tasks, allTasks, onComplete, onDelegate, on
         <div className="bg-card rounded-lg border p-8 text-center">
           <Inbox className="w-8 h-8 mx-auto text-muted-foreground/40 mb-2" />
           <p className="text-sm text-muted-foreground font-body">
-            Nenhuma tarefa para este estado. Use a captura rápida para adicionar.
+            Nenhuma tarefa para este estado. Use + para adicionar.
           </p>
         </div>
       ) : (

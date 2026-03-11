@@ -33,7 +33,7 @@ export function HomeModule({ energy }: HomeModuleProps) {
         <div>
           <h2 className="font-mono text-lg font-bold tracking-tight">Casa</h2>
           <p className="text-sm text-muted-foreground font-body mt-0.5">
-            Só o básico. 2 ações de 2 minutos. Já é vitória.
+            2 ações. 2 minutos.
           </p>
         </div>
         <div className="space-y-2">
@@ -64,7 +64,7 @@ export function HomeModule({ energy }: HomeModuleProps) {
         </div>
         {completedBasic.size === basicTasks.length && (
           <p className="text-sm text-primary font-mono text-center mt-4 animate-fade-in">
-            Feito. O app não mostra mais nada de casa.
+            Concluído.
           </p>
         )}
       </div>
@@ -85,7 +85,7 @@ export function HomeModule({ energy }: HomeModuleProps) {
             </p>
           </div>
           <div className="bg-card rounded-lg border p-6 text-center space-y-4">
-            <p className="text-sm font-body">Quer limpar outro cômodo ou parar?</p>
+            <p className="text-sm font-body">Próximo cômodo?</p>
             <div className="flex gap-3 justify-center">
               <button
                 onClick={() => {
@@ -116,7 +116,7 @@ export function HomeModule({ energy }: HomeModuleProps) {
           <div>
             <h2 className="font-mono text-lg font-bold tracking-tight">Casa</h2>
           </div>
-          <p className="text-sm text-primary font-mono text-center">Bom trabalho. Descanse.</p>
+          <p className="text-sm text-muted-foreground font-mono text-center">Casa — concluído por agora.</p>
         </div>
       );
     }

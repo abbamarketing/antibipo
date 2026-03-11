@@ -12,21 +12,21 @@ const states = [
     label: "FOCO TOTAL",
     desc: "Energia alta. Cabeça clara.",
     icon: Zap,
-    detail: "3 tarefas estratégicas · Limpeza profunda · Registro completo",
+    detail: "Até 3 tarefas · Limpeza profunda · Registro completo",
   },
   {
     key: "modo_leve" as EnergyState,
     label: "MODO LEVE",
-    desc: "Presente, mas com ruído.",
+    desc: "Presente, com ruído.",
     icon: Sun,
-    detail: "1 tarefa por vez · 1 cômodo até o fim · Confirmar remédio",
+    detail: "1 tarefa por vez · 1 cômodo · Confirmar remédio",
   },
   {
     key: "basico" as EnergyState,
     label: "SÓ O BÁSICO",
-    desc: "Travado. Não forçar.",
+    desc: "Energia baixa.",
     icon: Battery,
-    detail: "1 tarefa urgente · Lixo + 1 louça · Só o remédio",
+    detail: "1 tarefa urgente · Lixo + 1 louça · Remédio",
   },
 ];
 
@@ -34,7 +34,7 @@ export function EnergyStateSelector({ current, onSelect }: EnergyStateSelectorPr
   return (
     <div className="space-y-3">
       <h2 className="font-mono text-sm tracking-widest text-muted-foreground uppercase">
-        Como você está agora?
+        Estado de energia
       </h2>
       <div className="grid gap-3">
         {states.map((s, i) => {

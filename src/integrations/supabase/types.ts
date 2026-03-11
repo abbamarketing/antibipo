@@ -14,6 +14,30 @@ export type Database = {
   }
   public: {
     Tables: {
+      activity_log: {
+        Row: {
+          acao: string
+          contexto: string | null
+          criado_em: string
+          detalhes: Json | null
+          id: string
+        }
+        Insert: {
+          acao: string
+          contexto?: string | null
+          criado_em?: string
+          detalhes?: Json | null
+          id?: string
+        }
+        Update: {
+          acao?: string
+          contexto?: string | null
+          criado_em?: string
+          detalhes?: Json | null
+          id?: string
+        }
+        Relationships: []
+      }
       clientes: {
         Row: {
           contato: string | null
