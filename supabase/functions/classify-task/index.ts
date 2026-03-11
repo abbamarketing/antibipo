@@ -86,11 +86,13 @@ serve(async (req) => {
 
     // Try user's Google token first (free Gemini)
     let classification: any = null;
+    let ai_provider = "none";
     if (userId) {
       const supabaseAdmin = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
       const result = await callGeminiWithUserToken(supabaseAdmin, userId, geminiOpts);
       if (result?.toolCall) {
         classification = JSON.parse(result.toolCall.arguments);
+        ai_provider = "gemini_direct";
       }
     }
 
@@ -120,13 +122,14 @@ serve(async (req) => {
         throw new Error(`AI gateway returned ${status}`);
       }
 
+      ai_provider = "lovable_ai";
       const result = await response.json();
       const toolCall = result.choices?.[0]?.message?.tool_calls?.[0];
       if (!toolCall?.function?.arguments) throw new Error("No classification returned");
       classification = JSON.parse(toolCall.function.arguments);
     }
 
-    return new Response(JSON.stringify({ classification }), {
+    return new Response(JSON.stringify({ classification, ai_provider }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (e) {

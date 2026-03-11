@@ -134,12 +134,14 @@ REGRAS ESPECIAIS PARA TAREFAS DE TRABALHO:
     // Try user's Google token first
     const userId = await getUserIdFromRequest(req);
     let parsed: any = null;
+    let ai_provider = "none";
 
     if (userId) {
       const supabaseAdmin = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
       const result = await callGeminiWithUserToken(supabaseAdmin, userId, geminiOpts);
       if (result?.toolCall) {
         parsed = JSON.parse(result.toolCall.arguments);
+        ai_provider = "gemini_direct";
       }
     }
 
@@ -166,13 +168,14 @@ REGRAS ESPECIAIS PARA TAREFAS DE TRABALHO:
         throw new Error(`AI gateway error: ${status}`);
       }
 
+      ai_provider = "lovable_ai";
       const result = await response.json();
       const toolCall = result.choices?.[0]?.message?.tool_calls?.[0];
       if (!toolCall) return new Response(JSON.stringify({ error: "Nao consegui interpretar." }), { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } });
       parsed = JSON.parse(toolCall.function.arguments);
     }
 
-    return new Response(JSON.stringify(parsed), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    return new Response(JSON.stringify({ ...parsed, ai_provider }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
   } catch (e) {
     console.error("parse-command error:", e);
     return new Response(JSON.stringify({ error: e instanceof Error ? e.message : "Erro desconhecido" }), {

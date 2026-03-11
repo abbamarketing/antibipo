@@ -104,7 +104,7 @@ Responda em JSON: {"resumo": "...", "sugestoes": ["..."], "alerta": "verde|amare
       detalhes: analise ? [analise] : [],
     }, { onConflict: "tipo,periodo_inicio,periodo_fim" });
 
-    return new Response(JSON.stringify({ summary, analise }), {
+    return new Response(JSON.stringify({ summary, analise, ai_provider }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (e) {
