@@ -16,7 +16,7 @@ const TOOLS = [
       parameters: {
         type: "object",
         properties: {
-          tipo: { type: "string", enum: ["financeiro", "calendario", "casa", "trabalho", "saude_exercicio", "saude_medicamento", "saude_peso", "saude_humor", "compras", "meta", "diario", "criar_tracker"], description: "Tipo da acao detectada" },
+          tipo: { type: "string", enum: ["financeiro", "calendario", "casa", "trabalho", "saude_exercicio", "saude_medicamento", "saude_peso", "saude_humor", "compras", "meta", "diario", "criar_tracker", "plano_casa"], description: "Tipo da acao detectada" },
           resposta: { type: "string", description: "Confirmacao curta e amigavel para o usuario (max 80 chars)" },
           dados: {
             type: "object",
@@ -57,6 +57,10 @@ const TOOLS = [
               tracker_meta_unidade: { type: "string", description: "Unidade da meta (ex: livros, kg, km)" },
               tracker_data_alvo: { type: "string", description: "Data alvo para alertas YYYY-MM-DD" },
               tracker_lembrete_dias: { type: "number", description: "Dias antes para lembrar" },
+              // Plano casa fields
+              plano_tarefas: { type: "array", items: { type: "object", properties: { comodo: { type: "string" }, tarefa: { type: "string" }, prioridade: { type: "number", description: "1=alta, 2=media, 3=baixa" }, tempo_estimado_min: { type: "number" } }, required: ["comodo", "tarefa"] }, description: "Lista de tarefas do plano de organizacao da casa" },
+              plano_prazo: { type: "string", description: "Data limite do plano YYYY-MM-DD" },
+              plano_resumo: { type: "string", description: "Resumo do plano gerado" },
             },
           },
         },
