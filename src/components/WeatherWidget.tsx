@@ -60,6 +60,17 @@ async function reverseGeocode(lat: number, lon: number): Promise<string> {
 }
 
 export function WeatherWidget() {
+  const [expanded, setExpanded] = useState(() => {
+    const saved = localStorage.getItem("ab_weather_expanded");
+    return saved !== null ? saved === "true" : true;
+  });
+
+  const toggleExpanded = () => {
+    const next = !expanded;
+    setExpanded(next);
+    localStorage.setItem("ab_weather_expanded", String(next));
+  };
+
   const { data: weather, isLoading } = useQuery<WeatherData>({
     queryKey: ["weather"],
     queryFn: async () => {
