@@ -142,6 +142,9 @@ export function HealthModule({
         )}
       </div>
 
+      {/* Escovação */}
+      <BrushingTracker />
+
       {/* Humor */}
       {showMood && (
         <div className="space-y-2">
