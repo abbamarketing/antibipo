@@ -70,7 +70,7 @@ export function WeeklyDashboard() {
 
       {/* Classification card */}
       <div className={`rounded-lg p-4 text-center ${cfg.bg}`}>
-        <span className="text-2xl">{cfg.icon}</span>
+        {(() => { const Icon = cfg.icon; return <Icon className={`w-6 h-6 mx-auto ${cfg.text}`} />; })()}
         <p className={`font-mono text-sm font-bold tracking-wider mt-1 ${cfg.text}`}>{cfg.label}</p>
         {current.score_medio != null && (
           <p className="font-mono text-xs text-muted-foreground mt-1">Score: {Number(current.score_medio).toFixed(0)}/100</p>
