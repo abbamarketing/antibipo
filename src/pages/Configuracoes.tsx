@@ -2,7 +2,8 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useProfileStore } from "@/lib/profile-store";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, RotateCcw, LogOut, Bell, User, Trash2, Shield, ScrollText, BookOpen } from "lucide-react";
+import { ArrowLeft, RotateCcw, LogOut, Bell, User, Trash2, Shield, ScrollText, BookOpen, Brain } from "lucide-react";
+import { getAIStats, resetAIStats } from "@/lib/ai-stats";
 
 export default function Configuracoes() {
   const navigate = useNavigate();
