@@ -9,6 +9,7 @@ import ActivityLogPage from "./pages/ActivityLog.tsx";
 import Financeiro from "./pages/Financeiro.tsx";
 import Calendario from "./pages/Calendario.tsx";
 import Configuracoes from "./pages/Configuracoes.tsx";
+import Documentacao from "./pages/Documentacao.tsx";
 import AuthPage from "./pages/Auth.tsx";
 import NotFound from "./pages/NotFound.tsx";
 
