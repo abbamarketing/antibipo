@@ -87,6 +87,10 @@ export function WeatherWidget() {
 
       const data = await weatherRes.json();
 
+      if (!data?.current || !data?.daily?.time) {
+        throw new Error("Invalid weather data");
+      }
+
       return {
         city,
         currentTemp: Math.round(data.current.temperature_2m),
