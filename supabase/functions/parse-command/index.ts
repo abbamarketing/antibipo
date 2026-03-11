@@ -91,7 +91,7 @@ Voce DEVE responder usando a tool parse_command para TODAS as mensagens do usuar
 Regras:
 - "gastei X reais" / "paguei X" / "recebi X" -> financeiro (entrada ou saida)
 - "reuniao" / "call" / "agendei" / "consulta" -> calendario
-- "lavei" / "limpei" / "arrumei" / "passei" / "aspirei" -> casa (tarefa de limpeza)
+- "lavei" / "limpei" / "arrumei" / "passei" / "aspirei" -> casa (tarefa de limpeza ja feita)
 - "fiz exercicio" / "caminhei" / "corri" / "academia" / "treino" -> saude_exercicio
 - "tomei remedio" / "tomei medicamento" -> saude_medicamento
 - "peso X" / "estou pesando X" -> saude_peso
@@ -100,6 +100,18 @@ Regras:
 - "comprar" / "preciso comprar" / "lista" -> compras
 - "meta" / "objetivo" / "quero alcançar" -> meta
 - QUALQUER texto que seja relato pessoal, diario, documentacao do dia, reflexao, desabafo -> diario
+
+REGRAS PARA PLANO DE ORGANIZACAO DA CASA (plano_casa):
+- "arrumar a casa" / "organizar a casa" / "limpeza geral" / "faxina" / "preciso limpar tudo" / "casa toda" -> plano_casa
+- Quando o usuario pedir para organizar, arrumar ou limpar a casa (ou partes dela), gere um PLANO com lista de tarefas
+- Use os comodos informados no contexto do usuario. Se nao houver comodos, use os padroes: Cozinha, Sala, Banheiro, Quarto, Lavanderia, Geral
+- Para cada comodo, gere tarefas especificas e praticas (varrer, aspirar, limpar superficies, organizar, etc.)
+- Defina prioridade: 1=alta (areas visiveis/usadas), 2=media, 3=baixa
+- Estime tempo em minutos para cada tarefa
+- Se o usuario mencionar prazo ("ate amanha", "hoje"), preencha plano_prazo
+- O plano_resumo deve ser uma frase motivacional e pratica
+- Ordene as tarefas da mais importante para a menos importante
+- Se o usuario mencionar apenas um comodo especifico ("arrumar o quarto"), gere tarefas so para aquele comodo
 
 REGRAS PARA CRIAR TRACKERS (modulos pre-scriptados):
 - "quero uma feature" / "criar rastreador" / "adicionar tracker" / "nova tarefa recorrente" / "me lembre de X a cada Y dias" -> criar_tracker
