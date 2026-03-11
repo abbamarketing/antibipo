@@ -98,6 +98,22 @@ const Index = () => {
   const handleSleep = (type: "dormir" | "acordar", qualidade?: 1 | 2 | 3) => {
     registrarSono(type, qualidade);
     logActivity(type === "dormir" ? "sono_dormir" : "sono_acordar", { qualidade, hora: brasiliaTimeString() });
+    
+    // Trigger Monday/Friday modals on "acordei"
+    if (type === "acordar") {
+      const hoje = brasiliaTime();
+      const dia = hoje.getDay();
+      const sessionKey = `flow_review_${hoje.toISOString().split("T")[0]}`;
+      
+      if (dia === 1 && !sessionStorage.getItem(`${sessionKey}_monday`)) {
+        sessionStorage.setItem(`${sessionKey}_monday`, "1");
+        setShowMondayReview(true);
+      }
+      if (dia === 5 && !sessionStorage.getItem(`${sessionKey}_friday`)) {
+        sessionStorage.setItem(`${sessionKey}_friday`, "1");
+        setShowFridayReport(true);
+      }
+    }
   };
 
   const handleCapture = async (data: Parameters<typeof addTask>[0]) => {
