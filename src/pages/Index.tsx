@@ -146,10 +146,35 @@ const Index = () => {
             <h1 className="font-mono text-xl font-bold tracking-tight">FLOW</h1>
             <div className="flex items-center gap-2">
               <button
+                onClick={() => navigate("/calendario")}
+                className="p-1.5 rounded-md text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors"
+                title="Calendario"
+              >
+                <CalendarDays className="w-4 h-4" />
+              </button>
+              <button
                 onClick={() => navigate("/financeiro")}
                 className="p-1.5 rounded-md text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors"
                 title="Financeiro"
               >
+                <Wallet className="w-4 h-4" />
+              </button>
+              <button
+                onClick={() => navigate("/log")}
+                className="p-1.5 rounded-md text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors"
+                title="Log de atividade"
+              >
+                <Activity className="w-4 h-4" />
+              </button>
+              <button
+                onClick={async () => { await supabase.auth.signOut(); navigate("/auth"); }}
+                className="p-1.5 rounded-md text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors"
+                title="Sair"
+              >
+                <LogOut className="w-4 h-4" />
+              </button>
+              <span className="font-mono text-sm text-muted-foreground tabular-nums">{clock}</span>
+            </div>
                 <Wallet className="w-4 h-4" />
               </button>
               <button
