@@ -24,6 +24,22 @@ interface HomeModuleProps {
 
 export function HomeModule({ energy }: HomeModuleProps) {
   const casa = useCasaStore();
+  const { profile } = useProfileStore();
+  const seededRef = useRef(false);
+
+  // Auto-seed tasks if table is empty but onboarding was done
+  useEffect(() => {
+    if (seededRef.current) return;
+    if (casa.tarefas.length === 0 && profile?.onboarding_casa) {
+      seededRef.current = true;
+      seedTarefasCasa({
+        casa_comodos: profile.casa_comodos,
+        casa_pets: profile.casa_pets,
+        casa_frequencia_ideal: profile.casa_frequencia_ideal,
+      });
+    }
+  }, [casa.tarefas.length, profile]);
+
   const [activeTab, setActiveTab] = useState<"tarefas" | "compras">("tarefas");
   const [showAddTask, setShowAddTask] = useState(false);
   const [showAddItem, setShowAddItem] = useState(false);
