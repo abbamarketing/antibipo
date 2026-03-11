@@ -1,6 +1,10 @@
 import { useState } from "react";
 import { EnergyState, Medicamento, RegistroHumor, RegistroSono, today } from "@/lib/store";
+import { useBemEstarStore } from "@/lib/bem-estar-store";
 import { Pill, Moon, Sun, SmilePlus, Check, Plus, Frown, Meh, Smile, Laugh, Angry } from "lucide-react";
+import { MealSection } from "@/components/bem-estar/MealSection";
+import { ExerciseSection } from "@/components/bem-estar/ExerciseSection";
+import { WeeklyDashboard } from "@/components/bem-estar/WeeklyDashboard";
 
 interface HealthModuleProps {
   energy: EnergyState;
@@ -39,6 +43,7 @@ export function HealthModule({
   const [medDose, setMedDose] = useState("");
   const [medHorario, setMedHorario] = useState("08:00");
 
+  const bemEstar = useBemEstarStore();
   const todaySono = registros_sono.find((r) => r.data === today());
 
   const handleAddMed = () => {
@@ -56,13 +61,20 @@ export function HealthModule({
 
   const showMood = energy !== "basico";
   const showSleep = energy !== "basico";
+  const showExercise = true; // always show
+  const showMeals = true; // always show
+  const showDashboard = energy === "foco_total";
 
   return (
     <div className="space-y-6 animate-fade-in">
       <div>
-        <h2 className="font-mono text-lg font-bold tracking-tight">Saúde</h2>
+        <h2 className="font-mono text-lg font-bold tracking-tight">Saúde & Bem-Estar</h2>
         <p className="text-sm text-muted-foreground font-body mt-0.5">
-          {energy === "basico" ? "Medicação." : energy === "modo_leve" ? "Medicação e registro." : "Medicação, humor e sono."}
+          {energy === "basico"
+            ? "Medicação e registros rápidos."
+            : energy === "modo_leve"
+            ? "Medicação, humor, alimentação e exercício."
+            : "Visão completa: medicação, humor, sono, alimentação, exercício e dashboard."}
         </p>
       </div>
 
@@ -168,6 +180,30 @@ export function HealthModule({
           </div>
         </div>
       )}
+
+      {/* Alimentação */}
+      {showMeals && (
+        <MealSection
+          energy={energy}
+          refeicoes={bemEstar.refeicoes}
+          onAdd={bemEstar.addRefeicao}
+        />
+      )}
+
+      {/* Exercício */}
+      {showExercise && (
+        <ExerciseSection
+          exerciciosHoje={bemEstar.exerciciosHoje}
+          exerciciosSemana={bemEstar.exerciciosSemana}
+          metaDias={bemEstar.metaExercicio}
+          metaDuracao={bemEstar.metaDuracao}
+          diasAtivos={bemEstar.exerciciosDaSemana()}
+          onAdd={bemEstar.addExercicio}
+        />
+      )}
+
+      {/* Dashboard semanal — só no foco total */}
+      {showDashboard && <WeeklyDashboard />}
     </div>
   );
 }
