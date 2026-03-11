@@ -194,7 +194,9 @@ export function OnboardingWizard({ modulo, onComplete, isRefresh }: OnboardingWi
       [`onboarding_${modulo}`]: true,
       [`onboarding_${modulo}_at`]: new Date().toISOString(),
     } as any;
+    console.log("Onboarding finish - saving:", profileUpdates);
     updateProfile(profileUpdates);
+    logActivity("onboarding_concluido", { modulo, respostas: Object.keys(answers).length });
     onComplete();
   };
 
