@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useProfileStore } from "@/lib/profile-store";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, RotateCcw, LogOut, Bell, User, Trash2, Shield, ScrollText } from "lucide-react";
+import { ArrowLeft, RotateCcw, LogOut, Bell, User, Trash2, Shield, ScrollText, BookOpen } from "lucide-react";
 
 export default function Configuracoes() {
   const navigate = useNavigate();
@@ -180,6 +180,20 @@ export default function Configuracoes() {
               })}
             </div>
           )}
+        </section>
+
+        {/* Documentation */}
+        <section className="mb-4">
+          <button
+            onClick={() => navigate("/docs")}
+            className="w-full flex items-center gap-3 p-4 bg-card rounded-lg border hover:bg-secondary/50 transition-colors"
+          >
+            <BookOpen className="w-4 h-4 text-primary" />
+            <div className="text-left">
+              <p className="font-mono text-xs font-medium">Documentação Completa</p>
+              <p className="font-mono text-[10px] text-muted-foreground">Guia do usuário, funcionalidades, lógica e tecnologias</p>
+            </div>
+          </button>
         </section>
 
         {/* Actions */}
