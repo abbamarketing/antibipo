@@ -34,7 +34,7 @@ export function EnergyStateSelector({ current, onSelect }: EnergyStateSelectorPr
   return (
     <div className="space-y-3">
       <h2 className="font-mono text-sm tracking-widest text-muted-foreground uppercase">
-        Como você está agora?
+        Estado de energia
       </h2>
       <div className="grid gap-3">
         {states.map((s, i) => {

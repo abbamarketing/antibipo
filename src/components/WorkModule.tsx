@@ -38,7 +38,7 @@ export function WorkModule({ energy, tasks, allTasks, onComplete, onDelegate, on
         <div className="bg-card rounded-lg border p-8 text-center">
           <Inbox className="w-8 h-8 mx-auto text-muted-foreground/40 mb-2" />
           <p className="text-sm text-muted-foreground font-body">
-            Nenhuma tarefa para este estado. Use a captura rápida para adicionar.
+            Nenhuma tarefa para este estado. Use + para adicionar.
           </p>
         </div>
       ) : (
