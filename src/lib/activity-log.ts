@@ -19,7 +19,13 @@ export type ActivityAction =
   | "tarefa_casa_concluida"
   | "item_compra_adicionado"
   | "diario_registrado"
-  | "escovacao";
+  | "escovacao"
+  | "onboarding_concluido"
+  | "peso_registrado"
+  | "exercicio_registrado"
+  | "refeicao_registrada";
+
+const CONSOLIDATION_THRESHOLD = 100;
 
 export async function logActivity(
   acao: ActivityAction,
@@ -27,12 +33,53 @@ export async function logActivity(
   contexto?: string
 ) {
   try {
-    await supabase.from("activity_log").insert([{
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      console.warn("Activity log skipped: no user");
+      return;
+    }
+
+    const { error } = await supabase.from("activity_log" as any).insert([{
       acao,
       detalhes: (detalhes || {}) as any,
       contexto: contexto || null,
-    }]);
+      user_id: user.id,
+    }] as any);
+
+    if (error) {
+      console.error("Activity log insert failed:", error);
+      return;
+    }
+
+    // Check if we've hit the consolidation threshold
+    checkAndConsolidate(user.id);
   } catch (e) {
     console.error("Activity log failed:", e);
+  }
+}
+
+async function checkAndConsolidate(userId: string) {
+  try {
+    const { count, error } = await supabase
+      .from("activity_log" as any)
+      .select("*", { count: "exact", head: true })
+      .eq("user_id", userId);
+
+    if (error || !count) return;
+
+    if (count >= CONSOLIDATION_THRESHOLD) {
+      console.log(`Activity log hit ${count} entries, triggering consolidation...`);
+      
+      // Call edge function to consolidate
+      const { error: fnError } = await supabase.functions.invoke("consolidate-logs", {
+        body: { user_id: userId },
+      });
+
+      if (fnError) {
+        console.error("Consolidation failed:", fnError);
+      }
+    }
+  } catch (e) {
+    console.error("Consolidation check failed:", e);
   }
 }
