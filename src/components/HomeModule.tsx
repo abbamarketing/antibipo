@@ -3,6 +3,7 @@ import { useCasaStore } from "@/lib/casa-store";
 import { EnergyState } from "@/lib/store";
 import { logActivity } from "@/lib/activity-log";
 import { brasiliaTimeString } from "@/lib/brasilia";
+import { WeeklyTaskView } from "@/components/casa/WeeklyTaskView";
 import {
   Home,
   Check,
@@ -13,24 +14,14 @@ import {
   X,
   History,
 } from "lucide-react";
-import { formatDistanceToNow } from "date-fns";
-import { ptBR } from "date-fns/locale";
 
 interface HomeModuleProps {
   energy: EnergyState;
 }
 
-const frequenciaLabel: Record<string, string> = {
-  diario: "Diário",
-  semanal: "Semanal",
-  quinzenal: "Quinzenal",
-  mensal: "Mensal",
-};
-
 export function HomeModule({ energy }: HomeModuleProps) {
   const casa = useCasaStore();
   const [activeTab, setActiveTab] = useState<"tarefas" | "compras">("tarefas");
-  const [selectedComodo, setSelectedComodo] = useState<string | null>(null);
   const [showAddTask, setShowAddTask] = useState(false);
   const [showAddItem, setShowAddItem] = useState(false);
   const [newTaskComodo, setNewTaskComodo] = useState("");
@@ -40,19 +31,6 @@ export function HomeModule({ energy }: HomeModuleProps) {
   const [newItemNome, setNewItemNome] = useState("");
   const [newItemQtd, setNewItemQtd] = useState("");
   const [newItemCat, setNewItemCat] = useState("mercado");
-
-  const handleCompletarTarefa = (t: typeof casa.tarefas[0]) => {
-    casa.completarTarefa({
-      tarefa_casa_id: t.id,
-      comodo: t.comodo,
-      tarefa: t.tarefa,
-    });
-    logActivity("tarefa_casa_concluida", {
-      comodo: t.comodo,
-      tarefa: t.tarefa,
-      hora: brasiliaTimeString(),
-    });
-  };
 
   const handleAddTask = () => {
     if (!newTaskNome.trim() || !newTaskComodo.trim()) return;
@@ -86,12 +64,6 @@ export function HomeModule({ energy }: HomeModuleProps) {
   const pendentes = casa.listaCompras.filter((i) => !i.comprado);
   const comprados = casa.listaCompras.filter((i) => i.comprado);
 
-  // Determine tasks to show based on energy
-  const getVisibleComodos = () => {
-    if (energy === "basico") return casa.comodos.slice(0, 1);
-    if (energy === "modo_leve") return selectedComodo ? [selectedComodo] : casa.comodos.slice(0, 2);
-    return casa.comodos;
-  };
 
   return (
     <div className="space-y-5 animate-fade-in">
@@ -127,81 +99,20 @@ export function HomeModule({ energy }: HomeModuleProps) {
       {/* TAREFAS TAB */}
       {activeTab === "tarefas" && (
         <div className="space-y-4">
-          {/* Room selector for modo_leve */}
-          {energy === "modo_leve" && casa.comodos.length > 1 && (
-            <div className="flex flex-wrap gap-1.5">
-              {casa.comodos.map((c) => (
-                <button
-                  key={c}
-                  onClick={() => setSelectedComodo(selectedComodo === c ? null : c)}
-                  className={`px-3 py-1.5 rounded-md text-xs font-mono transition-all ${
-                    selectedComodo === c
-                      ? "bg-primary text-primary-foreground"
-                      : "bg-secondary text-muted-foreground hover:text-foreground"
-                  }`}
-                >
-                  {c}
-                </button>
-              ))}
-            </div>
-          )}
-
-          {getVisibleComodos().map((comodo) => {
-            const tarefas = casa.tarefasPorComodo(comodo);
-            return (
-              <div key={comodo} className="space-y-2">
-                <h3 className="font-mono text-xs tracking-widest text-muted-foreground uppercase">
-                  {comodo}
-                </h3>
-                {tarefas.map((t) => {
-                  const ultima = casa.getUltimaLimpeza(t.id);
-                  const tempoDesdeUltima = ultima
-                    ? formatDistanceToNow(new Date(ultima.feito_em), { locale: ptBR, addSuffix: true })
-                    : null;
-
-                  return (
-                    <div
-                      key={t.id}
-                      className="bg-card rounded-lg border p-3 flex items-center justify-between gap-3"
-                    >
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium">{t.tarefa}</p>
-                        <div className="flex items-center gap-2 mt-1">
-                          <span className="text-[10px] font-mono text-muted-foreground">
-                            {frequenciaLabel[t.frequencia] || t.frequencia}
-                          </span>
-                          {t.tempo_min && (
-                            <>
-                              <span className="text-muted-foreground/30">·</span>
-                              <span className="flex items-center gap-0.5 text-[10px] text-muted-foreground">
-                                <Clock className="w-2.5 h-2.5" />
-                                {t.tempo_min}min
-                              </span>
-                            </>
-                          )}
-                          {tempoDesdeUltima && (
-                            <>
-                              <span className="text-muted-foreground/30">·</span>
-                              <span className="flex items-center gap-0.5 text-[10px] text-muted-foreground">
-                                <History className="w-2.5 h-2.5" />
-                                {tempoDesdeUltima}
-                              </span>
-                            </>
-                          )}
-                        </div>
-                      </div>
-                      <button
-                        onClick={() => handleCompletarTarefa(t)}
-                        className="flex items-center gap-1 px-3 py-1.5 rounded-md bg-primary text-primary-foreground font-mono text-[10px] hover:opacity-90 transition-opacity"
-                      >
-                        <Check className="w-3 h-3" /> FEITO
-                      </button>
-                    </div>
-                  );
-                })}
-              </div>
-            );
-          })}
+          <WeeklyTaskView
+            tarefas={casa.tarefas}
+            registros={casa.registros}
+            comodos={casa.comodos}
+            energy={energy}
+            onCompletarTarefa={(t) => {
+              casa.completarTarefa(t);
+              logActivity("tarefa_casa_concluida", {
+                comodo: t.comodo,
+                tarefa: t.tarefa,
+                hora: brasiliaTimeString(),
+              });
+            }}
+          />
 
           {/* Add task button */}
           {energy === "foco_total" && (
