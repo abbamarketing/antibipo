@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { Modulo, TaskType, TaskOwner, Urgency } from "@/lib/store";
-import { X, Plus } from "lucide-react";
+import { X, Plus, Users } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 
 interface QuickCaptureProps {
   open: boolean;
@@ -14,6 +16,7 @@ interface QuickCaptureProps {
     tempo_min: number;
     estado_ideal: "foco_total" | "modo_leve" | "basico" | "qualquer";
     impacto: 1 | 2 | 3;
+    cliente_id?: string;
   }) => void;
 }
 
@@ -21,6 +24,16 @@ export function QuickCapture({ open, onClose, onCapture }: QuickCaptureProps) {
   const [titulo, setTitulo] = useState("");
   const [modulo, setModulo] = useState<Modulo>("trabalho");
   const [urgencia, setUrgencia] = useState<Urgency>(2);
+  const [clienteId, setClienteId] = useState<string | null>(null);
+
+  const { data: clientes = [] } = useQuery({
+    queryKey: ["clientes"],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("clientes").select("*").eq("status", "ativo").order("nome");
+      if (error) throw error;
+      return data;
+    },
+  });
 
   if (!open) return null;
 
@@ -35,8 +48,10 @@ export function QuickCapture({ open, onClose, onCapture }: QuickCaptureProps) {
       tempo_min: 30,
       estado_ideal: "qualquer",
       impacto: 2,
+      ...(modulo === "trabalho" && clienteId ? { cliente_id: clienteId } : {}),
     });
     setTitulo("");
+    setClienteId(null);
     onClose();
   };
 
@@ -65,30 +80,56 @@ export function QuickCapture({ open, onClose, onCapture }: QuickCaptureProps) {
           }}
         />
 
+        {/* Módulo */}
         <div className="flex gap-2 mt-3">
           {(["trabalho", "casa", "saude"] as Modulo[]).map((m) => (
             <button
               key={m}
-              onClick={() => setModulo(m)}
-              className={`
-                font-mono text-[11px] tracking-wider px-3 py-1.5 rounded-md transition-colors
-                ${modulo === m ? "bg-primary text-primary-foreground" : "bg-secondary text-secondary-foreground hover:bg-secondary/80"}
-              `}
+              onClick={() => { setModulo(m); if (m !== "trabalho") setClienteId(null); }}
+              className={`font-mono text-[11px] tracking-wider px-3 py-1.5 rounded-md transition-colors ${modulo === m ? "bg-primary text-primary-foreground" : "bg-secondary text-secondary-foreground hover:bg-secondary/80"}`}
             >
               {m === "saude" ? "SAÚDE" : m.toUpperCase()}
             </button>
           ))}
         </div>
 
-        <div className="flex gap-2 mt-2">
+        {/* Cliente — only for trabalho */}
+        {modulo === "trabalho" && clientes.length > 0 && (
+          <div className="mt-3">
+            <div className="flex items-center gap-1.5 mb-1.5">
+              <Users className="w-3 h-3 text-muted-foreground" />
+              <span className="font-mono text-[10px] tracking-widest text-muted-foreground uppercase">Cliente</span>
+            </div>
+            <div className="flex flex-wrap gap-1.5">
+              <button
+                onClick={() => setClienteId(null)}
+                className={`font-mono text-[10px] tracking-wider px-2.5 py-1 rounded-md transition-colors ${!clienteId ? "bg-primary text-primary-foreground" : "bg-secondary text-secondary-foreground hover:bg-secondary/80"}`}
+              >
+                GERAL
+              </button>
+              {clientes.map((c) => (
+                <button
+                  key={c.id}
+                  onClick={() => setClienteId(c.id)}
+                  className={`font-mono text-[10px] tracking-wider px-2.5 py-1 rounded-md transition-colors ${clienteId === c.id ? "bg-primary text-primary-foreground" : "bg-secondary text-secondary-foreground hover:bg-secondary/80"}`}
+                >
+                  {c.nome.toUpperCase()}
+                  <span className="ml-1 opacity-60">
+                    {(c as any).tipo === "fixo" ? "F" : (c as any).tipo === "pontual" ? "P" : "R"}
+                  </span>
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Urgência */}
+        <div className="flex gap-2 mt-3">
           {([1, 2, 3] as Urgency[]).map((u) => (
             <button
               key={u}
               onClick={() => setUrgencia(u)}
-              className={`
-                font-mono text-[11px] tracking-wider px-3 py-1.5 rounded-md transition-colors
-                ${urgencia === u ? "bg-primary text-primary-foreground" : "bg-secondary text-secondary-foreground hover:bg-secondary/80"}
-              `}
+              className={`font-mono text-[11px] tracking-wider px-3 py-1.5 rounded-md transition-colors ${urgencia === u ? "bg-primary text-primary-foreground" : "bg-secondary text-secondary-foreground hover:bg-secondary/80"}`}
             >
               {u === 1 ? "TALVEZ" : u === 2 ? "SEMANA" : "HOJE"}
             </button>

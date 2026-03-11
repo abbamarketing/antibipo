@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { EnergyState, Medicamento, RegistroHumor, RegistroSono, today } from "@/lib/store";
-import { Pill, Moon, Sun, SmilePlus, Check, Plus } from "lucide-react";
+import { Pill, Moon, Sun, SmilePlus, Check, Plus, Frown, Meh, Smile, Laugh, Angry } from "lucide-react";
 
 interface HealthModuleProps {
   energy: EnergyState;
@@ -15,12 +15,12 @@ interface HealthModuleProps {
   todayHumor?: RegistroHumor;
 }
 
-const moodEmojis = [
-  { val: -2, label: "Muito baixo", emoji: "😞" },
-  { val: -1, label: "Baixo", emoji: "😔" },
-  { val: 0, label: "Neutro", emoji: "😐" },
-  { val: 1, label: "Bom", emoji: "🙂" },
-  { val: 2, label: "Muito bom", emoji: "😊" },
+const moodOptions = [
+  { val: -2, label: "Muito baixo", icon: Angry },
+  { val: -1, label: "Baixo", icon: Frown },
+  { val: 0, label: "Neutro", icon: Meh },
+  { val: 1, label: "Bom", icon: Smile },
+  { val: 2, label: "Muito bom", icon: Laugh },
 ];
 
 export function HealthModule({
@@ -54,7 +54,6 @@ export function HealthModule({
     setAddingMed(false);
   };
 
-  // In basico mode, show only medication
   const showMood = energy !== "basico";
   const showSleep = energy !== "basico";
 
@@ -63,11 +62,7 @@ export function HealthModule({
       <div>
         <h2 className="font-mono text-lg font-bold tracking-tight">Saúde</h2>
         <p className="text-sm text-muted-foreground font-body mt-0.5">
-          {energy === "basico"
-            ? "Medicação."
-            : energy === "modo_leve"
-            ? "Medicação e registro."
-            : "Medicação, humor e sono."}
+          {energy === "basico" ? "Medicação." : energy === "modo_leve" ? "Medicação e registro." : "Medicação, humor e sono."}
         </p>
       </div>
 
@@ -77,40 +72,19 @@ export function HealthModule({
           <h3 className="font-mono text-xs tracking-widest text-muted-foreground uppercase flex items-center gap-2">
             <Pill className="w-3.5 h-3.5" /> Medicação
           </h3>
-          <button
-            onClick={() => setAddingMed(!addingMed)}
-            className="text-primary hover:opacity-80 transition-opacity"
-          >
+          <button onClick={() => setAddingMed(!addingMed)} className="text-primary hover:opacity-80 transition-opacity">
             <Plus className="w-4 h-4" />
           </button>
         </div>
 
         {addingMed && (
           <div className="bg-card rounded-lg border p-4 space-y-3 animate-fade-in">
-            <input
-              value={medName}
-              onChange={(e) => setMedName(e.target.value)}
-              placeholder="Nome do remédio"
-              className="w-full bg-background border rounded-md p-2.5 text-sm font-body focus:outline-none focus:ring-1 focus:ring-primary"
-            />
+            <input value={medName} onChange={(e) => setMedName(e.target.value)} placeholder="Nome do remédio" className="w-full bg-background border rounded-md p-2.5 text-sm font-body focus:outline-none focus:ring-1 focus:ring-primary" />
             <div className="flex gap-2">
-              <input
-                value={medDose}
-                onChange={(e) => setMedDose(e.target.value)}
-                placeholder="Dose (ex: 1 comprimido)"
-                className="flex-1 bg-background border rounded-md p-2.5 text-sm font-body focus:outline-none focus:ring-1 focus:ring-primary"
-              />
-              <input
-                type="time"
-                value={medHorario}
-                onChange={(e) => setMedHorario(e.target.value)}
-                className="bg-background border rounded-md p-2.5 text-sm font-mono focus:outline-none focus:ring-1 focus:ring-primary"
-              />
+              <input value={medDose} onChange={(e) => setMedDose(e.target.value)} placeholder="Dose (ex: 1 comprimido)" className="flex-1 bg-background border rounded-md p-2.5 text-sm font-body focus:outline-none focus:ring-1 focus:ring-primary" />
+              <input type="time" value={medHorario} onChange={(e) => setMedHorario(e.target.value)} className="bg-background border rounded-md p-2.5 text-sm font-mono focus:outline-none focus:ring-1 focus:ring-primary" />
             </div>
-            <button
-              onClick={handleAddMed}
-              className="w-full py-2 rounded-md bg-primary text-primary-foreground font-mono text-xs tracking-wider hover:opacity-90 transition-opacity"
-            >
+            <button onClick={handleAddMed} className="w-full py-2 rounded-md bg-primary text-primary-foreground font-mono text-xs tracking-wider hover:opacity-90 transition-opacity">
               ADICIONAR
             </button>
           </div>
@@ -119,9 +93,7 @@ export function HealthModule({
         {medicamentos.length === 0 && !addingMed ? (
           <div className="bg-card rounded-lg border p-6 text-center">
             <Pill className="w-6 h-6 mx-auto text-muted-foreground/40 mb-2" />
-            <p className="text-xs text-muted-foreground font-body">
-              Nenhum medicamento configurado. Toque em + para adicionar.
-            </p>
+            <p className="text-xs text-muted-foreground font-body">Nenhum medicamento configurado. Toque em + para adicionar.</p>
           </div>
         ) : (
           medicamentos.map((med) =>
@@ -134,19 +106,8 @@ export function HealthModule({
                       <span className="text-sm font-medium">{med.nome}</span>
                       <span className="text-xs text-muted-foreground ml-2">{med.dose} · {h}</span>
                     </div>
-                    <button
-                      onClick={() => onTakeMed(med.id, h)}
-                      disabled={taken}
-                      className={`font-mono text-xs px-4 py-2 rounded-md transition-all ${taken
-                        ? "bg-secondary text-muted-foreground cursor-default"
-                        : "bg-primary text-primary-foreground hover:opacity-90"
-                        }`}
-                    >
-                      {taken ? (
-                        <span className="flex items-center gap-1"><Check className="w-3 h-3" /> TOMADO</span>
-                      ) : (
-                        "TOMEI"
-                      )}
+                    <button onClick={() => onTakeMed(med.id, h)} disabled={taken} className={`font-mono text-xs px-4 py-2 rounded-md transition-all ${taken ? "bg-secondary text-muted-foreground cursor-default" : "bg-primary text-primary-foreground hover:opacity-90"}`}>
+                      {taken ? <span className="flex items-center gap-1"><Check className="w-3 h-3" /> TOMADO</span> : "TOMEI"}
                     </button>
                   </div>
                 </div>
@@ -164,16 +125,19 @@ export function HealthModule({
           </h3>
           <div className="bg-card rounded-lg border p-4">
             <div className="flex justify-between">
-              {moodEmojis.map((m) => (
-                <button
-                  key={m.val}
-                  onClick={() => onMood(m.val)}
-                  className={`flex flex-col items-center gap-1 p-2 rounded-md transition-all ${todayHumor?.valor === m.val ? "bg-primary/10 ring-1 ring-primary" : "hover:bg-secondary"}`}
-                >
-                  <span className="text-xl">{m.emoji}</span>
-                  <span className="font-mono text-[9px] text-muted-foreground">{m.label}</span>
-                </button>
-              ))}
+              {moodOptions.map((m) => {
+                const Icon = m.icon;
+                return (
+                  <button
+                    key={m.val}
+                    onClick={() => onMood(m.val)}
+                    className={`flex flex-col items-center gap-1 p-2 rounded-md transition-all ${todayHumor?.valor === m.val ? "bg-primary/10 ring-1 ring-primary" : "hover:bg-secondary"}`}
+                  >
+                    <Icon className={`w-5 h-5 ${todayHumor?.valor === m.val ? "text-primary" : "text-muted-foreground"}`} />
+                    <span className="font-mono text-[9px] text-muted-foreground">{m.label}</span>
+                  </button>
+                );
+              })}
             </div>
           </div>
         </div>
@@ -187,25 +151,11 @@ export function HealthModule({
           </h3>
           <div className="bg-card rounded-lg border p-4">
             <div className="flex gap-3">
-              <button
-                onClick={() => onSleep("dormir")}
-                disabled={!!todaySono?.horario_dormir}
-                className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-md font-mono text-xs transition-all ${todaySono?.horario_dormir
-                  ? "bg-secondary text-muted-foreground cursor-default"
-                  : "bg-primary text-primary-foreground hover:opacity-90"
-                  }`}
-              >
+              <button onClick={() => onSleep("dormir")} disabled={!!todaySono?.horario_dormir} className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-md font-mono text-xs transition-all ${todaySono?.horario_dormir ? "bg-secondary text-muted-foreground cursor-default" : "bg-primary text-primary-foreground hover:opacity-90"}`}>
                 <Moon className="w-3.5 h-3.5" />
                 {todaySono?.horario_dormir ? "REGISTRADO" : "INDO DORMIR"}
               </button>
-              <button
-                onClick={() => onSleep("acordar", 2)}
-                disabled={!!todaySono?.horario_acordar}
-                className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-md font-mono text-xs transition-all ${todaySono?.horario_acordar
-                  ? "bg-secondary text-muted-foreground cursor-default"
-                  : "bg-primary text-primary-foreground hover:opacity-90"
-                  }`}
-              >
+              <button onClick={() => onSleep("acordar", 2)} disabled={!!todaySono?.horario_acordar} className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-md font-mono text-xs transition-all ${todaySono?.horario_acordar ? "bg-secondary text-muted-foreground cursor-default" : "bg-primary text-primary-foreground hover:opacity-90"}`}>
                 <Sun className="w-3.5 h-3.5" />
                 {todaySono?.horario_acordar ? "REGISTRADO" : "ACORDEI"}
               </button>

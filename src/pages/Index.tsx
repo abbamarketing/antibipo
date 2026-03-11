@@ -10,7 +10,10 @@ import { WorkModule } from "@/components/WorkModule";
 import { HomeModule } from "@/components/HomeModule";
 import { HealthModule } from "@/components/HealthModule";
 import { QuickCapture } from "@/components/QuickCapture";
-import { Plus } from "lucide-react";
+import { WeatherWidget } from "@/components/WeatherWidget";
+import { NotificationManager } from "@/components/NotificationManager";
+import { Plus, Activity, Zap, Sun, Battery } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 const Index = () => {
   const {
@@ -30,6 +33,7 @@ const Index = () => {
     todayHumor,
   } = useFlowStore();
 
+  const navigate = useNavigate();
   const [captureOpen, setCaptureOpen] = useState(false);
   const [clock, setClock] = useState(brasiliaTimeString());
 
@@ -42,6 +46,12 @@ const Index = () => {
   const pending = pendingMeds();
   const { current_energy, current_modulo } = state;
   const showEnergySelector = !current_energy;
+
+  const energyConfig: Record<string, { icon: typeof Zap; label: string }> = {
+    foco_total: { icon: Zap, label: "FOCO TOTAL" },
+    modo_leve: { icon: Sun, label: "MODO LEVE" },
+    basico: { icon: Battery, label: "SÓ O BÁSICO" },
+  };
 
   const handleSetEnergy = (energy: typeof current_energy) => {
     if (!energy) return;
@@ -100,17 +110,37 @@ const Index = () => {
 
   return (
     <div className="min-h-screen bg-background">
+      <NotificationManager
+        medicamentos={state.medicamentos}
+        isMedTaken={isMedTakenToday}
+        hasEnergy={!!current_energy}
+      />
+
       <div className="max-w-lg mx-auto px-4 py-6 pb-24">
         {/* Header */}
         <header className="mb-6">
           <div className="flex items-center justify-between">
             <h1 className="font-mono text-xl font-bold tracking-tight">FLOW</h1>
-            <span className="font-mono text-sm text-muted-foreground tabular-nums">{clock}</span>
+            <div className="flex items-center gap-3">
+              <button
+                onClick={() => navigate("/log")}
+                className="p-1.5 rounded-md text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors"
+                title="Log de atividade"
+              >
+                <Activity className="w-4 h-4" />
+              </button>
+              <span className="font-mono text-sm text-muted-foreground tabular-nums">{clock}</span>
+            </div>
           </div>
           <p className="text-xs text-muted-foreground font-mono tracking-widest mt-1">
             {brasiliaDateString()}
           </p>
         </header>
+
+        {/* Weather */}
+        <div className="mb-4">
+          <WeatherWidget />
+        </div>
 
         {/* Med Alert */}
         {pending.length > 0 && (
@@ -125,9 +155,18 @@ const Index = () => {
           <>
             {/* Energy indicator */}
             <div className="flex items-center gap-2 mb-4">
-              <span className="font-mono text-[11px] tracking-wider text-primary">
-                {current_energy === "foco_total" ? "⚡ FOCO TOTAL" : current_energy === "modo_leve" ? "☀️ MODO LEVE" : "🔋 SÓ O BÁSICO"}
-              </span>
+              {current_energy && (() => {
+                const cfg = energyConfig[current_energy];
+                const EIcon = cfg.icon;
+                return (
+                  <>
+                    <EIcon className="w-3.5 h-3.5 text-primary" />
+                    <span className="font-mono text-[11px] tracking-wider text-primary">
+                      {cfg.label}
+                    </span>
+                  </>
+                );
+              })()}
               <span className="text-muted-foreground/30">·</span>
               <button
                 onClick={() => handleSetEnergy(current_energy === "foco_total" ? "modo_leve" : current_energy === "modo_leve" ? "basico" : "foco_total")}
