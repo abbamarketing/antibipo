@@ -39,6 +39,32 @@ const energyMessages: Record<EnergyState, string> = {
 };
 
 export function WorkModule({ energy, tasks, allTasks, onComplete, onDelegate, onPush }: WorkModuleProps) {
+  // Fetch clients for name display
+  const { data: clientes = [] } = useQuery({
+    queryKey: ["clientes_all"],
+    queryFn: async () => {
+      const { data } = await supabase.from("clientes").select("id, nome");
+      return data || [];
+    },
+  });
+
+  const clienteMap = useMemo(() => {
+    const map: Record<string, string> = {};
+    clientes.forEach((c: any) => { map[c.id] = c.nome; });
+    return map;
+  }, [clientes]);
+
+  // Group subtasks by parent
+  const subtaskMap = useMemo(() => {
+    const map: Record<string, Task[]> = {};
+    allTasks.forEach((t: any) => {
+      if (t.parent_task_id) {
+        if (!map[t.parent_task_id]) map[t.parent_task_id] = [];
+        map[t.parent_task_id].push(t);
+      }
+    });
+    return map;
+  }, [allTasks]);
   const [view, setView] = useState<"focus" | "kanban">(energy === "foco_total" ? "kanban" : "focus");
   const [search, setSearch] = useState("");
   const [showSearch, setShowSearch] = useState(false);
