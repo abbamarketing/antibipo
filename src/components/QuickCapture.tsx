@@ -412,14 +412,16 @@ export function QuickCapture({ open, onClose, onActionComplete }: QuickCapturePr
         { data: pendingTasks },
         { data: lastHumor },
         { data: lastSono },
+        { data: tarefasCasa },
       ] = await Promise.all([
-        supabase.from("profiles").select("nome, trabalho_tipo, trabalho_equipe, trabalho_clientes_ativos, objetivo_saude").eq("user_id", user.id).maybeSingle(),
+        supabase.from("profiles").select("nome, trabalho_tipo, trabalho_equipe, trabalho_clientes_ativos, objetivo_saude, casa_comodos, casa_moradores, casa_pets").eq("user_id", user.id).maybeSingle(),
         supabase.from("activity_log").select("acao, detalhes").eq("user_id", user.id).order("criado_em", { ascending: false }).limit(10),
         supabase.from("configuracoes").select("valor").eq("user_id", user.id).like("chave", "resumo_logs_%").order("updated_at", { ascending: false }).limit(2),
         supabase.from("clientes").select("nome, tipo, status").eq("status", "ativo").limit(20),
         supabase.from("tasks").select("titulo, status, urgencia, dono").in("status", ["hoje", "em_andamento", "aguardando"]).limit(10),
         supabase.from("registros_humor").select("valor, notas").eq("data", todayStr).maybeSingle(),
         supabase.from("registros_sono").select("horario_dormir, horario_acordar, qualidade").eq("data", todayStr).maybeSingle(),
+        supabase.from("tarefas_casa" as any).select("comodo, tarefa, frequencia").eq("ativo", true).order("comodo"),
       ]);
 
       const parts: string[] = [];
