@@ -3,6 +3,8 @@ import { Medicamento, today } from "@/lib/store";
 import { useCalendarStore } from "@/lib/calendar-store";
 import { useMetasStore } from "@/lib/metas-store";
 import { useCasaStore } from "@/lib/casa-store";
+import { useTrackerStore } from "@/lib/tracker-store";
+import { isRecorrenteDue, type RecorrenteConfig } from "@/lib/tracker-blueprints";
 
 interface NotificationManagerProps {
   medicamentos: Medicamento[];
@@ -16,10 +18,18 @@ function requestPermission() {
   }
 }
 
-function notify(title: string, body: string) {
+function notify(title: string, body: string, tag?: string) {
   if ("Notification" in window && Notification.permission === "granted") {
-    new Notification(title, { body, icon: "/favicon.ico" });
+    new Notification(title, { body, icon: "/favicon.ico", tag }); // tag deduplicates
   }
+}
+
+// Throttle: only notify once per tag per session
+const notifiedTags = new Set<string>();
+function notifyOnce(title: string, body: string, tag: string) {
+  if (notifiedTags.has(tag)) return;
+  notifiedTags.add(tag);
+  notify(title, body, tag);
 }
 
 export function NotificationManager({ medicamentos, isMedTaken, hasEnergy }: NotificationManagerProps) {
@@ -31,6 +41,8 @@ export function NotificationManager({ medicamentos, isMedTaken, hasEnergy }: Not
   const now = new Date();
   const calStore = useCalendarStore(now.getFullYear(), now.getMonth() + 1);
   const metasStore = useMetasStore();
+  const casaStore = useCasaStore();
+  const trackerStore = useTrackerStore();
 
   useEffect(() => {
     requestPermission();
@@ -46,13 +58,12 @@ export function NotificationManager({ medicamentos, isMedTaken, hasEnergy }: Not
           }, 2000);
         }
       };
-      // Check immediately and also after a delay (user might grant permission)
       checkPerm();
       setTimeout(checkPerm, 5000);
     }
   }, []);
 
-  // Morning reminder — once per day
+  // Morning reminder — once per day (7-9h)
   useEffect(() => {
     const check = () => {
       const now = new Date();
@@ -62,11 +73,8 @@ export function NotificationManager({ medicamentos, isMedTaken, hasEnergy }: Not
       if (hour >= 7 && hour <= 9 && lastMorning.current !== todayStr && !hasEnergy) {
         lastMorning.current = todayStr;
 
-        // Count today's meetings
         const meetings = calStore.todayMeetings.length;
-        const meetingMsg = meetings > 0 ? ` Voce tem ${meetings} reuniao(oes) hoje.` : "";
-
-        // Check pending goals
+        const meetingMsg = meetings > 0 ? ` ${meetings} reuniao(oes) hoje.` : "";
         const pendingGoals = metasStore.metasAtivas.length;
         const goalMsg = pendingGoals > 0 ? ` ${pendingGoals} metas ativas.` : "";
 
@@ -132,7 +140,73 @@ export function NotificationManager({ medicamentos, isMedTaken, hasEnergy }: Not
     return () => clearInterval(interval);
   }, [calStore.todayMeetings]);
 
-  // Inactivity check — if no interaction for 2h, ask about tasks
+  // Pending tasks reminder — once at 10h and once at 14h
+  useEffect(() => {
+    const check = () => {
+      const now = new Date();
+      const hour = now.getHours();
+      const todayStr = today();
+
+      if ((hour === 10 || hour === 14) && hasEnergy) {
+        const tag = `pending_tasks_${todayStr}_${hour}`;
+        // Count casa tasks due
+        const casaDue = casaStore.tarefas.filter((t) => {
+          if (t.ativo === false) return false;
+          const lastDone = casaStore.registros.find((r) => r.tarefa_casa_id === t.id);
+          const lastDate = lastDone ? new Date(lastDone.feito_em) : null;
+          const daysSince = lastDate ? Math.floor((now.getTime() - lastDate.getTime()) / 86400000) : 999;
+          const freqDays = t.frequencia === "diario" ? 1 : t.frequencia === "semanal" ? 7 : t.frequencia === "quinzenal" ? 15 : 30;
+          return daysSince >= freqDays;
+        }).length;
+
+        // Count tracker tasks due
+        const trackersDue = trackerStore.trackers.filter((t) => {
+          if (!t.ativo || t.tipo !== "recorrente") return false;
+          const config = t.config as unknown as RecorrenteConfig;
+          const last = trackerStore.getLastCompletion(t.id);
+          return isRecorrenteDue(config, last);
+        }).length;
+
+        const total = casaDue + trackersDue;
+        if (total > 0) {
+          const parts: string[] = [];
+          if (casaDue > 0) parts.push(`${casaDue} tarefa(s) de casa`);
+          if (trackersDue > 0) parts.push(`${trackersDue} tracker(s)`);
+          notifyOnce("Tarefas pendentes", `Voce tem ${parts.join(" e ")} aguardando.`, tag);
+        }
+      }
+    };
+
+    check();
+    const interval = setInterval(check, 5 * 60 * 1000);
+    return () => clearInterval(interval);
+  }, [hasEnergy, casaStore.tarefas, casaStore.registros, trackerStore.trackers]);
+
+  // Mood check-in reminder — every 3h (9, 12, 15, 18, 21)
+  useEffect(() => {
+    const check = () => {
+      const now = new Date();
+      const hour = now.getHours();
+      const todayStr = today();
+      const checkinHours = [9, 12, 15, 18, 21];
+
+      if (checkinHours.includes(hour) && hasEnergy) {
+        const tag = `mood_checkin_${todayStr}_${hour}`;
+        const lastCheckin = localStorage.getItem("last_mood_checkin");
+        const elapsed = lastCheckin ? Date.now() - parseInt(lastCheckin, 10) : Infinity;
+
+        if (elapsed > 2.5 * 60 * 60 * 1000) { // 2.5h since last check-in
+          notifyOnce("Check-in emocional", "Como voce esta se sentindo? Abra o app para registrar.", tag);
+        }
+      }
+    };
+
+    check();
+    const interval = setInterval(check, 10 * 60 * 1000);
+    return () => clearInterval(interval);
+  }, [hasEnergy]);
+
+  // Inactivity check — if no interaction for 2h (reduced from always)
   useEffect(() => {
     const resetInactivity = () => {
       lastInactivity.current = Date.now();
@@ -156,7 +230,7 @@ export function NotificationManager({ medicamentos, isMedTaken, hasEnergy }: Not
     };
   }, [hasEnergy]);
 
-  // Evening reminder — weight and exercise check
+  // Evening reminder — weight and exercise check (20-21h)
   useEffect(() => {
     const check = () => {
       const now = new Date();
