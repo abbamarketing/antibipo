@@ -123,7 +123,7 @@ Tom: parceiro, factual, direto. Sem emojis, sem aspas.`;
     const geminiResult = await callGeminiWithUserToken(supabaseAdmin, user.id, geminiOpts);
 
     if (geminiResult?.text) {
-      return new Response(JSON.stringify({ message: geminiResult.text.trim() }), {
+      return new Response(JSON.stringify({ message: geminiResult.text.trim(), ai_provider: "gemini_direct" }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
@@ -131,7 +131,7 @@ Tom: parceiro, factual, direto. Sem emojis, sem aspas.`;
     // Fallback to Lovable AI
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) {
-      return new Response(JSON.stringify({ message: "Ontem foi produtivo. Hoje pode ser ainda melhor!" }), {
+      return new Response(JSON.stringify({ message: "Ontem foi produtivo. Hoje pode ser ainda melhor!", ai_provider: "none" }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
@@ -143,14 +143,14 @@ Tom: parceiro, factual, direto. Sem emojis, sem aspas.`;
     });
 
     if (!aiResponse.ok) {
-      return new Response(JSON.stringify({ message: "Ontem foi um bom dia. Hoje pode ser ainda melhor!" }), {
+      return new Response(JSON.stringify({ message: "Ontem foi um bom dia. Hoje pode ser ainda melhor!", ai_provider: "none" }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
     const aiData = await aiResponse.json();
     const message = aiData.choices?.[0]?.message?.content?.trim() || "Vamos fazer hoje valer a pena!";
-    return new Response(JSON.stringify({ message }), {
+    return new Response(JSON.stringify({ message, ai_provider: "lovable_ai" }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (e) {

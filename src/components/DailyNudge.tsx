@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { trackAIProvider } from "@/lib/ai-stats";
 
 export function DailyNudge() {
   const { data } = useQuery({
@@ -7,6 +8,7 @@ export function DailyNudge() {
     queryFn: async () => {
       const { data, error } = await supabase.functions.invoke("daily-nudge");
       if (error) throw error;
+      if (data?.ai_provider) trackAIProvider(data.ai_provider);
       return data as { message: string };
     },
     staleTime: 60 * 60 * 1000, // 1h cache

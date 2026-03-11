@@ -53,6 +53,7 @@ serve(async (req) => {
 
     // Generate AI analysis if API key available
     let analise = null;
+    let ai_provider = "none";
     if (LOVABLE_API_KEY) {
       const prompt = `Analise o dia do usuario e gere um resumo breve (max 3 frases) sobre produtividade, bem-estar e sugestoes para o dia seguinte.
 
@@ -80,9 +81,9 @@ Responda em JSON: {"resumo": "...", "sugestoes": ["..."], "alerta": "verde|amare
         });
 
         if (response.ok) {
+          ai_provider = "lovable_ai";
           const result = await response.json();
           const content = result.choices?.[0]?.message?.content || "";
-          // Parse JSON from response
           const jsonMatch = content.match(/\{[\s\S]*\}/);
           if (jsonMatch) {
             analise = JSON.parse(jsonMatch[0]);
@@ -103,7 +104,7 @@ Responda em JSON: {"resumo": "...", "sugestoes": ["..."], "alerta": "verde|amare
       detalhes: analise ? [analise] : [],
     }, { onConflict: "tipo,periodo_inicio,periodo_fim" });
 
-    return new Response(JSON.stringify({ summary, analise }), {
+    return new Response(JSON.stringify({ summary, analise, ai_provider }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (e) {
