@@ -29,29 +29,53 @@ serve(async (req) => {
     yesterday.setDate(yesterday.getDate() - 1);
     const yesterdayStr = yesterday.toISOString().split("T")[0];
 
-    const { data: logs } = await supabase
-      .from("activity_log")
-      .select("acao, detalhes")
-      .gte("criado_em", `${yesterdayStr}T00:00:00`)
-      .lt("criado_em", `${yesterdayStr}T23:59:59`)
-      .order("criado_em", { ascending: false })
-      .limit(20);
+    // Fetch last 7 days for weekly context
+    const weekAgo = new Date();
+    weekAgo.setDate(weekAgo.getDate() - 7);
+    const weekAgoStr = weekAgo.toISOString().split("T")[0];
 
-    // Fetch recent diary entries
-    const { data: diary } = await supabase
-      .from("diario_entradas")
-      .select("texto, humor_detectado, sentimento")
-      .eq("user_id", user.id)
-      .gte("data", yesterdayStr)
-      .order("created_at", { ascending: false })
-      .limit(5);
+    const [
+      { data: yesterdayLogs },
+      { data: weekLogs },
+      { data: diary },
+      { data: weekDiary },
+      { data: metas },
+    ] = await Promise.all([
+      supabase.from("activity_log").select("acao, detalhes")
+        .gte("criado_em", `${yesterdayStr}T00:00:00`)
+        .lt("criado_em", `${yesterdayStr}T23:59:59`)
+        .order("criado_em", { ascending: false }).limit(20),
+      supabase.from("activity_log").select("acao, detalhes")
+        .gte("criado_em", `${weekAgoStr}T00:00:00`)
+        .lt("criado_em", `${yesterdayStr}T00:00:00`)
+        .order("criado_em", { ascending: false }).limit(50),
+      supabase.from("diario_entradas").select("texto, humor_detectado, sentimento")
+        .eq("user_id", user.id).eq("data", yesterdayStr)
+        .order("created_at", { ascending: false }).limit(5),
+      supabase.from("diario_entradas").select("texto, humor_detectado, sentimento, data")
+        .eq("user_id", user.id)
+        .gte("data", weekAgoStr).lt("data", yesterdayStr)
+        .order("created_at", { ascending: false }).limit(10),
+      supabase.from("metas_pessoais").select("titulo, progresso, status")
+        .eq("user_id", user.id).eq("status", "ativa").limit(5),
+    ]);
 
-    const context = {
-      logs: (logs || []).map(l => `${l.acao}: ${JSON.stringify(l.detalhes)}`).join("\n"),
-      diary: (diary || []).map(d => `[humor:${d.humor_detectado}] ${d.texto}`).join("\n"),
+    // Summarize actions into counts
+    const summarize = (logs: any[]) => {
+      const counts: Record<string, number> = {};
+      for (const l of logs) {
+        counts[l.acao] = (counts[l.acao] || 0) + 1;
+      }
+      return Object.entries(counts).map(([k, v]) => `${k}: ${v}x`).join(", ");
     };
 
-    const hasData = context.logs.length > 0 || context.diary.length > 0;
+    const yesterdaySummary = summarize(yesterdayLogs || []);
+    const weekSummary = summarize(weekLogs || []);
+    const diaryText = (diary || []).map(d => `[humor:${d.humor_detectado}] ${d.texto}`).join("\n");
+    const weekDiaryText = (weekDiary || []).map(d => `[${d.data}] ${d.texto}`).join("\n");
+    const metasText = (metas || []).map(m => `${m.titulo} (${m.progresso}%)`).join(", ");
+
+    const hasData = (yesterdayLogs?.length || 0) > 0 || (diary?.length || 0) > 0;
 
     if (!hasData) {
       return new Response(JSON.stringify({ message: "Novo dia, novas possibilidades. Vamos nessa!" }), {
@@ -77,14 +101,23 @@ serve(async (req) => {
         messages: [
           {
             role: "system",
-            content: `Você é um assistente pessoal brasileiro. Gere UMA frase curta (máximo 12 palavras) positiva e motivacional baseada nas atividades de ontem do usuário. 
-Seja específico: mencione algo concreto que ele fez (tarefa, exercício, medicamento, registro). 
-Tom: caloroso, direto, sem emojis, sem aspas. Frase completa em português brasileiro.
-Exemplos: "Ontem você completou 3 tarefas, hoje vai ser melhor ainda", "Seu treino de ontem mostra disciplina, continue assim"`,
+            content: `Você gera UMA frase curta (máx 15 palavras) que relata algo CONCRETO que o usuário fez ontem.
+NÃO seja motivacional genérico. Seja factual e específico.
+Use dados reais: tarefas concluídas, exercícios feitos, medicamentos tomados, entradas de diário.
+Se houver contexto semanal, reconheça padrões de consistência ou evolução.
+Tom: parceiro, factual, direto. Sem emojis, sem aspas, sem exclamação exagerada.
+
+BOM: "Ontem você fechou 3 tarefas e treinou, quinto dia seguido"
+BOM: "Tomou todos os remédios e registrou como se sentiu, isso importa"
+BOM: "Semana com 4 dias de exercício, ontem não foi exceção"
+RUIM: "Você é incrível, continue assim!" (vazio demais)
+RUIM: "Novo dia, novas possibilidades" (genérico)
+
+Se as metas tiverem progresso, mencione. Se o humor subiu, note.`,
           },
           {
             role: "user",
-            content: `Atividades de ontem:\n${context.logs}\n\nDiário:\n${context.diary}`,
+            content: `ONTEM: ${yesterdaySummary}\nDiário ontem: ${diaryText || "nenhum"}\n\nSEMANA ANTERIOR: ${weekSummary || "sem dados"}\nDiário da semana: ${weekDiaryText || "nenhum"}\n\nMetas ativas: ${metasText || "nenhuma"}`,
           },
         ],
       }),
