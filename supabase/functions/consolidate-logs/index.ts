@@ -40,8 +40,9 @@ async function generateSummary(supabase: any, userId: string, logs: any[], perio
   };
 
   // Try user's Google token
+  let ai_provider = "none";
   const geminiResult = await callGeminiWithUserToken(supabase, userId, geminiOpts);
-  if (geminiResult?.text) return geminiResult.text;
+  if (geminiResult?.text) { ai_provider = "gemini_direct"; return geminiResult.text; }
 
   // Fallback to Lovable AI
   const lovableKey = Deno.env.get("LOVABLE_API_KEY");
