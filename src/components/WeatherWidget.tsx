@@ -17,7 +17,6 @@ interface WeatherData {
   }[];
 }
 
-// WMO Weather interpretation codes → icon + label
 function weatherIcon(code: number) {
   if (code === 0) return Sun;
   if (code <= 2) return CloudSun;
@@ -38,13 +37,9 @@ function weatherLabel(code: number): string {
   if (code === 3) return "Nublado";
   if (code <= 48) return "Nevoeiro";
   if (code <= 55) return "Garoa";
-  if (code <= 57) return "Garoa congelante";
   if (code <= 65) return "Chuva";
-  if (code <= 67) return "Chuva congelante";
-  if (code <= 75) return "Neve";
-  if (code <= 77) return "Granizo";
+  if (code <= 77) return "Neve";
   if (code <= 82) return "Pancadas de chuva";
-  if (code <= 86) return "Neve";
   if (code <= 99) return "Trovoada";
   return "Indefinido";
 }
@@ -76,7 +71,9 @@ export function WeatherWidget() {
         );
         lat = pos.coords.latitude;
         lon = pos.coords.longitude;
-      } catch {}
+      } catch {
+        // fallback to Montes Claros
+      }
 
       const [weatherRes, city] = await Promise.all([
         fetch(
@@ -86,6 +83,10 @@ export function WeatherWidget() {
       ]);
 
       const data = await weatherRes.json();
+
+      if (!data?.current || !data?.daily?.time) {
+        throw new Error("Invalid weather data");
+      }
 
       return {
         city,
@@ -116,13 +117,12 @@ export function WeatherWidget() {
     );
   }
 
-  if (!weather) return null;
+  if (!weather || !weather.forecast) return null;
 
   const CurrentIcon = weatherIcon(weather.currentCode);
 
   return (
     <div className="bg-card rounded-lg border p-4">
-      {/* Current — Google style */}
       <div className="flex items-start justify-between mb-4">
         <div>
           <p className="font-mono text-[10px] tracking-widest text-muted-foreground uppercase">
@@ -138,7 +138,6 @@ export function WeatherWidget() {
         <CurrentIcon className="w-10 h-10 text-primary mt-1" />
       </div>
 
-      {/* Details row */}
       <div className="flex gap-4 mb-4 text-muted-foreground">
         <div className="flex items-center gap-1">
           <Droplets className="w-3 h-3" />
@@ -148,12 +147,9 @@ export function WeatherWidget() {
           <Wind className="w-3 h-3" />
           <span className="font-mono text-[10px]">{weather.windSpeed} km/h</span>
         </div>
-        <span className="font-mono text-[10px]">
-          Sensação {weather.feelsLike}°
-        </span>
+        <span className="font-mono text-[10px]">Sensação {weather.feelsLike}°</span>
       </div>
 
-      {/* 7-day forecast */}
       <div className="border-t pt-3">
         <div className="flex justify-between">
           {weather.forecast.map((d, i) => {
