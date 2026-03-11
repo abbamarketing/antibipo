@@ -19,7 +19,7 @@ import { MondayGoalsReview } from "@/components/MondayGoalsReview";
 import { FridayWeeklyReport } from "@/components/FridayWeeklyReport";
 import { TodayEvents } from "@/components/TodayEvents";
 import { DailyNudge } from "@/components/DailyNudge";
-import { DailyTasksView } from "@/components/DailyTasksView";
+import { UnifiedKanban } from "@/components/UnifiedKanban";
 import { DayGate } from "@/components/DayGate";
 import { MoodCheckIn } from "@/components/MoodCheckIn";
 import { ModuleDashboard } from "@/components/ModuleDashboard";
@@ -213,9 +213,7 @@ const Index = () => {
             {!showMondayReview && !showFridayReport && (
               <>
                 {/* Unified Daily Tasks - always visible */}
-                <div className="mb-6">
-                  <DailyTasksView energy={current_energy!} lastMoodValue={lastMoodValue} />
-                </div>
+                  <UnifiedKanban energy={current_energy!} lastMoodValue={lastMoodValue} />
 
                 {/* Dashboard */}
                 <div className="mb-6">
