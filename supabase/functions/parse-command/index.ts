@@ -16,7 +16,7 @@ serve(async (req) => {
     const today = new Date().toISOString().split("T")[0];
     const now = new Date().toLocaleTimeString("pt-BR", { timeZone: "America/Sao_Paulo", hour: "2-digit", minute: "2-digit" });
 
-    const systemPrompt = `Voce e o assistente do app FLOW. Sua funcao e interpretar comandos em linguagem natural do usuario e converter em acoes estruturadas.
+    const systemPrompt = `Voce e o assistente do app AntiBipolaridade. Sua funcao e interpretar comandos em linguagem natural do usuario e converter em acoes estruturadas.
 
 Data de hoje: ${today}
 Hora atual (Brasilia): ${now}
