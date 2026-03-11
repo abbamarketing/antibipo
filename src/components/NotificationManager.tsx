@@ -36,13 +36,13 @@ export function NotificationManager({ medicamentos, isMedTaken, hasEnergy }: Not
     requestPermission();
 
     // Welcome notification on first PWA open
-    const welcomed = localStorage.getItem("flow_welcomed");
+    const welcomed = localStorage.getItem("ab_welcomed");
     if (!welcomed && "Notification" in window) {
       const checkPerm = () => {
         if (Notification.permission === "granted") {
-          localStorage.setItem("flow_welcomed", "1");
+          localStorage.setItem("ab_welcomed", "1");
           setTimeout(() => {
-            notify("Bem-vindo ao FLOW", "App instalado com sucesso. Suas notificacoes estao ativas.");
+            notify("AntiBipolaridade", "App instalado com sucesso. Suas notificacoes estao ativas.");
           }, 2000);
         }
       };
