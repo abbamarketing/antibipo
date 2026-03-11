@@ -1,5 +1,6 @@
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Sun, Cloud, CloudRain, CloudLightning, CloudSnow, CloudDrizzle, Loader2, Droplets, Wind, CloudSun } from "lucide-react";
+import { Sun, Cloud, CloudRain, CloudLightning, CloudSnow, CloudDrizzle, Loader2, Droplets, Wind, CloudSun, ChevronDown, ChevronUp } from "lucide-react";
 
 interface WeatherData {
   city: string;

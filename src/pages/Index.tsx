@@ -138,7 +138,6 @@ const Index = () => {
               </p>
             </div>
             <div className="flex items-center gap-1">
-              <span className="font-mono text-xs text-muted-foreground tabular-nums mr-1">{clock}</span>
               <button onClick={() => navigate("/financeiro")} className="p-2 rounded-md text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors">
                 <Wallet className="w-4 h-4" />
               </button>
