@@ -52,12 +52,34 @@ export function useProfileStore() {
     queryFn: async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return null;
+      
+      // Try to get existing profile
       const { data, error } = await supabase
         .from("profiles" as any)
         .select("*")
         .eq("user_id", user.id)
         .maybeSingle();
-      if (error) throw error;
+      
+      if (error) {
+        console.error("Error fetching profile:", error);
+        throw error;
+      }
+      
+      // If no profile exists, create one
+      if (!data) {
+        console.log("No profile found, creating one for user:", user.id);
+        const { data: newProfile, error: insertError } = await supabase
+          .from("profiles" as any)
+          .insert({ user_id: user.id } as any)
+          .select("*")
+          .single();
+        if (insertError) {
+          console.error("Error creating profile:", insertError);
+          throw insertError;
+        }
+        return newProfile as unknown as Profile;
+      }
+      
       return data as unknown as Profile | null;
     },
   });
@@ -82,13 +104,26 @@ export function useProfileStore() {
     mutationFn: async (updates: Partial<Profile>) => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Not authenticated");
+      
+      console.log("Updating profile for user:", user.id, "with:", updates);
+      
+      // Use upsert to handle case where profile doesn't exist
       const { error } = await supabase
         .from("profiles" as any)
-        .update({ ...updates, updated_at: new Date().toISOString() } as any)
-        .eq("user_id", user.id);
-      if (error) throw error;
+        .upsert({ 
+          ...updates, 
+          user_id: user.id,
+          updated_at: new Date().toISOString() 
+        } as any, { onConflict: "user_id" });
+      
+      if (error) {
+        console.error("Profile update error:", error);
+        throw error;
+      }
+      console.log("Profile updated successfully");
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ["profile"] }),
+    onError: (error) => console.error("Profile mutation failed:", error),
   });
 
   const addPesoMut = useMutation({
@@ -115,12 +150,11 @@ export function useProfileStore() {
       const done = !!profile[`onboarding_${modulo}` as keyof Profile];
       if (!done) return false;
 
-      // For adaptive modules, check if 30 days have passed
       if (ADAPTIVE_MODULES.includes(modulo)) {
         const lastAt = profile[`onboarding_${modulo}_at` as keyof Profile] as string | null;
         if (lastAt) {
           const elapsed = Date.now() - new Date(lastAt).getTime();
-          if (elapsed > THIRTY_DAYS_MS) return false; // Time for refresh
+          if (elapsed > THIRTY_DAYS_MS) return false;
         }
       }
       return true;
