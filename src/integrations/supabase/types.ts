@@ -1024,12 +1024,18 @@ export type Database = {
         Row: {
           cliente_id: string | null
           criado_em: string
+          data_limite: string | null
+          depende_de: string | null
           dono: Database["public"]["Enums"]["task_owner"]
           estado_ideal: Database["public"]["Enums"]["estado_ideal_type"]
           feito_em: string | null
+          frequencia_recorrencia: string | null
           id: string
           impacto: number
           modulo: Database["public"]["Enums"]["task_modulo"]
+          notas: string | null
+          parent_task_id: string | null
+          recorrente: boolean
           status: Database["public"]["Enums"]["task_status"]
           tempo_min: number
           tipo: Database["public"]["Enums"]["task_tipo"]
@@ -1039,12 +1045,18 @@ export type Database = {
         Insert: {
           cliente_id?: string | null
           criado_em?: string
+          data_limite?: string | null
+          depende_de?: string | null
           dono?: Database["public"]["Enums"]["task_owner"]
           estado_ideal?: Database["public"]["Enums"]["estado_ideal_type"]
           feito_em?: string | null
+          frequencia_recorrencia?: string | null
           id?: string
           impacto?: number
           modulo?: Database["public"]["Enums"]["task_modulo"]
+          notas?: string | null
+          parent_task_id?: string | null
+          recorrente?: boolean
           status?: Database["public"]["Enums"]["task_status"]
           tempo_min?: number
           tipo?: Database["public"]["Enums"]["task_tipo"]
@@ -1054,12 +1066,18 @@ export type Database = {
         Update: {
           cliente_id?: string | null
           criado_em?: string
+          data_limite?: string | null
+          depende_de?: string | null
           dono?: Database["public"]["Enums"]["task_owner"]
           estado_ideal?: Database["public"]["Enums"]["estado_ideal_type"]
           feito_em?: string | null
+          frequencia_recorrencia?: string | null
           id?: string
           impacto?: number
           modulo?: Database["public"]["Enums"]["task_modulo"]
+          notas?: string | null
+          parent_task_id?: string | null
+          recorrente?: boolean
           status?: Database["public"]["Enums"]["task_status"]
           tempo_min?: number
           tipo?: Database["public"]["Enums"]["task_tipo"]
@@ -1072,6 +1090,13 @@ export type Database = {
             columns: ["cliente_id"]
             isOneToOne: false
             referencedRelation: "clientes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tasks_parent_task_id_fkey"
+            columns: ["parent_task_id"]
+            isOneToOne: false
+            referencedRelation: "tasks"
             referencedColumns: ["id"]
           },
         ]
