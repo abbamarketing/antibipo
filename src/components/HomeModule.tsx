@@ -31,7 +31,6 @@ export function HomeModule({ energy }: HomeModuleProps) {
   const [newItemNome, setNewItemNome] = useState("");
   const [newItemQtd, setNewItemQtd] = useState("");
   const [newItemCat, setNewItemCat] = useState("mercado");
-  };
 
   const handleAddTask = () => {
     if (!newTaskNome.trim() || !newTaskComodo.trim()) return;
