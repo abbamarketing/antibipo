@@ -38,6 +38,204 @@ export type Database = {
         }
         Relationships: []
       }
+      bm_analise_semanal: {
+        Row: {
+          adesao_alimentar_pct: number | null
+          classificacao: string | null
+          created_at: string | null
+          exercicios_semana: number | null
+          humor_medio: number | null
+          ia_alerta_nivel: string | null
+          ia_insights: Json | null
+          ia_resumo: string | null
+          id: string
+          score_medio: number | null
+          semana_fim: string
+          semana_inicio: string
+          sono_medio: number | null
+        }
+        Insert: {
+          adesao_alimentar_pct?: number | null
+          classificacao?: string | null
+          created_at?: string | null
+          exercicios_semana?: number | null
+          humor_medio?: number | null
+          ia_alerta_nivel?: string | null
+          ia_insights?: Json | null
+          ia_resumo?: string | null
+          id?: string
+          score_medio?: number | null
+          semana_fim: string
+          semana_inicio: string
+          sono_medio?: number | null
+        }
+        Update: {
+          adesao_alimentar_pct?: number | null
+          classificacao?: string | null
+          created_at?: string | null
+          exercicios_semana?: number | null
+          humor_medio?: number | null
+          ia_alerta_nivel?: string | null
+          ia_insights?: Json | null
+          ia_resumo?: string | null
+          id?: string
+          score_medio?: number | null
+          semana_fim?: string
+          semana_inicio?: string
+          sono_medio?: number | null
+        }
+        Relationships: []
+      }
+      bm_exercicios: {
+        Row: {
+          como_ficou: number | null
+          created_at: string | null
+          data: string
+          duracao_min: number
+          id: string
+          intensidade: number
+          notas: string | null
+          tipo: string
+        }
+        Insert: {
+          como_ficou?: number | null
+          created_at?: string | null
+          data?: string
+          duracao_min: number
+          id?: string
+          intensidade: number
+          notas?: string | null
+          tipo: string
+        }
+        Update: {
+          como_ficou?: number | null
+          created_at?: string | null
+          data?: string
+          duracao_min?: number
+          id?: string
+          intensidade?: number
+          notas?: string | null
+          tipo?: string
+        }
+        Relationships: []
+      }
+      bm_log_estado: {
+        Row: {
+          created_at: string | null
+          data: string
+          estado_energia: string | null
+          exercicio_feito: boolean | null
+          exercicio_intensidade: number | null
+          exercicio_min: number | null
+          humor: number | null
+          ia_alerta: string | null
+          ia_score_bem_estar: number | null
+          ia_sinais: string[] | null
+          id: string
+          refeicoes_puladas: number | null
+          refeicoes_saudaveis: number | null
+          refeicoes_total: number | null
+          remedio_tomado: boolean | null
+          sono_horas: number | null
+          sono_qualidade: number | null
+        }
+        Insert: {
+          created_at?: string | null
+          data: string
+          estado_energia?: string | null
+          exercicio_feito?: boolean | null
+          exercicio_intensidade?: number | null
+          exercicio_min?: number | null
+          humor?: number | null
+          ia_alerta?: string | null
+          ia_score_bem_estar?: number | null
+          ia_sinais?: string[] | null
+          id?: string
+          refeicoes_puladas?: number | null
+          refeicoes_saudaveis?: number | null
+          refeicoes_total?: number | null
+          remedio_tomado?: boolean | null
+          sono_horas?: number | null
+          sono_qualidade?: number | null
+        }
+        Update: {
+          created_at?: string | null
+          data?: string
+          estado_energia?: string | null
+          exercicio_feito?: boolean | null
+          exercicio_intensidade?: number | null
+          exercicio_min?: number | null
+          humor?: number | null
+          ia_alerta?: string | null
+          ia_score_bem_estar?: number | null
+          ia_sinais?: string[] | null
+          id?: string
+          refeicoes_puladas?: number | null
+          refeicoes_saudaveis?: number | null
+          refeicoes_total?: number | null
+          remedio_tomado?: boolean | null
+          sono_horas?: number | null
+          sono_qualidade?: number | null
+        }
+        Relationships: []
+      }
+      bm_metas: {
+        Row: {
+          ativo: boolean | null
+          dias_exercicio_meta: number | null
+          duracao_meta_min: number | null
+          id: string
+          refeicoes_meta_pct: number | null
+        }
+        Insert: {
+          ativo?: boolean | null
+          dias_exercicio_meta?: number | null
+          duracao_meta_min?: number | null
+          id?: string
+          refeicoes_meta_pct?: number | null
+        }
+        Update: {
+          ativo?: boolean | null
+          dias_exercicio_meta?: number | null
+          duracao_meta_min?: number | null
+          id?: string
+          refeicoes_meta_pct?: number | null
+        }
+        Relationships: []
+      }
+      bm_refeicoes: {
+        Row: {
+          categorias: string[] | null
+          created_at: string | null
+          data: string
+          descricao: string | null
+          id: string
+          pulou: boolean | null
+          qualidade: number
+          refeicao: string
+        }
+        Insert: {
+          categorias?: string[] | null
+          created_at?: string | null
+          data?: string
+          descricao?: string | null
+          id?: string
+          pulou?: boolean | null
+          qualidade: number
+          refeicao: string
+        }
+        Update: {
+          categorias?: string[] | null
+          created_at?: string | null
+          data?: string
+          descricao?: string | null
+          id?: string
+          pulou?: boolean | null
+          qualidade?: number
+          refeicao?: string
+        }
+        Relationships: []
+      }
       clientes: {
         Row: {
           contato: string | null
