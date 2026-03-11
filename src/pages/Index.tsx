@@ -18,6 +18,7 @@ import { ModuleOnboardingGuard } from "@/components/ModuleOnboardingGuard";
 import { MondayGoalsReview } from "@/components/MondayGoalsReview";
 import { FridayWeeklyReport } from "@/components/FridayWeeklyReport";
 import { TodayEvents } from "@/components/TodayEvents";
+import { DailyNudge } from "@/components/DailyNudge";
 import { Plus, Zap, Sun, Battery, Wallet, Settings, CalendarDays, Activity } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
