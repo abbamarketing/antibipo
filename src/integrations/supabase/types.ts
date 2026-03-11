@@ -392,6 +392,33 @@ export type Database = {
         }
         Relationships: []
       }
+      lista_compras: {
+        Row: {
+          categoria: string | null
+          comprado: boolean | null
+          created_at: string | null
+          id: string
+          item: string
+          quantidade: string | null
+        }
+        Insert: {
+          categoria?: string | null
+          comprado?: boolean | null
+          created_at?: string | null
+          id?: string
+          item: string
+          quantidade?: string | null
+        }
+        Update: {
+          categoria?: string | null
+          comprado?: boolean | null
+          created_at?: string | null
+          id?: string
+          item?: string
+          quantidade?: string | null
+        }
+        Relationships: []
+      }
       medicamentos: {
         Row: {
           criado_em: string
@@ -442,6 +469,41 @@ export type Database = {
           valor?: number
         }
         Relationships: []
+      }
+      registros_limpeza: {
+        Row: {
+          comodo: string
+          feito_em: string
+          id: string
+          notas: string | null
+          tarefa: string
+          tarefa_casa_id: string | null
+        }
+        Insert: {
+          comodo: string
+          feito_em?: string
+          id?: string
+          notas?: string | null
+          tarefa: string
+          tarefa_casa_id?: string | null
+        }
+        Update: {
+          comodo?: string
+          feito_em?: string
+          id?: string
+          notas?: string | null
+          tarefa?: string
+          tarefa_casa_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "registros_limpeza_tarefa_casa_id_fkey"
+            columns: ["tarefa_casa_id"]
+            isOneToOne: false
+            referencedRelation: "tarefas_casa"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       registros_medicamento: {
         Row: {
@@ -523,6 +585,36 @@ export type Database = {
           estado?: Database["public"]["Enums"]["energy_state"]
           hora_inicio?: string
           id?: string
+        }
+        Relationships: []
+      }
+      tarefas_casa: {
+        Row: {
+          ativo: boolean | null
+          comodo: string
+          created_at: string | null
+          frequencia: string
+          id: string
+          tarefa: string
+          tempo_min: number | null
+        }
+        Insert: {
+          ativo?: boolean | null
+          comodo: string
+          created_at?: string | null
+          frequencia?: string
+          id?: string
+          tarefa: string
+          tempo_min?: number | null
+        }
+        Update: {
+          ativo?: boolean | null
+          comodo?: string
+          created_at?: string | null
+          frequencia?: string
+          id?: string
+          tarefa?: string
+          tempo_min?: number | null
         }
         Relationships: []
       }

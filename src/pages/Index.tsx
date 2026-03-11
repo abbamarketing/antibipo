@@ -1,4 +1,5 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
+import { supabase } from "@/integrations/supabase/client";
 import { useFlowStore } from "@/lib/store";
 import { startTimeThemeWatcher } from "@/lib/time-theme";
 import { brasiliaTimeString, brasiliaDateString } from "@/lib/brasilia";
@@ -12,7 +13,7 @@ import { HealthModule } from "@/components/HealthModule";
 import { QuickCapture } from "@/components/QuickCapture";
 import { WeatherWidget } from "@/components/WeatherWidget";
 import { NotificationManager } from "@/components/NotificationManager";
-import { Plus, Activity, Zap, Sun, Battery, Wallet } from "lucide-react";
+import { Plus, Activity, Zap, Sun, Battery, Wallet, LogOut } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 const Index = () => {
@@ -133,6 +134,13 @@ const Index = () => {
                 title="Log de atividade"
               >
                 <Activity className="w-4 h-4" />
+              </button>
+              <button
+                onClick={async () => { await supabase.auth.signOut(); navigate("/auth"); }}
+                className="p-1.5 rounded-md text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors"
+                title="Sair"
+              >
+                <LogOut className="w-4 h-4" />
               </button>
               <span className="font-mono text-sm text-muted-foreground tabular-nums">{clock}</span>
             </div>
