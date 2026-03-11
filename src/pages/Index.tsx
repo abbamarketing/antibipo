@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useFlowStore } from "@/lib/store";
 import { startTimeThemeWatcher } from "@/lib/time-theme";
@@ -17,6 +17,7 @@ import { NotificationManager } from "@/components/NotificationManager";
 import { ModuleOnboardingGuard } from "@/components/ModuleOnboardingGuard";
 import { MondayGoalsReview } from "@/components/MondayGoalsReview";
 import { FridayWeeklyReport } from "@/components/FridayWeeklyReport";
+import { TodayEvents } from "@/components/TodayEvents";
 import { Plus, Zap, Sun, Battery, Wallet, Settings, CalendarDays, Activity } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
@@ -29,15 +30,14 @@ const Index = () => {
 
   const navigate = useNavigate();
   const [captureOpen, setCaptureOpen] = useState(false);
-  const [clock, setClock] = useState(brasiliaTimeString());
+  
   const [activeNav, setActiveNav] = useState<NavModulo>("trabalho");
   const [showMondayReview, setShowMondayReview] = useState(false);
   const [showFridayReport, setShowFridayReport] = useState(false);
 
   useEffect(() => {
     const cleanup = startTimeThemeWatcher();
-    const clockInterval = setInterval(() => setClock(brasiliaTimeString()), 30000);
-    return () => { cleanup(); clearInterval(clockInterval); };
+    return () => { cleanup(); };
   }, []);
 
   const pending = pendingMeds();
@@ -138,7 +138,6 @@ const Index = () => {
               </p>
             </div>
             <div className="flex items-center gap-1">
-              <span className="font-mono text-xs text-muted-foreground tabular-nums mr-1">{clock}</span>
               <button onClick={() => navigate("/financeiro")} className="p-2 rounded-md text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors">
                 <Wallet className="w-4 h-4" />
               </button>
@@ -159,6 +158,9 @@ const Index = () => {
         <div className="mb-4">
           <WeatherWidget />
         </div>
+
+        {/* Today's events */}
+        <TodayEvents />
 
         {/* Med Alert */}
         {pending.length > 0 && (
