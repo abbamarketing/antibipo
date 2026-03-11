@@ -295,7 +295,9 @@ const Index = () => {
       <QuickCapture
         open={captureOpen}
         onClose={() => setCaptureOpen(false)}
-        onCapture={handleCapture}
+        onActionComplete={() => {
+          // Invalidate relevant queries after AI action
+        }}
       />
     </div>
   );
