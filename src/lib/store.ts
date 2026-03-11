@@ -75,6 +75,15 @@ export function useFlowStore() {
     },
   });
 
+  const { data: clientes = [] } = useQuery({
+    queryKey: ["clientes"],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("clientes").select("*").eq("status", "ativo").order("nome");
+      if (error) throw error;
+      return data;
+    },
+  });
+
   // ===== MUTATIONS =====
   const addTaskMut = useMutation({
     mutationFn: async (task: Database["public"]["Tables"]["tasks"]["Insert"]) => {
