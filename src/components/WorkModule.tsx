@@ -1,6 +1,8 @@
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import { EnergyState, Task } from "@/lib/store";
 import { TaskCard } from "./TaskCard";
+import { supabase } from "@/integrations/supabase/client";
+import { useQuery } from "@tanstack/react-query";
 import {
   Inbox,
   Search,
@@ -37,6 +39,32 @@ const energyMessages: Record<EnergyState, string> = {
 };
 
 export function WorkModule({ energy, tasks, allTasks, onComplete, onDelegate, onPush }: WorkModuleProps) {
+  // Fetch clients for name display
+  const { data: clientes = [] } = useQuery({
+    queryKey: ["clientes_all"],
+    queryFn: async () => {
+      const { data } = await supabase.from("clientes").select("id, nome");
+      return data || [];
+    },
+  });
+
+  const clienteMap = useMemo(() => {
+    const map: Record<string, string> = {};
+    clientes.forEach((c: any) => { map[c.id] = c.nome; });
+    return map;
+  }, [clientes]);
+
+  // Group subtasks by parent
+  const subtaskMap = useMemo(() => {
+    const map: Record<string, Task[]> = {};
+    allTasks.forEach((t: any) => {
+      if (t.parent_task_id) {
+        if (!map[t.parent_task_id]) map[t.parent_task_id] = [];
+        map[t.parent_task_id].push(t);
+      }
+    });
+    return map;
+  }, [allTasks]);
   const [view, setView] = useState<"focus" | "kanban">(energy === "foco_total" ? "kanban" : "focus");
   const [search, setSearch] = useState("");
   const [showSearch, setShowSearch] = useState(false);
@@ -99,7 +127,7 @@ export function WorkModule({ energy, tasks, allTasks, onComplete, onDelegate, on
 
   // Filter work tasks
   const workTasks = allTasks.filter(
-    (t) => t.modulo === "trabalho" && t.status !== "feito" && t.status !== "descartado"
+    (t: any) => t.modulo === "trabalho" && t.status !== "feito" && t.status !== "descartado" && !t.parent_task_id
   );
 
   const filtered = workTasks.filter((t) => {
@@ -164,7 +192,7 @@ export function WorkModule({ energy, tasks, allTasks, onComplete, onDelegate, on
           <div className="space-y-3">
             {tasks.map((task) => (
               <div key={task.id} className="space-y-1">
-                <TaskCard task={task} onComplete={onComplete} onDelegate={onDelegate} onPush={onPush} />
+                <TaskCard task={task} clienteName={task.cliente_id ? clienteMap[task.cliente_id] : undefined} subtasks={subtaskMap[task.id]} onComplete={onComplete} onDelegate={onDelegate} onPush={onPush} />
                 {!pomodoroActive && (
                   <button
                     onClick={() => startPomodoro(task.id)}
@@ -315,7 +343,7 @@ export function WorkModule({ energy, tasks, allTasks, onComplete, onDelegate, on
                   ) : (
                     colTasks.map((task) => (
                       <div key={task.id} className="space-y-1">
-                        <TaskCard task={task} onComplete={onComplete} onDelegate={onDelegate} onPush={onPush} />
+                        <TaskCard task={task} clienteName={task.cliente_id ? clienteMap[task.cliente_id] : undefined} subtasks={subtaskMap[task.id]} onComplete={onComplete} onDelegate={onDelegate} onPush={onPush} />
                         {!pomodoroActive && (
                           <button
                             onClick={() => startPomodoro(task.id)}

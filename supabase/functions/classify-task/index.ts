@@ -9,7 +9,7 @@ serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
-    const { titulo } = await req.json();
+    const { titulo, notas } = await req.json();
     if (!titulo) throw new Error("titulo is required");
 
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
@@ -26,7 +26,7 @@ serve(async (req) => {
         messages: [
           {
             role: "system",
-            content: `Você é um classificador de tarefas para o sistema AntiBipolaridade. Recebe o título de uma tarefa e retorna a classificação usando tool calling.
+            content: `Você é um classificador de tarefas para o sistema AntiBipolaridade. Recebe o título de uma tarefa e informações adicionais e retorna a classificação usando tool calling.
 
 Contexto do usuário:
 - Empreendedor, dono de agência de vídeo para clínicas médicas
@@ -54,11 +54,14 @@ Dono:
 
 Urgência: 1=talvez, 2=esta semana, 3=hoje
 Impacto: 1=baixo, 2=médio, 3=alto
-Tempo estimado em minutos (padrão 30)`,
+Tempo estimado em minutos (padrão 30)
+
+Se a tarefa mencionar repetição ou recorrência, marque recorrente=true e defina a frequência.
+Se depender de outra pessoa para começar, identifique quem em depende_de.`,
           },
           {
             role: "user",
-            content: `Classifique esta tarefa: "${titulo}"`,
+            content: `Classifique esta tarefa: "${titulo}"${notas ? `\nNotas adicionais: ${notas}` : ""}`,
           },
         ],
         tools: [
@@ -66,7 +69,7 @@ Tempo estimado em minutos (padrão 30)`,
             type: "function",
             function: {
               name: "classify_task",
-              description: "Classifica uma tarefa do AntiBipolaridade com tipo, estado ideal, urgência, impacto, dono e tempo estimado.",
+              description: "Classifica uma tarefa com tipo, estado ideal, urgência, impacto, dono, tempo, recorrência e dependências.",
               parameters: {
                 type: "object",
                 properties: {
@@ -77,6 +80,9 @@ Tempo estimado em minutos (padrão 30)`,
                   dono: { type: "string", description: "One of: eu, socio_medico, editor" },
                   tempo_min: { type: "number", description: "Estimated minutes" },
                   modulo: { type: "string", description: "One of: trabalho, casa, saude" },
+                  recorrente: { type: "boolean", description: "Whether this task repeats" },
+                  frequencia_recorrencia: { type: "string", description: "diario, semanal, quinzenal, mensal" },
+                  depende_de: { type: "string", description: "Person this task depends on" },
                 },
               },
             },

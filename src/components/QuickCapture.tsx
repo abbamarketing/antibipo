@@ -177,18 +177,63 @@ export function QuickCapture({ open, onClose, onActionComplete }: QuickCapturePr
         }
 
         case "trabalho": {
-          await supabase.from("tasks").insert({
+          // Find client by name if provided
+          let clienteId = null;
+          if (dados.cliente_nome) {
+            const { data: clienteMatch } = await supabase
+              .from("clientes")
+              .select("id")
+              .ilike("nome", `%${dados.cliente_nome}%`)
+              .limit(1)
+              .maybeSingle();
+            clienteId = clienteMatch?.id || null;
+          }
+
+          // Create main task
+          const { data: mainTask } = await supabase.from("tasks").insert({
             titulo: dados.titulo || input,
-            modulo: dados.modulo || "trabalho",
+            modulo: (dados.modulo as any) || "trabalho",
             urgencia: dados.urgencia || 2,
-            tipo: "operacional",
-            dono: "eu",
+            tipo: "operacional" as any,
+            dono: "eu" as any,
             tempo_min: 30,
-            estado_ideal: "qualquer",
+            estado_ideal: "qualquer" as any,
             impacto: 2,
-            status: "hoje",
+            status: "hoje" as any,
+            cliente_id: clienteId,
+            recorrente: dados.recorrente || false,
+            frequencia_recorrencia: dados.frequencia_recorrencia || null,
+            depende_de: dados.depende_de || null,
+            data_limite: dados.data_limite || null,
+            notas: dados.notas || null,
+          } as any).select().single();
+
+          // Create subtasks if detected
+          if (dados.subtarefas && dados.subtarefas.length > 0 && mainTask) {
+            const subtaskInserts = dados.subtarefas.map((sub: string) => ({
+              titulo: sub,
+              modulo: "trabalho" as any,
+              urgencia: dados.urgencia || 2,
+              tipo: "operacional" as any,
+              dono: "eu" as any,
+              tempo_min: 15,
+              estado_ideal: "qualquer" as any,
+              impacto: 1,
+              status: "backlog" as any,
+              parent_task_id: (mainTask as any).id,
+              cliente_id: clienteId,
+            }));
+            await supabase.from("tasks").insert(subtaskInserts as any);
+          }
+
+          logActivity("tarefa_capturada", {
+            titulo: dados.titulo,
+            modulo: dados.modulo || "trabalho",
+            cliente: dados.cliente_nome,
+            recorrente: dados.recorrente,
+            subtarefas: dados.subtarefas?.length || 0,
+            depende_de: dados.depende_de,
           });
-          logActivity("tarefa_capturada", { titulo: dados.titulo, modulo: dados.modulo || "trabalho" });
           break;
         }
 
