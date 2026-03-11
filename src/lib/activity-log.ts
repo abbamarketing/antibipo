@@ -23,11 +23,11 @@ export async function logActivity(
   contexto?: string
 ) {
   try {
-    await supabase.from("activity_log").insert({
+    await supabase.from("activity_log").insert([{
       acao,
-      detalhes: detalhes || {},
+      detalhes: (detalhes || {}) as any,
       contexto: contexto || null,
-    });
+    }]);
   } catch (e) {
     console.error("Activity log failed:", e);
   }
