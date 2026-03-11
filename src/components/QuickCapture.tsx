@@ -427,6 +427,12 @@ export function QuickCapture({ open, onClose, onActionComplete }: QuickCapturePr
       const parts: string[] = [];
       if (profile?.nome) parts.push(`Nome: ${profile.nome}`);
       if (profile?.trabalho_tipo) parts.push(`Trabalho: ${profile.trabalho_tipo}, equipe: ${profile.trabalho_equipe || "solo"}`);
+      if (profile?.casa_comodos) parts.push(`Casa: ${profile.casa_comodos} cômodos, ${profile.casa_moradores || 1} moradores${profile.casa_pets ? ", tem pets" : ""}`);
+      if (tarefasCasa?.length) {
+        const comodos = [...new Set((tarefasCasa as any[]).map((t: any) => t.comodo))];
+        parts.push(`Cômodos cadastrados: ${comodos.join(", ")}`);
+        parts.push(`Tarefas domésticas cadastradas: ${(tarefasCasa as any[]).map((t: any) => `${t.tarefa} (${t.comodo})`).join(", ")}`);
+      }
       if (clientes?.length) parts.push(`Clientes ativos: ${clientes.map((c: any) => `${c.nome} (${c.tipo})`).join(", ")}`);
       if (pendingTasks?.length) parts.push(`Tarefas pendentes: ${pendingTasks.map((t: any) => `${t.titulo} [${t.status}]`).join(", ")}`);
       if (lastHumor) parts.push(`Humor hoje: ${lastHumor.valor}/5`);
