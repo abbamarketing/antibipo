@@ -1,12 +1,142 @@
-// Update this page (the content is just a fallback if you fail to update the page)
+import { useEffect, useState } from "react";
+import { useFlowStore } from "@/lib/store";
+import { startTimeThemeWatcher } from "@/lib/time-theme";
+import { EnergyStateSelector } from "@/components/EnergyStateSelector";
+import { MedAlert } from "@/components/MedAlert";
+import { ModuleNav } from "@/components/ModuleNav";
+import { WorkModule } from "@/components/WorkModule";
+import { HomeModule } from "@/components/HomeModule";
+import { HealthModule } from "@/components/HealthModule";
+import { QuickCapture } from "@/components/QuickCapture";
+import { Plus } from "lucide-react";
 
 const Index = () => {
+  const {
+    state,
+    setEnergy,
+    setModulo,
+    addTask,
+    completeTask,
+    updateTask,
+    addMedicamento,
+    registrarMedicamento,
+    registrarHumor,
+    registrarSono,
+    isMedTakenToday,
+    pendingMeds,
+    getFilteredTasks,
+    todayHumor,
+  } = useFlowStore();
+
+  const [captureOpen, setCaptureOpen] = useState(false);
+
+  useEffect(() => {
+    return startTimeThemeWatcher();
+  }, []);
+
+  const pending = pendingMeds();
+  const { current_energy, current_modulo } = state;
+
+  // If no energy selected, show home/energy selection
+  const showEnergySelector = !current_energy;
+
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background">
-      <div className="text-center">
-        <h1 className="mb-4 text-4xl font-bold">Welcome to Your Blank App</h1>
-        <p className="text-xl text-muted-foreground">Start building your amazing project here!</p>
+    <div className="min-h-screen bg-background">
+      <div className="max-w-lg mx-auto px-4 py-6 pb-24">
+        {/* Header */}
+        <header className="mb-6">
+          <h1 className="font-mono text-xl font-bold tracking-tight">FLOW</h1>
+          <p className="text-xs text-muted-foreground font-mono tracking-widest mt-1">
+            {new Date().toLocaleDateString("pt-BR", { weekday: "long", day: "numeric", month: "long" })}
+          </p>
+        </header>
+
+        {/* Med Alert — always visible if pending */}
+        {pending.length > 0 && (
+          <div className="mb-4">
+            <MedAlert pendingMeds={pending} onTake={registrarMedicamento} />
+          </div>
+        )}
+
+        {showEnergySelector ? (
+          <EnergyStateSelector current={current_energy} onSelect={setEnergy} />
+        ) : (
+          <>
+            {/* Energy indicator + change */}
+            <div className="flex items-center gap-2 mb-4">
+              <button
+                onClick={() => setEnergy(current_energy)}
+                className="font-mono text-[11px] tracking-wider text-primary hover:underline"
+              >
+                {current_energy === "foco_total" ? "⚡ FOCO TOTAL" : current_energy === "modo_leve" ? "☀️ MODO LEVE" : "🔋 SÓ O BÁSICO"}
+              </button>
+              <span className="text-muted-foreground/30">·</span>
+              <button
+                onClick={() => {
+                  // Reset energy to re-select
+                  setEnergy(current_energy === "foco_total" ? "modo_leve" : current_energy === "modo_leve" ? "basico" : "foco_total");
+                }}
+                className="font-mono text-[10px] text-muted-foreground hover:text-foreground transition-colors"
+              >
+                mudar
+              </button>
+            </div>
+
+            {/* Module Nav */}
+            <div className="mb-6">
+              <ModuleNav current={current_modulo} onSelect={setModulo} />
+            </div>
+
+            {/* Module Content */}
+            {current_modulo === "trabalho" && (
+              <WorkModule
+                energy={current_energy}
+                tasks={getFilteredTasks("trabalho", current_energy)}
+                allTasks={state.tasks}
+                onComplete={completeTask}
+                onDelegate={(id) => {
+                  updateTask(id, { status: "aguardando" });
+                  // In a real app, generate WhatsApp message here
+                }}
+                onPush={(id) => updateTask(id, { urgencia: Math.max(1, (state.tasks.find(t => t.id === id)?.urgencia || 2) - 1) as 1 | 2 | 3 })}
+              />
+            )}
+
+            {current_modulo === "casa" && <HomeModule energy={current_energy} />}
+
+            {current_modulo === "saude" && (
+              <HealthModule
+                energy={current_energy}
+                medicamentos={state.medicamentos}
+                registros_humor={state.registros_humor}
+                registros_sono={state.registros_sono}
+                onTakeMed={registrarMedicamento}
+                isMedTaken={isMedTakenToday}
+                onMood={registrarHumor}
+                onSleep={registrarSono}
+                onAddMed={addMedicamento}
+                todayHumor={todayHumor}
+              />
+            )}
+          </>
+        )}
       </div>
+
+      {/* FAB — Quick Capture */}
+      {current_energy && (
+        <button
+          onClick={() => setCaptureOpen(true)}
+          className="fixed bottom-6 right-6 w-14 h-14 rounded-full bg-primary text-primary-foreground shadow-lg flex items-center justify-center hover:opacity-90 transition-opacity z-40"
+        >
+          <Plus className="w-6 h-6" />
+        </button>
+      )}
+
+      <QuickCapture
+        open={captureOpen}
+        onClose={() => setCaptureOpen(false)}
+        onCapture={(data) => addTask(data)}
+      />
     </div>
   );
 };
