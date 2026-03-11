@@ -117,4 +117,9 @@
   button, label, nav, [data-ui-label] {
     font-family: var(--font-mono);
   }
+
+  /* Prevent iOS auto-zoom on input focus */
+  input, select, textarea {
+    font-size: 16px !important;
+  }
 }
