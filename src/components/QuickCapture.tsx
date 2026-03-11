@@ -389,6 +389,35 @@ export function QuickCapture({ open, onClose, onActionComplete }: QuickCapturePr
           });
           break;
         }
+
+        case "plano_casa": {
+          const tarefasPlano = dados.plano_tarefas || [];
+          if (tarefasPlano.length > 0) {
+            // Create tasks in the tasks table with module "casa" and deadline
+            for (const t of tarefasPlano) {
+              await supabase.from("tasks").insert({
+                titulo: `${t.tarefa} — ${t.comodo}`,
+                modulo: "casa" as any,
+                urgencia: t.prioridade || 2,
+                tipo: "domestico" as any,
+                dono: "eu" as any,
+                tempo_min: t.tempo_estimado_min || 15,
+                estado_ideal: "qualquer" as any,
+                impacto: t.prioridade === 1 ? 3 : 2,
+                status: "hoje" as any,
+                data_limite: dados.plano_prazo || null,
+                notas: dados.plano_resumo || null,
+              } as any);
+            }
+            toast.success(`Plano criado com ${tarefasPlano.length} tarefas!`);
+          }
+          logActivity("captura_rapida", {
+            tipo: "plano_casa",
+            tarefas: tarefasPlano.length,
+            prazo: dados.plano_prazo,
+          });
+          break;
+        }
       }
     } catch (err) {
       console.error("Action execution error:", err);
