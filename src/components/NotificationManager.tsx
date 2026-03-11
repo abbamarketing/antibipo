@@ -144,7 +144,7 @@ export function NotificationManager({ medicamentos, isMedTaken, hasEnergy }: Not
     const check = setInterval(() => {
       const elapsed = Date.now() - lastInactivity.current;
       if (elapsed > 2 * 60 * 60 * 1000 && hasEnergy) {
-        notify("FLOW", "Ha um tempo sem atividade. Como estao as tarefas?");
+        notify("AntiBipolaridade", "Ha um tempo sem atividade. Como estao as tarefas?");
         lastInactivity.current = Date.now();
       }
     }, 15 * 60 * 1000);
