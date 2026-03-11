@@ -135,6 +135,13 @@ const Index = () => {
               >
                 <Activity className="w-4 h-4" />
               </button>
+              <button
+                onClick={async () => { await supabase.auth.signOut(); navigate("/auth"); }}
+                className="p-1.5 rounded-md text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors"
+                title="Sair"
+              >
+                <LogOut className="w-4 h-4" />
+              </button>
               <span className="font-mono text-sm text-muted-foreground tabular-nums">{clock}</span>
             </div>
           </div>
