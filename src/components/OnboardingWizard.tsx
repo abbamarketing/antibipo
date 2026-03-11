@@ -7,6 +7,7 @@ type ModuloOnboarding = "saude" | "trabalho" | "casa" | "financeiro";
 interface OnboardingWizardProps {
   modulo: ModuloOnboarding;
   onComplete: () => void;
+  isRefresh?: boolean;
 }
 
 type Question = {
