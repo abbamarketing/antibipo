@@ -128,7 +128,7 @@ const Index = () => {
       />
 
       <div className="max-w-lg mx-auto px-4 py-4 pb-24">
-        {/* Header - compact */}
+        {/* Header */}
         <header className="mb-5">
           <div className="flex items-center justify-between">
             <div>
@@ -144,6 +144,9 @@ const Index = () => {
               </button>
               <button onClick={() => navigate("/calendario")} className="p-2 rounded-md text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors">
                 <CalendarDays className="w-4 h-4" />
+              </button>
+              <button onClick={() => navigate("/log")} className="p-2 rounded-md text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors" title="Log de atividade">
+                <Activity className="w-4 h-4" />
               </button>
               <button onClick={() => navigate("/config")} className="p-2 rounded-md text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors">
                 <Settings className="w-4 h-4" />

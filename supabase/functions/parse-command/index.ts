@@ -37,9 +37,13 @@ Regras:
 - "preciso fazer" / "tarefa" / "to do" / qualquer tarefa de trabalho -> trabalho
 - "comprar" / "preciso comprar" / "lista" -> compras
 - "meta" / "objetivo" / "quero alcançar" -> meta
+- QUALQUER texto que seja relato pessoal, diario, documentacao do dia, reflexao, desabafo, comentario sobre o que esta fazendo, como esta se sentindo de forma geral -> diario
+  Exemplos de diario: "hoje foi um dia bom", "almocei com minha mae", "estou me sentindo ansioso", "terminei aquele projeto", "fui ao mercado", "nao consegui dormir direito", "tive uma conversa boa com fulano"
 - Para datas relativas: "amanha" = dia seguinte, "segunda" = proxima segunda, etc.
 - Para valores financeiros: extraia o numero e determine se e entrada ou saida pelo contexto
 - Se o usuario nao especificar urgencia, use 2 (semana)
+- Para diario: SEMPRE detecte o humor implicito (1=muito mal, 2=mal, 3=neutro, 4=bem, 5=muito bem) e o sentimento geral
+- Para diario: extraia tags relevantes como ["trabalho", "familia", "saude", "social", "lazer", "estudo"]
 - Responda com uma confirmacao curta e amigavel no campo "resposta"`;
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
@@ -65,7 +69,7 @@ Regras:
                 properties: {
                   tipo: {
                     type: "string",
-                    enum: ["financeiro", "calendario", "casa", "trabalho", "saude_exercicio", "saude_medicamento", "saude_peso", "saude_humor", "compras", "meta"],
+                    enum: ["financeiro", "calendario", "casa", "trabalho", "saude_exercicio", "saude_medicamento", "saude_peso", "saude_humor", "compras", "meta", "diario"],
                     description: "Tipo da acao detectada"
                   },
                   resposta: {
@@ -108,6 +112,11 @@ Regras:
                       // Meta
                       meta_titulo: { type: "string" },
                       meta_prazo: { type: "string", enum: ["1_mes", "6_meses", "1_ano"] },
+                      // Diario
+                      diario_texto: { type: "string", description: "Texto completo do relato do usuario" },
+                      diario_humor: { type: "number", enum: [1, 2, 3, 4, 5], description: "Humor detectado: 1=muito mal, 5=muito bem" },
+                      diario_sentimento: { type: "string", description: "Sentimento geral: positivo, negativo, neutro, ansioso, triste, feliz, frustrado, motivado, cansado" },
+                      diario_tags: { type: "array", items: { type: "string" }, description: "Tags relevantes extraidas do texto" },
                     },
                     additionalProperties: false,
                   },

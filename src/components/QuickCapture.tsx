@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { logActivity } from "@/lib/activity-log";
 import { brasiliaTimeString, brasiliaISO } from "@/lib/brasilia";
-import { X, Send, Loader2, CheckCircle2, AlertCircle } from "lucide-react";
+import { X, Send, Loader2, CheckCircle2, AlertCircle, Mic, MicOff } from "lucide-react";
 import { toast } from "sonner";
 
 interface QuickCaptureProps {
@@ -19,13 +19,21 @@ interface ActionResult {
   dados: Record<string, any>;
 }
 
+// Web Speech API types
+interface SpeechRecognitionEvent {
+  results: SpeechRecognitionResultList;
+  resultIndex: number;
+}
+
 export function QuickCapture({ open, onClose, onActionComplete }: QuickCaptureProps) {
   const [input, setInput] = useState("");
   const [feedback, setFeedback] = useState<FeedbackState>("idle");
   const [lastResponse, setLastResponse] = useState("");
   const [history, setHistory] = useState<{ text: string; response: string; tipo: string }[]>([]);
+  const [isListening, setIsListening] = useState(false);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const historyRef = useRef<HTMLDivElement>(null);
+  const recognitionRef = useRef<any>(null);
 
   useEffect(() => {
     if (open) {
@@ -34,6 +42,7 @@ export function QuickCapture({ open, onClose, onActionComplete }: QuickCapturePr
       setHistory([]);
       setFeedback("idle");
       setLastResponse("");
+      stopListening();
     }
   }, [open]);
 
@@ -42,6 +51,81 @@ export function QuickCapture({ open, onClose, onActionComplete }: QuickCapturePr
       historyRef.current.scrollTop = historyRef.current.scrollHeight;
     }
   }, [history]);
+
+  // Initialize Speech Recognition
+  const startListening = () => {
+    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    if (!SpeechRecognition) {
+      toast.error("Seu navegador nao suporta reconhecimento de voz");
+      return;
+    }
+
+    const recognition = new SpeechRecognition();
+    recognition.lang = "pt-BR";
+    recognition.interimResults = true;
+    recognition.continuous = true;
+    recognition.maxAlternatives = 1;
+
+    recognition.onresult = (event: SpeechRecognitionEvent) => {
+      let interimTranscript = "";
+      let finalTranscript = "";
+
+      for (let i = event.resultIndex; i < event.results.length; i++) {
+        const result = event.results[i];
+        if (result.isFinal) {
+          finalTranscript += result[0].transcript;
+        } else {
+          interimTranscript += result[0].transcript;
+        }
+      }
+
+      if (finalTranscript) {
+        setInput((prev) => (prev ? prev + " " : "") + finalTranscript);
+      } else if (interimTranscript) {
+        // Show interim results in a subtle way
+        setInput((prev) => {
+          const base = prev.replace(/\[.*?\]$/, "").trim();
+          return base ? `${base} [${interimTranscript}]` : `[${interimTranscript}]`;
+        });
+      }
+    };
+
+    recognition.onerror = (event: any) => {
+      console.error("Speech recognition error:", event.error);
+      if (event.error !== "no-speech") {
+        toast.error("Erro no reconhecimento de voz");
+      }
+      setIsListening(false);
+    };
+
+    recognition.onend = () => {
+      setIsListening(false);
+      // Clean up interim brackets
+      setInput((prev) => prev.replace(/\s*\[.*?\]$/, ""));
+    };
+
+    recognitionRef.current = recognition;
+    recognition.start();
+    setIsListening(true);
+  };
+
+  const stopListening = () => {
+    if (recognitionRef.current) {
+      recognitionRef.current.stop();
+      recognitionRef.current = null;
+    }
+    setIsListening(false);
+    // Clean up interim brackets
+    setInput((prev) => prev.replace(/\s*\[.*?\]$/, ""));
+  };
+
+  const toggleListening = () => {
+    if (isListening) {
+      stopListening();
+    } else {
+      startListening();
+    }
+  };
 
   if (!open) return null;
 
@@ -120,7 +204,6 @@ export function QuickCapture({ open, onClose, onActionComplete }: QuickCapturePr
         }
 
         case "saude_medicamento": {
-          // Just log, the user can confirm in the health module
           logActivity("captura_rapida", { tipo: "medicamento_info", descricao: dados.descricao });
           break;
         }
@@ -133,7 +216,6 @@ export function QuickCapture({ open, onClose, onActionComplete }: QuickCapturePr
             peso_kg: dados.peso_kg,
             data: today,
           });
-          // Also update profile
           await supabase.from("profiles").update({ peso_kg: dados.peso_kg, updated_at: new Date().toISOString() } as any).eq("user_id", user.id);
           logActivity("captura_rapida", { tipo: "peso", peso_kg: dados.peso_kg });
           break;
@@ -175,6 +257,39 @@ export function QuickCapture({ open, onClose, onActionComplete }: QuickCapturePr
           logActivity("captura_rapida", { tipo: "meta", titulo: dados.meta_titulo, prazo: dados.meta_prazo });
           break;
         }
+
+        case "diario": {
+          const { data: { user } } = await supabase.auth.getUser();
+          if (!user) throw new Error("Nao autenticado");
+
+          // Save diary entry
+          await supabase.from("diario_entradas").insert({
+            user_id: user.id,
+            texto: dados.diario_texto || result.resposta,
+            humor_detectado: dados.diario_humor || null,
+            sentimento: dados.diario_sentimento || null,
+            tags_extraidas: dados.diario_tags || null,
+            fonte: isListening ? "audio" : "texto",
+            data: today,
+          });
+
+          // Also update mood if detected
+          if (dados.diario_humor) {
+            await supabase.from("registros_humor").upsert({
+              data: today,
+              valor: dados.diario_humor,
+              notas: dados.diario_texto?.substring(0, 200) || null,
+            }, { onConflict: "data" });
+          }
+
+          logActivity("diario_registrado", {
+            humor: dados.diario_humor,
+            sentimento: dados.diario_sentimento,
+            tags: dados.diario_tags,
+            fonte: isListening ? "audio" : "texto",
+          });
+          break;
+        }
       }
     } catch (err) {
       console.error("Action execution error:", err);
@@ -183,9 +298,11 @@ export function QuickCapture({ open, onClose, onActionComplete }: QuickCapturePr
   };
 
   const handleSubmit = async () => {
-    const text = input.trim();
+    // Clean up interim brackets before submitting
+    const text = input.replace(/\s*\[.*?\]$/, "").trim();
     if (!text) return;
 
+    if (isListening) stopListening();
     setInput("");
     setFeedback("loading");
     setLastResponse("");
@@ -210,7 +327,6 @@ export function QuickCapture({ open, onClose, onActionComplete }: QuickCapturePr
       setHistory((prev) => [...prev, { text, response: result.resposta, tipo: result.tipo }]);
       onActionComplete?.();
 
-      // Auto-reset after 2s
       setTimeout(() => setFeedback("idle"), 2000);
     } catch (err) {
       console.error("QuickCapture error:", err);
@@ -231,6 +347,20 @@ export function QuickCapture({ open, onClose, onActionComplete }: QuickCapturePr
     saude_humor: "Humor",
     compras: "Compras",
     meta: "Meta",
+    diario: "Diario",
+  };
+
+  const tipoColor: Record<string, string> = {
+    financeiro: "text-green-600",
+    calendario: "text-blue-500",
+    casa: "text-amber-600",
+    trabalho: "text-primary",
+    diario: "text-purple-500",
+    saude_exercicio: "text-red-500",
+    saude_humor: "text-pink-500",
+    saude_peso: "text-teal-500",
+    compras: "text-orange-500",
+    meta: "text-indigo-500",
   };
 
   return (
@@ -239,8 +369,13 @@ export function QuickCapture({ open, onClose, onActionComplete }: QuickCapturePr
       <div className="relative w-full max-w-lg mx-4 mb-4 sm:mb-0 bg-card rounded-lg border shadow-lg animate-slide-up">
         {/* Header */}
         <div className="flex items-center justify-between p-4 pb-2">
-          <h3 className="font-mono text-sm font-semibold tracking-wider">CAPTURA</h3>
-          <button onClick={onClose} className="text-muted-foreground hover:text-foreground transition-colors">
+          <div>
+            <h3 className="font-mono text-sm font-semibold tracking-wider">CAPTURA</h3>
+            <p className="font-mono text-[9px] text-muted-foreground/60 tracking-wider mt-0.5">
+              diario / comandos / audio
+            </p>
+          </div>
+          <button onClick={onClose} className="text-muted-foreground hover:text-foreground transition-colors p-1">
             <X className="w-4 h-4" />
           </button>
         </div>
@@ -258,7 +393,7 @@ export function QuickCapture({ open, onClose, onActionComplete }: QuickCapturePr
                 <div className="flex items-start gap-2">
                   <div className="bg-secondary rounded-lg px-3 py-1.5 max-w-[80%]">
                     <div className="flex items-center gap-1.5 mb-0.5">
-                      <span className="font-mono text-[9px] tracking-wider text-primary">
+                      <span className={`font-mono text-[9px] tracking-wider ${tipoColor[h.tipo] || "text-primary"}`}>
                         {tipoLabel[h.tipo] || h.tipo}
                       </span>
                     </div>
@@ -287,11 +422,24 @@ export function QuickCapture({ open, onClose, onActionComplete }: QuickCapturePr
         {/* Input */}
         <div className="p-4 pt-2">
           <div className="flex items-end gap-2">
+            {/* Mic button */}
+            <button
+              onClick={toggleListening}
+              className={`p-3 rounded-lg transition-all ${
+                isListening
+                  ? "bg-red-500 text-white animate-pulse"
+                  : "bg-secondary text-secondary-foreground hover:bg-secondary/80"
+              }`}
+              title={isListening ? "Parar gravacao" : "Gravar audio"}
+            >
+              {isListening ? <MicOff className="w-4 h-4" /> : <Mic className="w-4 h-4" />}
+            </button>
+
             <textarea
               ref={inputRef}
               value={input}
               onChange={(e) => setInput(e.target.value)}
-              placeholder="gastei 8 reais no almoco... reuniao amanha 8h com fulano... lavei roupa..."
+              placeholder={isListening ? "Ouvindo..." : "fale sobre seu dia, registre gastos, agende reunioes..."}
               className="flex-1 bg-background border rounded-lg p-3 text-sm font-body resize-none h-16 focus:outline-none focus:ring-1 focus:ring-primary placeholder:text-muted-foreground/40"
               onKeyDown={(e) => {
                 if (e.key === "Enter" && !e.shiftKey) {
@@ -301,17 +449,22 @@ export function QuickCapture({ open, onClose, onActionComplete }: QuickCapturePr
               }}
               disabled={feedback === "loading"}
             />
+
             <button
               onClick={handleSubmit}
-              disabled={!input.trim() || feedback === "loading"}
+              disabled={!input.replace(/\s*\[.*?\]$/, "").trim() || feedback === "loading"}
               className="p-3 rounded-lg bg-primary text-primary-foreground disabled:opacity-40 hover:opacity-90 transition-opacity"
             >
               <Send className="w-4 h-4" />
             </button>
           </div>
-          <p className="font-mono text-[9px] text-muted-foreground/50 mt-1.5 tracking-wider">
-            FINANCEIRO / CALENDARIO / CASA / SAUDE / TRABALHO / COMPRAS / METAS
-          </p>
+
+          {isListening && (
+            <div className="flex items-center gap-2 mt-2">
+              <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
+              <span className="font-mono text-[10px] text-red-500 tracking-wider">GRAVANDO</span>
+            </div>
+          )}
         </div>
       </div>
     </div>
