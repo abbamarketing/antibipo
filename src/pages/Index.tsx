@@ -267,6 +267,7 @@ const Index = () => {
 
       <QuickCapture open={captureOpen} onClose={() => setCaptureOpen(false)} onActionComplete={() => {}} />
     </div>
+    </DayGate>
   );
 };
 
