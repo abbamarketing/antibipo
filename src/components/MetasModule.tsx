@@ -1,12 +1,17 @@
 import { useState } from "react";
 import { useMetasStore, prazoLabel, MetaPessoal } from "@/lib/metas-store";
-import { Target, Plus, ChevronRight, X, TrendingUp, Calendar, Check, Pencil } from "lucide-react";
+import { Target, Plus, ChevronRight, X, TrendingUp, Calendar, Check, Pencil, Crosshair, MapPin, Zap } from "lucide-react";
 import { format, differenceInDays, addMonths, addYears } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
+const prazoConfig: Record<string, { color: string; bgColor: string; icon: typeof Target; label: string }> = {
+  longo: { color: "text-purple-500", bgColor: "bg-purple-500/10", icon: Target, label: "1 ANO" },
+  medio: { color: "text-blue-500", bgColor: "bg-blue-500/10", icon: MapPin, label: "6 MESES" },
+  curto: { color: "text-green-500", bgColor: "bg-green-500/10", icon: Zap, label: "1 MES" },
+};
+
 export function MetasModule() {
   const store = useMetasStore();
-  const [showSetup, setShowSetup] = useState(!store.hasAllTimeframes && !store.isLoading);
   const [addingPrazo, setAddingPrazo] = useState<"curto" | "medio" | "longo" | null>(null);
   const [titulo, setTitulo] = useState("");
   const [descricao, setDescricao] = useState("");
@@ -42,14 +47,9 @@ export function MetasModule() {
     setProgressValue(0);
   };
 
-  const prazoConfig: Record<string, { color: string; bgColor: string; emoji: string }> = {
-    longo: { color: "text-purple-500", bgColor: "bg-purple-500/10", emoji: "🎯" },
-    medio: { color: "text-blue-500", bgColor: "bg-blue-500/10", emoji: "📍" },
-    curto: { color: "text-green-500", bgColor: "bg-green-500/10", emoji: "⚡" },
-  };
-
   const renderMeta = (meta: MetaPessoal) => {
     const config = prazoConfig[meta.prazo];
+    const Icon = config.icon;
     const diasRestantes = differenceInDays(new Date(meta.data_alvo), new Date());
     const diasTotais = differenceInDays(new Date(meta.data_alvo), new Date(meta.data_inicio));
     const tempoDecorrido = diasTotais > 0 ? Math.round(((diasTotais - diasRestantes) / diasTotais) * 100) : 0;
@@ -60,7 +60,7 @@ export function MetasModule() {
         <div className="flex items-start justify-between gap-2">
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2">
-              <span>{config.emoji}</span>
+              <Icon className={`w-3.5 h-3.5 ${config.color}`} />
               <span className={`font-mono text-[10px] ${config.color}`}>
                 {prazoLabel[meta.prazo].toUpperCase()}
               </span>
@@ -134,7 +134,7 @@ export function MetasModule() {
             <input
               value={progressNote}
               onChange={(e) => setProgressNote(e.target.value)}
-              placeholder="O que avançou? Como está se sentindo?"
+              placeholder="O que avancou? Como esta se sentindo?"
               className="w-full bg-background border rounded-md p-2.5 text-sm font-body focus:outline-none focus:ring-1 focus:ring-primary"
               onKeyDown={(e) => e.key === "Enter" && handleSaveProgress(meta.id)}
             />
@@ -158,7 +158,7 @@ export function MetasModule() {
                 onClick={() => store.updateMeta({ id: meta.id, status: "concluida" })}
                 className="w-full py-2 rounded-md bg-green-500/10 text-green-500 font-mono text-xs border border-green-500/20 hover:bg-green-500/20"
               >
-                <Check className="w-3 h-3 inline mr-1" /> MARCAR COMO CONCLUÍDA
+                <Check className="w-3 h-3 inline mr-1" /> MARCAR COMO CONCLUIDA
               </button>
             )}
           </div>
@@ -180,18 +180,18 @@ export function MetasModule() {
           <Target className="w-5 h-5" /> Metas
         </h2>
         <p className="text-sm text-muted-foreground font-body mt-0.5">
-          Seus objetivos de curto, médio e longo prazo.
+          Seus objetivos de curto, medio e longo prazo.
         </p>
       </div>
 
-      {/* Goal sections */}
       {sections.map(({ prazo, metas: sectionMetas }) => {
         const config = prazoConfig[prazo];
+        const Icon = config.icon;
         return (
           <div key={prazo} className="space-y-2">
             <div className="flex items-center justify-between">
               <h3 className={`font-mono text-xs tracking-widest uppercase flex items-center gap-2 ${config.color}`}>
-                {config.emoji} {prazoLabel[prazo]}
+                <Icon className="w-3.5 h-3.5" /> {prazoLabel[prazo]}
               </h3>
               <button
                 onClick={() => setAddingPrazo(prazo)}
@@ -225,7 +225,7 @@ export function MetasModule() {
                 <input
                   value={titulo}
                   onChange={(e) => setTitulo(e.target.value)}
-                  placeholder="Qual é a meta?"
+                  placeholder="Qual e a meta?"
                   className="w-full bg-background border rounded-md p-2.5 text-sm font-body focus:outline-none focus:ring-1 focus:ring-primary"
                   autoFocus
                 />
@@ -248,11 +248,10 @@ export function MetasModule() {
         );
       })}
 
-      {/* Completed goals */}
       {store.metas.filter((m) => m.status === "concluida").length > 0 && (
         <div className="space-y-2">
           <h3 className="font-mono text-[10px] tracking-widest text-muted-foreground uppercase">
-            Concluídas ({store.metas.filter((m) => m.status === "concluida").length})
+            Concluidas ({store.metas.filter((m) => m.status === "concluida").length})
           </h3>
           {store.metas
             .filter((m) => m.status === "concluida")

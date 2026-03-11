@@ -1,13 +1,13 @@
 import { useBemEstarStore, type AnaliseSemanal } from "@/lib/bem-estar-store";
-import { ChevronLeft, ChevronRight, Activity } from "lucide-react";
+import { ChevronLeft, ChevronRight, Activity, Check, TrendingUp, CloudRain, ArrowUpDown, HelpCircle } from "lucide-react";
 import { useState } from "react";
 
-const classificacaoConfig: Record<string, { bg: string; text: string; icon: string; label: string }> = {
-  equilibrado: { bg: "bg-emerald-50 dark:bg-emerald-950/30", text: "text-emerald-700 dark:text-emerald-400", icon: "✓", label: "EQUILIBRADO" },
-  tendencia_mania: { bg: "bg-orange-50 dark:bg-orange-950/30", text: "text-orange-700 dark:text-orange-400", icon: "⚡", label: "TENDÊNCIA MANIA" },
-  tendencia_depressao: { bg: "bg-blue-50 dark:bg-blue-950/30", text: "text-blue-700 dark:text-blue-400", icon: "🌧", label: "TENDÊNCIA DEPRESSÃO" },
-  misto: { bg: "bg-purple-50 dark:bg-purple-950/30", text: "text-purple-700 dark:text-purple-400", icon: "↕", label: "MISTO" },
-  dados_insuficientes: { bg: "bg-secondary", text: "text-muted-foreground", icon: "···", label: "DADOS INSUFICIENTES" },
+const classificacaoConfig: Record<string, { bg: string; text: string; icon: typeof Check; label: string }> = {
+  equilibrado: { bg: "bg-emerald-50 dark:bg-emerald-950/30", text: "text-emerald-700 dark:text-emerald-400", icon: Check, label: "EQUILIBRADO" },
+  tendencia_mania: { bg: "bg-orange-50 dark:bg-orange-950/30", text: "text-orange-700 dark:text-orange-400", icon: TrendingUp, label: "TENDENCIA MANIA" },
+  tendencia_depressao: { bg: "bg-blue-50 dark:bg-blue-950/30", text: "text-blue-700 dark:text-blue-400", icon: CloudRain, label: "TENDENCIA DEPRESSAO" },
+  misto: { bg: "bg-purple-50 dark:bg-purple-950/30", text: "text-purple-700 dark:text-purple-400", icon: ArrowUpDown, label: "MISTO" },
+  dados_insuficientes: { bg: "bg-secondary", text: "text-muted-foreground", icon: HelpCircle, label: "DADOS INSUFICIENTES" },
 };
 
 function formatWeekLabel(start: string): string {
@@ -70,7 +70,7 @@ export function WeeklyDashboard() {
 
       {/* Classification card */}
       <div className={`rounded-lg p-4 text-center ${cfg.bg}`}>
-        <span className="text-2xl">{cfg.icon}</span>
+        {(() => { const Icon = cfg.icon; return <Icon className={`w-6 h-6 mx-auto ${cfg.text}`} />; })()}
         <p className={`font-mono text-sm font-bold tracking-wider mt-1 ${cfg.text}`}>{cfg.label}</p>
         {current.score_medio != null && (
           <p className="font-mono text-xs text-muted-foreground mt-1">Score: {Number(current.score_medio).toFixed(0)}/100</p>

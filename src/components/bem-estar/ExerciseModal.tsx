@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { X } from "lucide-react";
+import { X, Dumbbell, Footprints, Flame, PersonStanding, Waves, Bike, Pencil } from "lucide-react";
 
 interface ExerciseModalProps {
   onClose: () => void;
@@ -13,13 +13,13 @@ interface ExerciseModalProps {
 }
 
 const tipos = [
-  { key: "academia", label: "Academia", emoji: "🏋️" },
-  { key: "caminhada", label: "Caminhada", emoji: "🚶" },
-  { key: "corrida", label: "Corrida", emoji: "🏃" },
-  { key: "yoga", label: "Yoga", emoji: "🧘" },
-  { key: "natacao", label: "Natação", emoji: "🏊" },
-  { key: "bike", label: "Bike", emoji: "🚴" },
-  { key: "outro", label: "Outro", emoji: "✏️" },
+  { key: "academia", label: "Academia", icon: Dumbbell },
+  { key: "caminhada", label: "Caminhada", icon: Footprints },
+  { key: "corrida", label: "Corrida", icon: Flame },
+  { key: "yoga", label: "Yoga", icon: PersonStanding },
+  { key: "natacao", label: "Natacao", icon: Waves },
+  { key: "bike", label: "Bike", icon: Bike },
+  { key: "outro", label: "Outro", icon: Pencil },
 ];
 
 const duracoes = [15, 20, 30, 45, 60, 90];
@@ -60,20 +60,23 @@ export function ExerciseModal({ onClose, onSave }: ExerciseModalProps) {
         <div>
           <label className="text-[10px] font-mono text-muted-foreground uppercase tracking-wider">Tipo</label>
           <div className="grid grid-cols-4 gap-2 mt-1.5">
-            {tipos.map((t) => (
-              <button
-                key={t.key}
-                onClick={() => setTipo(t.key)}
-                className={`flex flex-col items-center gap-1 p-2.5 rounded-lg text-xs transition-all ${
-                  tipo === t.key
-                    ? "bg-primary/10 ring-1 ring-primary"
-                    : "bg-secondary hover:bg-secondary/80"
-                }`}
-              >
-                <span className="text-lg">{t.emoji}</span>
-                <span className="font-mono text-[9px]">{t.label}</span>
-              </button>
-            ))}
+            {tipos.map((t) => {
+              const Icon = t.icon;
+              return (
+                <button
+                  key={t.key}
+                  onClick={() => setTipo(t.key)}
+                  className={`flex flex-col items-center gap-1 p-2.5 rounded-lg text-xs transition-all ${
+                    tipo === t.key
+                      ? "bg-primary/10 ring-1 ring-primary"
+                      : "bg-secondary hover:bg-secondary/80"
+                  }`}
+                >
+                  <Icon className="w-4 h-4" />
+                  <span className="font-mono text-[9px]">{t.label}</span>
+                </button>
+              );
+            })}
           </div>
         </div>
 

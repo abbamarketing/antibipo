@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useMetasStore } from "@/lib/metas-store";
-import { BarChart3, X, Star, AlertTriangle, TrendingUp } from "lucide-react";
+import { BarChart3, Star, AlertTriangle, TrendingUp, Frown, Meh, Smile, Laugh, Angry } from "lucide-react";
 import { startOfWeek, endOfWeek, format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { supabase } from "@/integrations/supabase/client";
@@ -8,6 +8,14 @@ import { supabase } from "@/integrations/supabase/client";
 interface FridayWeeklyReportProps {
   onDismiss: () => void;
 }
+
+const ratingOptions = [
+  { val: 1, label: "Dificil", icon: Angry },
+  { val: 2, label: "Ruim", icon: Frown },
+  { val: 3, label: "Normal", icon: Meh },
+  { val: 4, label: "Boa", icon: Smile },
+  { val: 5, label: "Otima", icon: Laugh },
+];
 
 export function FridayWeeklyReport({ onDismiss }: FridayWeeklyReportProps) {
   const store = useMetasStore();
@@ -49,36 +57,37 @@ export function FridayWeeklyReport({ onDismiss }: FridayWeeklyReportProps) {
     <div key="rating" className="space-y-4">
       <label className="font-mono text-sm font-medium block">Como foi sua semana?</label>
       <div className="flex justify-between gap-2">
-        {[1, 2, 3, 4, 5].map((n) => (
-          <button
-            key={n}
-            onClick={() => { setNota(n); setTimeout(() => setStep(1), 300); }}
-            className={`flex-1 py-4 rounded-xl border text-center transition-all ${
-              nota === n
-                ? "bg-primary text-primary-foreground border-primary"
-                : "hover:bg-secondary"
-            }`}
-          >
-            <span className="text-lg">{["😔", "😕", "😐", "🙂", "😄"][n - 1]}</span>
-            <span className="block font-mono text-[9px] mt-1 text-muted-foreground">
-              {["Difícil", "Ruim", "Normal", "Boa", "Ótima"][n - 1]}
-            </span>
-          </button>
-        ))}
+        {ratingOptions.map((opt) => {
+          const Icon = opt.icon;
+          return (
+            <button
+              key={opt.val}
+              onClick={() => { setNota(opt.val); setTimeout(() => setStep(1), 300); }}
+              className={`flex-1 py-4 rounded-xl border text-center transition-all flex flex-col items-center gap-1.5 ${
+                nota === opt.val
+                  ? "bg-primary text-primary-foreground border-primary"
+                  : "hover:bg-secondary"
+              }`}
+            >
+              <Icon className="w-5 h-5" />
+              <span className="font-mono text-[9px]">{opt.label}</span>
+            </button>
+          );
+        })}
       </div>
     </div>,
 
     // Step 1: Highlights
     <div key="highlights" className="space-y-4">
       <label className="font-mono text-sm font-medium block flex items-center gap-2">
-        <Star className="w-4 h-4 text-yellow-500" /> Destaques da semana
+        <Star className="w-4 h-4 text-primary" /> Destaques da semana
       </label>
       <p className="text-xs text-muted-foreground font-body">O que deu certo? O que te orgulhou? (um por linha)</p>
       <textarea
         value={destaques}
         onChange={(e) => setDestaques(e.target.value)}
         rows={3}
-        placeholder="Entreguei o projeto X&#10;Fiz exercício 3x&#10;Mantive a casa organizada"
+        placeholder="Entreguei o projeto X&#10;Fiz exercicio 3x&#10;Mantive a casa organizada"
         className="w-full bg-background border rounded-lg p-3 text-sm font-body resize-none focus:outline-none focus:ring-2 focus:ring-primary/50"
       />
     </div>,
@@ -86,14 +95,14 @@ export function FridayWeeklyReport({ onDismiss }: FridayWeeklyReportProps) {
     // Step 2: Difficulties
     <div key="diff" className="space-y-4">
       <label className="font-mono text-sm font-medium block flex items-center gap-2">
-        <AlertTriangle className="w-4 h-4 text-orange-400" /> Dificuldades
+        <AlertTriangle className="w-4 h-4 text-destructive" /> Dificuldades
       </label>
-      <p className="text-xs text-muted-foreground font-body">O que foi difícil? Sem julgamento. (um por linha)</p>
+      <p className="text-xs text-muted-foreground font-body">O que foi dificil? Sem julgamento. (um por linha)</p>
       <textarea
         value={dificuldades}
         onChange={(e) => setDificuldades(e.target.value)}
         rows={3}
-        placeholder="Procrastinei na segunda&#10;Não dormi bem&#10;Esqueci do remédio"
+        placeholder="Procrastinei na segunda&#10;Nao dormi bem&#10;Esqueci do remedio"
         className="w-full bg-background border rounded-lg p-3 text-sm font-body resize-none focus:outline-none focus:ring-2 focus:ring-primary/50"
       />
     </div>,
@@ -101,9 +110,9 @@ export function FridayWeeklyReport({ onDismiss }: FridayWeeklyReportProps) {
     // Step 3: Reflection
     <div key="reflexao" className="space-y-4">
       <label className="font-mono text-sm font-medium block flex items-center gap-2">
-        <TrendingUp className="w-4 h-4 text-primary" /> Reflexão
+        <TrendingUp className="w-4 h-4 text-primary" /> Reflexao
       </label>
-      <p className="text-xs text-muted-foreground font-body">Uma frase sobre o que levar pra próxima semana.</p>
+      <p className="text-xs text-muted-foreground font-body">Uma frase sobre o que levar pra proxima semana.</p>
       <textarea
         value={reflexao}
         onChange={(e) => setReflexao(e.target.value)}
@@ -155,7 +164,7 @@ export function FridayWeeklyReport({ onDismiss }: FridayWeeklyReportProps) {
             onClick={() => setStep((s) => s + 1)}
             className="flex-1 py-2.5 rounded-lg bg-primary text-primary-foreground font-mono text-xs hover:opacity-90"
           >
-            PRÓXIMO
+            PROXIMO
           </button>
         ) : (
           <button

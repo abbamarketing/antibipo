@@ -17,7 +17,7 @@ import { NotificationManager } from "@/components/NotificationManager";
 import { ModuleOnboardingGuard } from "@/components/ModuleOnboardingGuard";
 import { MondayGoalsReview } from "@/components/MondayGoalsReview";
 import { FridayWeeklyReport } from "@/components/FridayWeeklyReport";
-import { Plus, Activity, Zap, Sun, Battery, Wallet, LogOut } from "lucide-react";
+import { Plus, Activity, Zap, Sun, Battery, Wallet, LogOut, CalendarDays } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 const Index = () => {
@@ -145,6 +145,13 @@ const Index = () => {
           <div className="flex items-center justify-between">
             <h1 className="font-mono text-xl font-bold tracking-tight">FLOW</h1>
             <div className="flex items-center gap-2">
+              <button
+                onClick={() => navigate("/calendario")}
+                className="p-1.5 rounded-md text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors"
+                title="Calendario"
+              >
+                <CalendarDays className="w-4 h-4" />
+              </button>
               <button
                 onClick={() => navigate("/financeiro")}
                 className="p-1.5 rounded-md text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors"
