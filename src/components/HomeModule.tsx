@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { useCasaStore } from "@/lib/casa-store";
 import { EnergyState } from "@/lib/store";
 import { logActivity } from "@/lib/activity-log";
