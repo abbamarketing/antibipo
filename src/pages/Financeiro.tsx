@@ -164,5 +164,6 @@ export default function Financeiro() {
         />
       )}
     </div>
+    </ModuleOnboardingGuard>
   );
 }
