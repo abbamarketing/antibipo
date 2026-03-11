@@ -48,7 +48,7 @@ export default function AuthPage() {
     <div className="min-h-screen bg-background flex items-center justify-center px-4">
       <div className="w-full max-w-sm space-y-8 text-center">
         <div>
-          <h1 className="font-mono text-3xl font-bold tracking-tight">FLOW</h1>
+           <h1 className="font-mono text-2xl font-bold tracking-tight">AntiBipolaridade</h1>
           <p className="text-sm text-muted-foreground font-body mt-2">
             Sistema pessoal de produtividade e bem-estar.
           </p>

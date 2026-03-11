@@ -143,7 +143,7 @@ const Index = () => {
         {/* Header */}
         <header className="mb-6">
           <div className="flex items-center justify-between">
-            <h1 className="font-mono text-xl font-bold tracking-tight">FLOW</h1>
+            <h1 className="font-mono text-sm font-bold tracking-tight">AB</h1>
             <div className="flex items-center gap-2">
               <button
                 onClick={() => navigate("/calendario")}

@@ -162,11 +162,11 @@ export function NotificationManager({ medicamentos, isMedTaken, hasEnergy }: Not
       const now = new Date();
       const hour = now.getHours();
       const todayStr = today();
-      const eveningKey = `flow_evening_${todayStr}`;
+      const eveningKey = `ab_evening_${todayStr}`;
 
       if (hour >= 20 && hour <= 21 && !sessionStorage.getItem(eveningKey) && hasEnergy) {
         sessionStorage.setItem(eveningKey, "1");
-        notify("FLOW", "Registrou tudo hoje? Peso, exercicio e humor ajudam no acompanhamento.");
+        notify("AntiBipolaridade", "Registrou tudo hoje? Peso, exercicio e humor ajudam no acompanhamento.");
       }
     };
 
