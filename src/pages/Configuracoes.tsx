@@ -1,14 +1,40 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useProfileStore } from "@/lib/profile-store";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, RotateCcw, LogOut, Bell, User, Trash2, Shield } from "lucide-react";
+import { ArrowLeft, RotateCcw, LogOut, Bell, User, Trash2, Shield, ScrollText } from "lucide-react";
 
 export default function Configuracoes() {
   const navigate = useNavigate();
   const { profile, updateProfile } = useProfileStore();
   const [confirmReset, setConfirmReset] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const [resumos, setResumos] = useState<any[]>([]);
+  const [logCount, setLogCount] = useState<number | null>(null);
+
+  useEffect(() => {
+    (async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      // Fetch consolidated summaries
+      const { data: configs } = await supabase
+        .from("configuracoes" as any)
+        .select("*")
+        .eq("user_id", user.id)
+        .like("chave", "resumo_logs_%")
+        .order("created_at", { ascending: false })
+        .limit(10);
+      if (configs) setResumos(configs as any[]);
+
+      // Fetch current log count
+      const { count } = await supabase
+        .from("activity_log" as any)
+        .select("*", { count: "exact", head: true })
+        .eq("user_id", user.id);
+      setLogCount(count ?? 0);
+    })();
+  }, []);
 
   const handleResetAccount = async () => {
     if (!confirmReset) { setConfirmReset(true); return; }
@@ -116,6 +142,44 @@ export default function Configuracoes() {
               </div>
             );
           })}
+        </section>
+
+        {/* Log Summaries */}
+        <section className="bg-card rounded-lg border p-4 mb-4">
+          <div className="flex items-center gap-2 mb-3">
+            <ScrollText className="w-4 h-4 text-muted-foreground" />
+            <h2 className="font-mono text-xs font-semibold tracking-wider">RESUMOS DE ATIVIDADE</h2>
+          </div>
+          <div className="flex items-center justify-between py-1.5 mb-2">
+            <span className="font-mono text-xs text-muted-foreground">Logs pendentes</span>
+            <span className="font-mono text-xs">{logCount ?? "..."}/100</span>
+          </div>
+          {resumos.length === 0 ? (
+            <p className="font-mono text-[10px] text-muted-foreground/60 py-2">
+              Nenhum resumo ainda. A cada 100 ações, um resumo é gerado automaticamente.
+            </p>
+          ) : (
+            <div className="space-y-2">
+              {resumos.map((r: any) => {
+                const valor = r.valor as any;
+                return (
+                  <div key={r.id} className="bg-secondary/50 rounded-md p-3 space-y-1">
+                    <div className="flex items-center justify-between">
+                      <span className="font-mono text-[9px] text-muted-foreground">
+                        {new Date(r.created_at).toLocaleDateString("pt-BR")}
+                      </span>
+                      <span className="font-mono text-[9px] text-primary">
+                        {valor?.total_acoes || 0} ações
+                      </span>
+                    </div>
+                    <p className="font-body text-xs text-foreground/80 leading-relaxed">
+                      {valor?.resumo || "Sem resumo"}
+                    </p>
+                  </div>
+                );
+              })}
+            </div>
+          )}
         </section>
 
         {/* Actions */}
