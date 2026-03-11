@@ -421,6 +421,9 @@ function PomodoroBar({
           </button>
         </div>
       </div>
+
+      {/* Custom Trackers for trabalho module */}
+      <CustomTrackers modulo="trabalho" />
     </div>
   );
 }
