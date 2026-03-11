@@ -12,9 +12,9 @@ interface WorkModuleProps {
 }
 
 const energyMessages: Record<EnergyState, string> = {
-  foco_total: "Energia alta. Até 3 tarefas estratégicas.",
-  modo_leve: "1 tarefa por vez. Sem pressa.",
-  basico: "Só o que trava alguém. Máximo 10 minutos.",
+  foco_total: "Até 3 tarefas estratégicas.",
+  modo_leve: "1 tarefa por vez.",
+  basico: "1 tarefa — a que trava alguém.",
 };
 
 export function WorkModule({ energy, tasks, allTasks, onComplete, onDelegate, onPush }: WorkModuleProps) {
