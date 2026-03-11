@@ -20,6 +20,7 @@ import { FridayWeeklyReport } from "@/components/FridayWeeklyReport";
 import { TodayEvents } from "@/components/TodayEvents";
 import { DailyNudge } from "@/components/DailyNudge";
 import { DailyTasksView } from "@/components/DailyTasksView";
+import { DayGate } from "@/components/DayGate";
 import { MoodCheckIn } from "@/components/MoodCheckIn";
 import { ModuleDashboard } from "@/components/ModuleDashboard";
 import { Plus, Zap, Sun, Battery, Wallet, Settings, CalendarDays, Activity } from "lucide-react";
@@ -130,6 +131,7 @@ const Index = () => {
   };
 
   return (
+    <DayGate>
     <div className="min-h-screen bg-background">
       <NotificationManager
         medicamentos={state.medicamentos}
@@ -265,6 +267,7 @@ const Index = () => {
 
       <QuickCapture open={captureOpen} onClose={() => setCaptureOpen(false)} onActionComplete={() => {}} />
     </div>
+    </DayGate>
   );
 };
 
