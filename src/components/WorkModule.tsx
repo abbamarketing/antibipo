@@ -127,7 +127,7 @@ export function WorkModule({ energy, tasks, allTasks, onComplete, onDelegate, on
 
   // Filter work tasks
   const workTasks = allTasks.filter(
-    (t) => t.modulo === "trabalho" && t.status !== "feito" && t.status !== "descartado"
+    (t: any) => t.modulo === "trabalho" && t.status !== "feito" && t.status !== "descartado" && !t.parent_task_id
   );
 
   const filtered = workTasks.filter((t) => {
