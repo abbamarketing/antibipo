@@ -449,6 +449,99 @@ export type Database = {
         }
         Relationships: []
       }
+      profiles: {
+        Row: {
+          altura_cm: number | null
+          casa_comodos: number | null
+          casa_desafio: string | null
+          casa_frequencia_ideal: string | null
+          casa_moradores: number | null
+          casa_pets: boolean | null
+          created_at: string | null
+          data_nascimento: string | null
+          financeiro_controla_gastos: string | null
+          financeiro_faixa_renda: string | null
+          financeiro_objetivo: string | null
+          financeiro_principal_gasto: string | null
+          financeiro_reserva: string | null
+          id: string
+          nome: string | null
+          objetivo_saude: string | null
+          onboarding_casa: boolean | null
+          onboarding_financeiro: boolean | null
+          onboarding_saude: boolean | null
+          onboarding_trabalho: boolean | null
+          peso_kg: number | null
+          trabalho_clientes_ativos: number | null
+          trabalho_desafio: string | null
+          trabalho_equipe: string | null
+          trabalho_horas_dia: number | null
+          trabalho_tipo: string | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          altura_cm?: number | null
+          casa_comodos?: number | null
+          casa_desafio?: string | null
+          casa_frequencia_ideal?: string | null
+          casa_moradores?: number | null
+          casa_pets?: boolean | null
+          created_at?: string | null
+          data_nascimento?: string | null
+          financeiro_controla_gastos?: string | null
+          financeiro_faixa_renda?: string | null
+          financeiro_objetivo?: string | null
+          financeiro_principal_gasto?: string | null
+          financeiro_reserva?: string | null
+          id?: string
+          nome?: string | null
+          objetivo_saude?: string | null
+          onboarding_casa?: boolean | null
+          onboarding_financeiro?: boolean | null
+          onboarding_saude?: boolean | null
+          onboarding_trabalho?: boolean | null
+          peso_kg?: number | null
+          trabalho_clientes_ativos?: number | null
+          trabalho_desafio?: string | null
+          trabalho_equipe?: string | null
+          trabalho_horas_dia?: number | null
+          trabalho_tipo?: string | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          altura_cm?: number | null
+          casa_comodos?: number | null
+          casa_desafio?: string | null
+          casa_frequencia_ideal?: string | null
+          casa_moradores?: number | null
+          casa_pets?: boolean | null
+          created_at?: string | null
+          data_nascimento?: string | null
+          financeiro_controla_gastos?: string | null
+          financeiro_faixa_renda?: string | null
+          financeiro_objetivo?: string | null
+          financeiro_principal_gasto?: string | null
+          financeiro_reserva?: string | null
+          id?: string
+          nome?: string | null
+          objetivo_saude?: string | null
+          onboarding_casa?: boolean | null
+          onboarding_financeiro?: boolean | null
+          onboarding_saude?: boolean | null
+          onboarding_trabalho?: boolean | null
+          peso_kg?: number | null
+          trabalho_clientes_ativos?: number | null
+          trabalho_desafio?: string | null
+          trabalho_equipe?: string | null
+          trabalho_horas_dia?: number | null
+          trabalho_tipo?: string | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       registros_humor: {
         Row: {
           data: string
@@ -539,6 +632,33 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      registros_peso: {
+        Row: {
+          created_at: string | null
+          data: string
+          id: string
+          notas: string | null
+          peso_kg: number
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          data?: string
+          id?: string
+          notas?: string | null
+          peso_kg: number
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          data?: string
+          id?: string
+          notas?: string | null
+          peso_kg?: number
+          user_id?: string
+        }
+        Relationships: []
       }
       registros_sono: {
         Row: {
