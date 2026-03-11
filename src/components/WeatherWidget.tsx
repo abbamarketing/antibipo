@@ -69,7 +69,7 @@ export function WeatherWidget() {
   return (
     <div className="bg-card rounded-lg border p-3">
       <h3 className="font-mono text-[10px] tracking-widest text-muted-foreground uppercase mb-2">
-        CLIMA — SÃO PAULO
+        CLIMA
       </h3>
       <div className="flex justify-between">
         {forecast.map((d, i) => {
