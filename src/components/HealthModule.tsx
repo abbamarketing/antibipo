@@ -11,7 +11,7 @@ interface HealthModuleProps {
   isMedTaken: (medId: string, horario: string) => boolean;
   onMood: (valor: number, notas?: string) => void;
   onSleep: (type: "dormir" | "acordar", qualidade?: 1 | 2 | 3) => void;
-  onAddMed: (med: Omit<Medicamento, "id">) => void;
+  onAddMed: (med: { nome: string; dose: string; horarios: string[]; estoque: number; instrucoes?: string }) => void;
   todayHumor?: RegistroHumor;
 }
 
