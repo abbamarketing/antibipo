@@ -127,7 +127,7 @@ export function WeeklyTaskView({ tarefasDevidas, registros, energy, onCompletarT
       ) : (
         <div className="bg-card rounded-lg border p-6 text-center">
           <p className="text-xs text-muted-foreground font-body">
-            Nenhuma tarefa pendente. Tudo em dia! 🎉
+            Nenhuma tarefa pendente. Tudo em dia.
           </p>
         </div>
       )}
