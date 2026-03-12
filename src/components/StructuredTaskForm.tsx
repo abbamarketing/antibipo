@@ -98,9 +98,9 @@ export function StructuredTaskForm({ open, onClose, onCreated }: StructuredTaskF
 
   // Auto-set modulo based on template
   useEffect(() => {
-    if (template === "domestico") setModulo("casa");
-    else if (template === "saude") setModulo("saude");
-    else if (template && template !== "domestico" && template !== "saude") setModulo("trabalho");
+    if (template === "domestico" as string) setModulo("casa");
+    else if (template === "saude" as string) setModulo("saude");
+    else if (template) setModulo("trabalho");
   }, [template]);
 
   const reset = () => {
