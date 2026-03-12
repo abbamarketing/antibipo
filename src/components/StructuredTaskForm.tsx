@@ -175,6 +175,9 @@ export function StructuredTaskForm({ open, onClose, onCreated }: StructuredTaskF
       if (error) throw error;
       if (data) {
         setClientes((prev) => [...prev, data].sort((a, b) => a.nome.localeCompare(b.nome)));
+        queryClient.setQueryData(["clientes"], (current: any[] = []) =>
+          [...current.filter((c) => c.id !== data.id), data].sort((a, b) => a.nome.localeCompare(b.nome))
+        );
         setFields({ ...fields, cliente: data.nome, cliente_id: data.id });
         toast.success("Cliente adicionado");
       }
