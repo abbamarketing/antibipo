@@ -99,6 +99,7 @@ export function StructuredTaskForm({ open, onClose, onCreated }: StructuredTaskF
   const [showNewClient, setShowNewClient] = useState(false);
   const [newClientName, setNewClientName] = useState("");
   const [savingClient, setSavingClient] = useState(false);
+  const queryClient = useQueryClient();
 
   const [clientes, setClientes] = useState<{ id: string; nome: string }[]>([]);
   useEffect(() => {
