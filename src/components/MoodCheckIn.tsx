@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { logActivity } from "@/lib/activity-log";
-import { Angry, Frown, Meh, Smile, Laugh, X, Bell } from "lucide-react";
+import { Angry, Frown, Meh, Smile, Laugh, X, Bell, CheckCircle2 } from "lucide-react";
 
 const CHECKIN_INTERVAL_MS = 3 * 60 * 60 * 1000; // 3 hours
 const STORAGE_KEY = "last_mood_checkin";
