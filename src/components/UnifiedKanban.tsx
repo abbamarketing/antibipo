@@ -285,9 +285,8 @@ export function UnifiedKanban({ energy, lastMoodValue, preferredModule = null }:
           return realB - realA;
         });
 
-      // In basico mode, limit "hoje" to max 3 tasks total
-      if (status === "hoje" && energy === "basico") return tasks.slice(0, 3);
-      if (status === "hoje" && energy === "modo_leve") return tasks.slice(0, 6);
+      // Limit "hoje" tasks based on mood+energy context
+      if (status === "hoje") return tasks.slice(0, dayCtx.taskLimit);
       return tasks;
     },
     [filtered, energy]
