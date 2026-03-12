@@ -469,7 +469,7 @@ export function StructuredTaskForm({ open, onClose, onCreated }: StructuredTaskF
                     {saving ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Plus className="w-3.5 h-3.5" />}
                     {saving ? "CRIANDO..." : "CRIAR TAREFA"}
                   </button>
-                </>
+                </div>
               )}
             </>
           )}
