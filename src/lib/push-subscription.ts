@@ -1,7 +1,20 @@
 import { supabase } from "@/integrations/supabase/client";
 
-// VAPID public key - stored in env for the frontend
-const VAPID_PUBLIC_KEY = import.meta.env.VITE_VAPID_PUBLIC_KEY;
+let cachedVapidKey: string | null = null;
+
+async function getVapidPublicKey(): Promise<string | null> {
+  if (cachedVapidKey) return cachedVapidKey;
+  
+  try {
+    const { data, error } = await supabase.functions.invoke('vapid-public-key');
+    if (error) throw error;
+    cachedVapidKey = data.publicKey || null;
+    return cachedVapidKey;
+  } catch (err) {
+    console.error('Failed to fetch VAPID public key:', err);
+    return null;
+  }
+}
 
 function urlBase64ToUint8Array(base64String: string): Uint8Array {
   const padding = '='.repeat((4 - (base64String.length % 4)) % 4);
@@ -21,8 +34,9 @@ export async function subscribeToPush(): Promise<boolean> {
       return false;
     }
 
-    if (!VAPID_PUBLIC_KEY) {
-      console.warn('VAPID public key not configured');
+    const vapidKey = await getVapidPublicKey();
+    if (!vapidKey) {
+      console.warn('VAPID public key not available');
       return false;
     }
 
@@ -34,17 +48,16 @@ export async function subscribeToPush(): Promise<boolean> {
 
     const registration = await navigator.serviceWorker.ready;
     
-    // Check for existing subscription
     let subscription = await registration.pushManager.getSubscription();
     
     if (!subscription) {
+      const appServerKey = urlBase64ToUint8Array(vapidKey);
       subscription = await registration.pushManager.subscribe({
         userVisibleOnly: true,
-        applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY).buffer as ArrayBuffer,
+        applicationServerKey: appServerKey.buffer as ArrayBuffer,
       });
     }
 
-    // Save to database
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return false;
 
@@ -53,7 +66,6 @@ export async function subscribeToPush(): Promise<boolean> {
     const p256dh = subJson.keys!.p256dh!;
     const auth = subJson.keys!.auth!;
 
-    // Upsert by endpoint
     const { error } = await supabase
       .from('push_subscriptions')
       .upsert(
@@ -83,7 +95,6 @@ export async function unsubscribeFromPush(): Promise<void> {
       const endpoint = subscription.endpoint;
       await subscription.unsubscribe();
       
-      // Remove from database
       await supabase
         .from('push_subscriptions')
         .delete()
