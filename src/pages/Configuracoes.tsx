@@ -162,18 +162,18 @@ export default function Configuracoes() {
 
     setResetting(true);
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error("Usuário não autenticado");
-
-      const { error } = await supabase.rpc("reset_user_data" as any, { p_user_id: user.id });
-      if (error) throw error;
+      const { error } = await supabase.rpc("reset_my_data" as any);
+      if (error) throw new Error(error.message || "Falha ao resetar conta");
 
       localStorage.clear();
       sessionStorage.clear();
       window.location.href = "/";
-    } catch (error) {
+    } catch (error: any) {
       console.error("Reset failed:", error);
-      alert("Não foi possível resetar agora. Tente novamente em alguns segundos.");
+      const message = error?.message
+        ? `Não foi possível resetar: ${error.message}`
+        : "Não foi possível resetar agora. Tente novamente em alguns segundos.";
+      alert(message);
     } finally {
       setResetting(false);
     }

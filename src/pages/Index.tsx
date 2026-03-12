@@ -214,7 +214,7 @@ const Index = () => {
             {!showMondayReview && !showFridayReport && (
               <>
                 {/* Unified Daily Tasks - always visible */}
-                  <UnifiedKanban energy={current_energy!} lastMoodValue={lastMoodValue} />
+                  <UnifiedKanban energy={current_energy!} lastMoodValue={lastMoodValue} preferredModule={activeNav === "metas" ? null : activeNav} />
 
                 {/* Dashboard + Trackers */}
                 <div className="mb-6">

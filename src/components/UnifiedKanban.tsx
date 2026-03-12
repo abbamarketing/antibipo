@@ -551,7 +551,13 @@ function KanbanCard({
               const isToday = diffDays === 0;
               const isTomorrow = diffDays === 1;
               const label = isOverdue ? `Atrasada (${Math.abs(diffDays)}d)` : isToday ? "Hoje" : isTomorrow ? "Amanhã" : deadline.toLocaleDateString("pt-BR", { day: "2-digit", month: "short" });
-              const colorClass = isOverdue ? "text-red-600 bg-red-500/15" : isToday ? "text-amber-600 bg-amber-500/15" : isTomorrow ? "text-orange-600 bg-orange-500/15" : "text-muted-foreground bg-secondary";
+              const colorClass = isOverdue
+                ? "text-destructive bg-destructive/15"
+                : isToday
+                ? "text-primary bg-primary/15"
+                : isTomorrow
+                ? "text-accent-foreground bg-accent"
+                : "text-muted-foreground bg-secondary";
               return (
                 <span className={`inline-flex items-center gap-0.5 text-[9px] font-mono px-1 py-0.5 rounded ${colorClass}`}>
                   <Calendar className="w-2.5 h-2.5" />
