@@ -221,7 +221,23 @@ export function UnifiedKanban({ energy, lastMoodValue }: UnifiedKanbanProps) {
     (status: string) =>
       filtered
         .filter((t) => t.status === status)
-        .sort((a, b) => b.urgencia - a.urgencia),
+        .sort((a, b) => {
+          // 1. Urgência (3=crítica primeiro)
+          if (b.urgencia !== a.urgencia) return b.urgencia - a.urgencia;
+          // 2. Data limite (mais próxima primeiro, sem data vai pro final)
+          const dateA = a.data_limite ? new Date(a.data_limite).getTime() : Infinity;
+          const dateB = b.data_limite ? new Date(b.data_limite).getTime() : Infinity;
+          if (dateA !== dateB) return dateA - dateB;
+          // 3. Tipo de tarefa: estratégico > operacional > admin > delegável > doméstico
+          const typePriority: Record<string, number> = { estrategico: 5, operacional: 4, administrativo: 3, delegavel: 2, domestico: 1 };
+          const tpA = typePriority[a.taskType || ""] || 0;
+          const tpB = typePriority[b.taskType || ""] || 0;
+          if (tpB !== tpA) return tpB - tpA;
+          // 4. Tasks reais antes de sintéticas (casa/tracker)
+          const realA = a.tipo === "task" ? 1 : 0;
+          const realB = b.tipo === "task" ? 1 : 0;
+          return realB - realA;
+        }),
     [filtered]
   );
 
