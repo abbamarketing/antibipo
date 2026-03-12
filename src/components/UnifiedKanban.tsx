@@ -528,12 +528,23 @@ function KanbanCard({
                 {item.depende_de}
               </span>
             )}
-            {item.data_limite && (
-              <span className="inline-flex items-center gap-0.5 text-[9px] font-mono text-red-600 bg-red-500/10 px-1 py-0.5 rounded">
-                <Calendar className="w-2.5 h-2.5" />
-                {new Date(item.data_limite + "T00:00:00").toLocaleDateString("pt-BR", { day: "2-digit", month: "short" })}
-              </span>
-            )}
+            {item.data_limite && (() => {
+              const deadline = new Date(item.data_limite + "T00:00:00");
+              const now = new Date();
+              now.setHours(0, 0, 0, 0);
+              const diffDays = Math.ceil((deadline.getTime() - now.getTime()) / 86400000);
+              const isOverdue = diffDays < 0;
+              const isToday = diffDays === 0;
+              const isTomorrow = diffDays === 1;
+              const label = isOverdue ? `Atrasada (${Math.abs(diffDays)}d)` : isToday ? "Hoje" : isTomorrow ? "Amanhã" : deadline.toLocaleDateString("pt-BR", { day: "2-digit", month: "short" });
+              const colorClass = isOverdue ? "text-red-600 bg-red-500/15" : isToday ? "text-amber-600 bg-amber-500/15" : isTomorrow ? "text-orange-600 bg-orange-500/15" : "text-muted-foreground bg-secondary";
+              return (
+                <span className={`inline-flex items-center gap-0.5 text-[9px] font-mono px-1 py-0.5 rounded ${colorClass}`}>
+                  <Calendar className="w-2.5 h-2.5" />
+                  {label}
+                </span>
+              );
+            })()}
           </div>
 
           {item.notas && (
