@@ -268,9 +268,9 @@ function Tecnologias() {
       </DocCard>
 
       <DocCard icon={Brain} title="Inteligência Artificial">
-        <p><strong>Modelo:</strong> Google Gemini 2.5 Flash via Lovable AI gateway — sem necessidade de API key.</p>
+        <p><strong>Modelo:</strong> Configurável pelo usuário via chave de API nas Configurações.</p>
         <p><strong>Uso:</strong> Classificação de tarefas, análise diária, nudges personalizados, consolidação de logs e geração de insights semanais.</p>
-        <p><strong>Privacidade:</strong> Os dados são processados em edge functions seguras. Nenhum dado é compartilhado com terceiros.</p>
+        <p><strong>Privacidade:</strong> Os dados são processados em funções backend seguras. Nenhum dado é compartilhado com terceiros.</p>
       </DocCard>
 
       <DocCard icon={Smartphone} title="PWA (Progressive Web App)">
