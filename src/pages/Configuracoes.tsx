@@ -162,18 +162,31 @@ export default function Configuracoes() {
 
     setResetting(true);
     try {
-      const { error } = await supabase.rpc("reset_my_data" as any);
-      if (error) throw new Error(error.message || "Falha ao resetar conta");
+      const { data: { user }, error: userError } = await supabase.auth.getUser();
+      if (userError || !user) {
+        throw new Error("Sessão expirada. Faça login novamente para resetar sua conta.");
+      }
+
+      const primary = await supabase.rpc("reset_user_data" as any, { p_user_id: user.id });
+      if (primary.error) {
+        const fallback = await supabase.rpc("reset_my_data" as any);
+        if (fallback.error) {
+          const details = [primary.error.message, primary.error.details, fallback.error.message, fallback.error.details]
+            .filter(Boolean)
+            .join(" | ");
+          throw new Error(details || "Falha no reset da conta");
+        }
+      }
 
       localStorage.clear();
       sessionStorage.clear();
       window.location.href = "/";
     } catch (error: any) {
       console.error("Reset failed:", error);
-      const message = error?.message
-        ? `Não foi possível resetar: ${error.message}`
-        : "Não foi possível resetar agora. Tente novamente em alguns segundos.";
-      alert(message);
+      const parsedMessage = typeof error === "string"
+        ? error
+        : error?.message || "Não foi possível resetar agora. Tente novamente em alguns segundos.";
+      alert(`Não foi possível resetar: ${parsedMessage}`);
     } finally {
       setResetting(false);
     }
