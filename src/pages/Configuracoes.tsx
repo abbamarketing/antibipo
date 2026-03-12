@@ -317,14 +317,13 @@ export default function Configuracoes() {
 
           <button
             onClick={handleResetAccount}
-            className={`w-full flex items-center gap-3 p-4 rounded-lg border transition-colors ${
-              confirmReset ? "bg-destructive/10 border-destructive/30" : "bg-card hover:bg-secondary/50"
-            }`}
+            disabled={resetting}
+            className="w-full flex items-center gap-3 p-4 rounded-lg border bg-card hover:bg-secondary/50 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
           >
             <RotateCcw className="w-4 h-4 text-muted-foreground" />
             <div className="text-left">
               <p className="font-mono text-xs font-medium">
-                {confirmReset ? "Confirmar reset? Clique novamente" : "Resetar conta"}
+                {resetting ? "Resetando conta..." : "Resetar conta"}
               </p>
               <p className="font-mono text-[10px] text-muted-foreground">
                 Apaga TODOS os dados e reinicia do zero
