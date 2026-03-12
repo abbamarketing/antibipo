@@ -175,8 +175,10 @@ function LogicaFuncionamento() {
           <p>├── Sexta? → Relatório Semanal → Libera app</p>
           <p>└── Outro dia → Acesso direto</p>
           <p className="mt-2">Dentro do app:</p>
-          <p>Selecionar Estado de Energia → Ver tarefas filtradas</p>
-          <p>→ Check-in emocional (3h) → Ajuste de tarefas visíveis</p>
+          <p>Selecionar Estado de Energia → Kanban Unificado</p>
+          <p>→ Dashboard Único + Trackers</p>
+          <p>→ Tabs de contexto (Trabalho/Casa/Saúde/Metas)</p>
+          <p>→ Check-in emocional (3h) → Ajuste de tarefas</p>
           <p>→ Completar tarefas → Análise IA fim do dia</p>
         </div>
       </DocCard>
