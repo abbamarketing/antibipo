@@ -139,37 +139,58 @@ export function useCasaStore() {
   );
 
   // Shared logic: get overdue casa tasks sorted by urgency
+  // Tasks reset daily at 8:00 AM Brasília and never accumulate
   const getTarefasDevidas = useCallback(
     () => {
       const now = new Date();
+      // Calculate "today's reset point" at 8:00 AM Brasília (UTC-3)
+      const brasiliaOffset = -3 * 60; // minutes
+      const utcMs = now.getTime() + now.getTimezoneOffset() * 60000;
+      const brasiliaMs = utcMs + brasiliaOffset * 60000;
+      const brasilia = new Date(brasiliaMs);
+
+      // Today's 8 AM reset in Brasília
+      const resetToday = new Date(brasilia);
+      resetToday.setHours(8, 0, 0, 0);
+      // If before 8 AM, the active reset is yesterday's 8 AM
+      const activeReset = brasilia < resetToday
+        ? new Date(resetToday.getTime() - 86400000)
+        : resetToday;
+      // Convert activeReset back to UTC for comparison
+      const activeResetUTC = new Date(activeReset.getTime() - brasiliaOffset * 60000 - now.getTimezoneOffset() * 60000);
+
       const result: { task: TarefaCasa; urgencia: number; daysSince: number }[] = [];
+
       tarefas
         .filter((t) => t.ativo !== false)
         .forEach((t) => {
           const freqDays = t.frequencia === "diario" ? 1 : t.frequencia === "semanal" ? 7 : t.frequencia === "quinzenal" ? 15 : 30;
           const lastDone = registros.find((r) => r.tarefa_casa_id === t.id);
 
-          // Never done yet: daily tasks are due immediately; others follow frequency from creation date
-          if (!lastDone) {
-            if (freqDays === 1) {
+          // For daily tasks: due if not done since last 8 AM reset
+          if (freqDays === 1) {
+            if (!lastDone || new Date(lastDone.feito_em) < activeResetUTC) {
+              // Urgency is always 2 for daily — no accumulation
               result.push({ task: t, urgencia: 2, daysSince: 1 });
-              return;
-            }
-
-            const createdDate = t.created_at ? new Date(t.created_at) : now;
-            const daysSinceFromCreation = Math.floor((now.getTime() - createdDate.getTime()) / 86400000);
-            if (daysSinceFromCreation >= freqDays) {
-              result.push({ task: t, urgencia: daysSinceFromCreation > freqDays * 1.5 ? 3 : 2, daysSince: daysSinceFromCreation });
             }
             return;
           }
 
-          const lastDate = new Date(lastDone.feito_em);
-          const daysSince = Math.floor((now.getTime() - lastDate.getTime()) / 86400000);
+          // Non-daily tasks: check days since last done or creation
+          const referenceDate = lastDone
+            ? new Date(lastDone.feito_em)
+            : t.created_at
+            ? new Date(t.created_at)
+            : now;
+          const daysSince = Math.floor((now.getTime() - referenceDate.getTime()) / 86400000);
+
           if (daysSince >= freqDays) {
-            result.push({ task: t, urgencia: daysSince > freqDays * 1.5 ? 3 : 2, daysSince });
+            // Cap urgency at 3 — no infinite accumulation
+            const urgencia = Math.min(daysSince > freqDays * 1.5 ? 3 : 2, 3);
+            result.push({ task: t, urgencia, daysSince: Math.min(daysSince, freqDays * 2) });
           }
         });
+
       return result.sort((a, b) => b.urgencia - a.urgencia || b.daysSince - a.daysSince);
     },
     [tarefas, registros]
