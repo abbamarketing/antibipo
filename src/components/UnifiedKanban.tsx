@@ -154,7 +154,7 @@ export function UnifiedKanban({ energy, lastMoodValue }: UnifiedKanbanProps) {
         if (daysSince >= freqDays) {
           items.push({
             id: `casa_${t.id}`,
-            titulo: `${t.tarefa} (${t.comodo})`,
+            titulo: `${t.tarefa} — ${t.comodo}`,
             modulo: "casa",
             tipo: "casa",
             status: "hoje",
@@ -221,7 +221,23 @@ export function UnifiedKanban({ energy, lastMoodValue }: UnifiedKanbanProps) {
     (status: string) =>
       filtered
         .filter((t) => t.status === status)
-        .sort((a, b) => b.urgencia - a.urgencia),
+        .sort((a, b) => {
+          // 1. Urgência (3=crítica primeiro)
+          if (b.urgencia !== a.urgencia) return b.urgencia - a.urgencia;
+          // 2. Data limite (mais próxima primeiro, sem data vai pro final)
+          const dateA = a.data_limite ? new Date(a.data_limite).getTime() : Infinity;
+          const dateB = b.data_limite ? new Date(b.data_limite).getTime() : Infinity;
+          if (dateA !== dateB) return dateA - dateB;
+          // 3. Tipo de tarefa: estratégico > operacional > admin > delegável > doméstico
+          const typePriority: Record<string, number> = { estrategico: 5, operacional: 4, administrativo: 3, delegavel: 2, domestico: 1 };
+          const tpA = typePriority[a.taskType || ""] || 0;
+          const tpB = typePriority[b.taskType || ""] || 0;
+          if (tpB !== tpA) return tpB - tpA;
+          // 4. Tasks reais antes de sintéticas (casa/tracker)
+          const realA = a.tipo === "task" ? 1 : 0;
+          const realB = b.tipo === "task" ? 1 : 0;
+          return realB - realA;
+        }),
     [filtered]
   );
 
@@ -512,12 +528,23 @@ function KanbanCard({
                 {item.depende_de}
               </span>
             )}
-            {item.data_limite && (
-              <span className="inline-flex items-center gap-0.5 text-[9px] font-mono text-red-600 bg-red-500/10 px-1 py-0.5 rounded">
-                <Calendar className="w-2.5 h-2.5" />
-                {new Date(item.data_limite + "T00:00:00").toLocaleDateString("pt-BR", { day: "2-digit", month: "short" })}
-              </span>
-            )}
+            {item.data_limite && (() => {
+              const deadline = new Date(item.data_limite + "T00:00:00");
+              const now = new Date();
+              now.setHours(0, 0, 0, 0);
+              const diffDays = Math.ceil((deadline.getTime() - now.getTime()) / 86400000);
+              const isOverdue = diffDays < 0;
+              const isToday = diffDays === 0;
+              const isTomorrow = diffDays === 1;
+              const label = isOverdue ? `Atrasada (${Math.abs(diffDays)}d)` : isToday ? "Hoje" : isTomorrow ? "Amanhã" : deadline.toLocaleDateString("pt-BR", { day: "2-digit", month: "short" });
+              const colorClass = isOverdue ? "text-red-600 bg-red-500/15" : isToday ? "text-amber-600 bg-amber-500/15" : isTomorrow ? "text-orange-600 bg-orange-500/15" : "text-muted-foreground bg-secondary";
+              return (
+                <span className={`inline-flex items-center gap-0.5 text-[9px] font-mono px-1 py-0.5 rounded ${colorClass}`}>
+                  <Calendar className="w-2.5 h-2.5" />
+                  {label}
+                </span>
+              );
+            })()}
           </div>
 
           {item.notas && (
