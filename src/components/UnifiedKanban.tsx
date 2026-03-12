@@ -567,7 +567,6 @@ function KanbanCard({
   onDelete: () => void;
 }) {
   const [showSubs, setShowSubs] = useState(false);
-  const [showMoveMenu, setShowMoveMenu] = useState(false);
   const Icon = MODULE_ICONS[item.modulo];
   const hasSubs = item.subtasks && item.subtasks.length > 0;
   const completedSubs = item.subtasks?.filter((s) => s.status === "feito").length || 0;
