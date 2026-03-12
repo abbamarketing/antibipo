@@ -26,13 +26,11 @@ export function today(): string {
 
 export function useFlowStore() {
   const qc = useQueryClient();
-  const [currentEnergy, setCurrentEnergyLocal] = useState<EnergyState | null>(null);
   const [currentModulo, setCurrentModulo] = useState<Modulo>("trabalho");
-  const [energyChecked, setEnergyChecked] = useState(false);
 
-  // Check last energy session on mount
-  const { data: lastEnergySession } = useQuery({
-    queryKey: ["last_energy_session"],
+  // Energy state — derived from React Query (single source of truth, globally reactive)
+  const { data: energySession, isLoading: energyLoading } = useQuery({
+    queryKey: ["current_energy"],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("sessoes_energia")
@@ -47,17 +45,16 @@ export function useFlowStore() {
     staleTime: 0,
   });
 
-  // Auto-restore energy if last session was less than 4h ago
-  if (lastEnergySession && !energyChecked) {
-    const sessionTime = new Date(lastEnergySession.hora_inicio).getTime();
+  // Derive current energy: valid if session < 4h old
+  const currentEnergy: EnergyState | null = (() => {
+    if (!energySession) return null;
+    const sessionTime = new Date(energySession.hora_inicio).getTime();
     const fourHoursMs = 4 * 60 * 60 * 1000;
     if (Date.now() - sessionTime < fourHoursMs) {
-      setCurrentEnergyLocal(lastEnergySession.estado);
+      return energySession.estado;
     }
-    setEnergyChecked(true);
-  } else if (!lastEnergySession && !energyChecked && lastEnergySession !== undefined) {
-    setEnergyChecked(true);
-  }
+    return null;
+  })();
 
   // ===== QUERIES =====
   const { data: tasks = [] } = useQuery({
