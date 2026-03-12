@@ -552,6 +552,8 @@ function KanbanCard({
   onStartPomodoro,
   showPomodoro,
   onCompleteSubtask,
+  onOpen,
+  onDelete,
 }: {
   item: UnifiedTask;
   onComplete: () => void;
@@ -561,6 +563,8 @@ function KanbanCard({
   onStartPomodoro: () => void;
   showPomodoro: boolean;
   onCompleteSubtask: (id: string) => void;
+  onOpen: () => void;
+  onDelete: () => void;
 }) {
   const [showSubs, setShowSubs] = useState(false);
   const [showMoveMenu, setShowMoveMenu] = useState(false);
