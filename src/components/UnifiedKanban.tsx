@@ -1,5 +1,6 @@
 import { useState, useMemo, useCallback } from "react";
 import { useFlowStore, type Task, type EnergyState } from "@/lib/store";
+import { useDayContext } from "@/hooks/use-day-context";
 import { useCasaStore } from "@/lib/casa-store";
 import { useTrackerStore } from "@/lib/tracker-store";
 import { isRecorrenteDue, type RecorrenteConfig, type ChecklistConfig } from "@/lib/tracker-blueprints";
@@ -76,6 +77,7 @@ export function UnifiedKanban({ energy, lastMoodValue, preferredModule = null }:
   const { state, completeTask, updateTask } = useFlowStore();
   const casa = useCasaStore();
   const { trackers, getTodayRegistros, getLastCompletion } = useTrackerStore();
+  const dayCtx = useDayContext();
 
   const [collapsedCols, setCollapsedCols] = useState<Set<string>>(
     () => new Set(energy === "basico" ? ["em_andamento", "aguardando", "backlog"] : energy === "modo_leve" ? ["backlog"] : [])
@@ -158,8 +160,8 @@ export function UnifiedKanban({ energy, lastMoodValue, preferredModule = null }:
         });
       });
 
-    // Casa tasks due — limited by energy level to avoid overwhelm
-    const casaLimit = energy === "basico" ? 2 : energy === "modo_leve" ? 3 : 5;
+    // Casa tasks due — limited by mood+energy context
+    const casaLimit = dayCtx.casaLimit;
     const today = new Date();
     const casaDue: { task: typeof casa.tarefas[0]; urgencia: number; daysSince: number }[] = [];
     casa.tarefas
@@ -232,7 +234,7 @@ export function UnifiedKanban({ energy, lastMoodValue, preferredModule = null }:
       });
 
     return items;
-  }, [state.tasks, casa.tarefas, casa.registros, trackers, getTodayRegistros, getLastCompletion, subtaskMap, energy]);
+  }, [state.tasks, casa.tarefas, casa.registros, trackers, getTodayRegistros, getLastCompletion, subtaskMap, energy, dayCtx.casaLimit]);
 
   const completedToday = state.tasks.filter(
     (t) => t.status === "feito" && t.feito_em && t.feito_em.startsWith(new Date().toISOString().split("T")[0])
@@ -283,12 +285,11 @@ export function UnifiedKanban({ energy, lastMoodValue, preferredModule = null }:
           return realB - realA;
         });
 
-      // In basico mode, limit "hoje" to max 3 tasks total
-      if (status === "hoje" && energy === "basico") return tasks.slice(0, 3);
-      if (status === "hoje" && energy === "modo_leve") return tasks.slice(0, 6);
+      // Limit "hoje" tasks based on mood+energy context
+      if (status === "hoje") return tasks.slice(0, dayCtx.taskLimit);
       return tasks;
     },
-    [filtered, energy]
+    [filtered, energy, dayCtx.taskLimit]
   );
 
   const toggleCol = (key: string) => {
