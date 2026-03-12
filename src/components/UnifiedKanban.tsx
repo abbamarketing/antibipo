@@ -80,6 +80,17 @@ export function UnifiedKanban({ energy, lastMoodValue, preferredModule = null }:
   const [collapsedCols, setCollapsedCols] = useState<Set<string>>(
     () => new Set(energy === "basico" ? ["em_andamento", "aguardando", "backlog"] : energy === "modo_leve" ? ["backlog"] : [])
   );
+
+  // Sync collapsed columns when energy changes
+  useEffect(() => {
+    if (energy === "basico") {
+      setCollapsedCols(new Set(["em_andamento", "aguardando", "backlog"]));
+    } else if (energy === "modo_leve") {
+      setCollapsedCols(new Set(["backlog"]));
+    } else {
+      setCollapsedCols(new Set());
+    }
+  }, [energy]);
   const [filterModule, setFilterModule] = useState<"trabalho" | "casa" | "saude" | null>(preferredModule);
   const [showCompleted, setShowCompleted] = useState(false);
 
@@ -147,8 +158,10 @@ export function UnifiedKanban({ energy, lastMoodValue, preferredModule = null }:
         });
       });
 
-    // Casa tasks due
+    // Casa tasks due — limited by energy level to avoid overwhelm
+    const casaLimit = energy === "basico" ? 2 : energy === "modo_leve" ? 3 : 5;
     const today = new Date();
+    const casaDue: { task: typeof casa.tarefas[0]; urgencia: number; daysSince: number }[] = [];
     casa.tarefas
       .filter((t) => t.ativo !== false)
       .forEach((t) => {
@@ -157,18 +170,25 @@ export function UnifiedKanban({ energy, lastMoodValue, preferredModule = null }:
         const daysSince = lastDate ? Math.floor((today.getTime() - lastDate.getTime()) / 86400000) : 999;
         const freqDays = t.frequencia === "diario" ? 1 : t.frequencia === "semanal" ? 7 : t.frequencia === "quinzenal" ? 15 : 30;
         if (daysSince >= freqDays) {
-          items.push({
-            id: `casa_${t.id}`,
-            titulo: `${t.tarefa} — ${t.comodo}`,
-            modulo: "casa",
-            tipo: "casa",
-            status: "hoje",
-            urgencia: daysSince > freqDays * 1.5 ? 3 : 2,
-            done: false,
-            sourceData: t,
-            tempo_min: t.tempo_min || undefined,
-          });
+          casaDue.push({ task: t, urgencia: daysSince > freqDays * 1.5 ? 3 : 2, daysSince });
         }
+      });
+    // Sort by urgency (highest first) then days overdue, then take limit
+    casaDue
+      .sort((a, b) => b.urgencia - a.urgencia || b.daysSince - a.daysSince)
+      .slice(0, casaLimit)
+      .forEach(({ task: t, urgencia }) => {
+        items.push({
+          id: `casa_${t.id}`,
+          titulo: `${t.tarefa} — ${t.comodo}`,
+          modulo: "casa",
+          tipo: "casa",
+          status: "hoje",
+          urgencia,
+          done: false,
+          sourceData: t,
+          tempo_min: t.tempo_min || undefined,
+        });
       });
 
     // Trackers due
@@ -212,7 +232,7 @@ export function UnifiedKanban({ energy, lastMoodValue, preferredModule = null }:
       });
 
     return items;
-  }, [state.tasks, casa.tarefas, casa.registros, trackers, getTodayRegistros, getLastCompletion, subtaskMap]);
+  }, [state.tasks, casa.tarefas, casa.registros, trackers, getTodayRegistros, getLastCompletion, subtaskMap, energy]);
 
   const completedToday = state.tasks.filter(
     (t) => t.status === "feito" && t.feito_em && t.feito_em.startsWith(new Date().toISOString().split("T")[0])
@@ -232,10 +252,20 @@ export function UnifiedKanban({ energy, lastMoodValue, preferredModule = null }:
   );
 
   const getColumnTasks = useCallback(
-    (status: string) =>
-      filtered
+    (status: string) => {
+      let tasks = filtered
         .filter((t) => t.status === status)
         .sort((a, b) => {
+          // Boost tasks matching current energy state
+          const energyMatch = (t: UnifiedTask) => {
+            const ideal = t.sourceData?.estado_ideal;
+            if (!ideal || ideal === "qualquer") return 0;
+            if (ideal === energy) return 1;
+            return -1;
+          };
+          const emA = energyMatch(a);
+          const emB = energyMatch(b);
+          if (emB !== emA) return emB - emA;
           // 1. Urgência (3=crítica primeiro)
           if (b.urgencia !== a.urgencia) return b.urgencia - a.urgencia;
           // 2. Data limite (mais próxima primeiro, sem data vai pro final)
@@ -251,8 +281,14 @@ export function UnifiedKanban({ energy, lastMoodValue, preferredModule = null }:
           const realA = a.tipo === "task" ? 1 : 0;
           const realB = b.tipo === "task" ? 1 : 0;
           return realB - realA;
-        }),
-    [filtered]
+        });
+
+      // In basico mode, limit "hoje" to max 3 tasks total
+      if (status === "hoje" && energy === "basico") return tasks.slice(0, 3);
+      if (status === "hoje" && energy === "modo_leve") return tasks.slice(0, 6);
+      return tasks;
+    },
+    [filtered, energy]
   );
 
   const toggleCol = (key: string) => {
