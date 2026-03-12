@@ -80,6 +80,17 @@ export function UnifiedKanban({ energy, lastMoodValue, preferredModule = null }:
   const [collapsedCols, setCollapsedCols] = useState<Set<string>>(
     () => new Set(energy === "basico" ? ["em_andamento", "aguardando", "backlog"] : energy === "modo_leve" ? ["backlog"] : [])
   );
+
+  // Sync collapsed columns when energy changes
+  useEffect(() => {
+    if (energy === "basico") {
+      setCollapsedCols(new Set(["em_andamento", "aguardando", "backlog"]));
+    } else if (energy === "modo_leve") {
+      setCollapsedCols(new Set(["backlog"]));
+    } else {
+      setCollapsedCols(new Set());
+    }
+  }, [energy]);
   const [filterModule, setFilterModule] = useState<"trabalho" | "casa" | "saude" | null>(preferredModule);
   const [showCompleted, setShowCompleted] = useState(false);
 
