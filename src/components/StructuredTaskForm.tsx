@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { logActivity } from "@/lib/activity-log";
 import { brasiliaTimeString } from "@/lib/brasilia";
@@ -98,6 +99,7 @@ export function StructuredTaskForm({ open, onClose, onCreated }: StructuredTaskF
   const [showNewClient, setShowNewClient] = useState(false);
   const [newClientName, setNewClientName] = useState("");
   const [savingClient, setSavingClient] = useState(false);
+  const queryClient = useQueryClient();
 
   const [clientes, setClientes] = useState<{ id: string; nome: string }[]>([]);
   useEffect(() => {
@@ -173,6 +175,9 @@ export function StructuredTaskForm({ open, onClose, onCreated }: StructuredTaskF
       if (error) throw error;
       if (data) {
         setClientes((prev) => [...prev, data].sort((a, b) => a.nome.localeCompare(b.nome)));
+        queryClient.setQueryData(["clientes"], (current: any[] = []) =>
+          [...current.filter((c) => c.id !== data.id), data].sort((a, b) => a.nome.localeCompare(b.nome))
+        );
         setFields({ ...fields, cliente: data.nome, cliente_id: data.id });
         toast.success("Cliente adicionado");
       }
@@ -208,6 +213,7 @@ export function StructuredTaskForm({ open, onClose, onCreated }: StructuredTaskF
 
       if (error) throw error;
 
+      let optimisticSubtasks: any[] = [];
       if (subtarefas.length > 0 && mainTask) {
         const subs = subtarefas.map((sub) => ({
           titulo: sub,
@@ -222,7 +228,38 @@ export function StructuredTaskForm({ open, onClose, onCreated }: StructuredTaskF
           parent_task_id: (mainTask as any).id,
         }));
         await supabase.from("tasks").insert(subs as any);
+
+        optimisticSubtasks = subs.map((sub, idx) => ({
+          id: `tmp_sub_${Date.now()}_${idx}`,
+          criado_em: new Date().toISOString(),
+          cliente_id: null,
+          data_limite: null,
+          depende_de: null,
+          dono: sub.dono,
+          estado_ideal: sub.estado_ideal,
+          feito_em: null,
+          frequencia_recorrencia: null,
+          impacto: sub.impacto,
+          modulo: sub.modulo,
+          notas: null,
+          parent_task_id: (mainTask as any).id,
+          recorrente: false,
+          status: sub.status,
+          tempo_min: sub.tempo_min,
+          tipo: sub.tipo,
+          titulo: sub.titulo,
+          urgencia: sub.urgencia,
+        }));
       }
+
+      if (mainTask) {
+        queryClient.setQueryData(["tasks"], (current: any[] = []) => {
+          const withoutSame = current.filter((t) => t.id !== mainTask.id);
+          return [mainTask, ...optimisticSubtasks, ...withoutSame];
+        });
+      }
+
+      queryClient.invalidateQueries({ queryKey: ["tasks"] });
 
       try { await supabase.functions.invoke("classify-task", { body: { titulo } }); } catch {}
 

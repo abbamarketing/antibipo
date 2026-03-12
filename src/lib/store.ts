@@ -29,7 +29,7 @@ export function useFlowStore() {
   const [currentModulo, setCurrentModulo] = useState<Modulo>("trabalho");
 
   // Energy state — derived from React Query (single source of truth, globally reactive)
-  const { data: energySession, isLoading: energyLoading } = useQuery({
+  const { data: energySession } = useQuery({
     queryKey: ["current_energy"],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -111,6 +111,8 @@ export function useFlowStore() {
     },
   });
 
+  const makeTempId = (prefix: string) => `tmp_${prefix}_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+
   // ===== MUTATIONS =====
   const addTaskMut = useMutation({
     mutationFn: async (task: Database["public"]["Tables"]["tasks"]["Insert"]) => {
@@ -118,7 +120,47 @@ export function useFlowStore() {
       if (error) throw error;
       return data;
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["tasks"] }),
+    onMutate: async (task) => {
+      await qc.cancelQueries({ queryKey: ["tasks"] });
+      const previousTasks = qc.getQueryData<Task[]>(["tasks"]) || [];
+
+      const optimisticTask: Task = {
+        id: makeTempId("task"),
+        criado_em: new Date().toISOString(),
+        cliente_id: task.cliente_id ?? null,
+        data_limite: task.data_limite ?? null,
+        depende_de: task.depende_de ?? null,
+        dono: task.dono ?? "eu",
+        estado_ideal: task.estado_ideal ?? "qualquer",
+        feito_em: null,
+        frequencia_recorrencia: task.frequencia_recorrencia ?? null,
+        impacto: task.impacto ?? 2,
+        modulo: task.modulo ?? "trabalho",
+        notas: task.notas ?? null,
+        parent_task_id: task.parent_task_id ?? null,
+        recorrente: task.recorrente ?? false,
+        status: task.status ?? "hoje",
+        tempo_min: task.tempo_min ?? 30,
+        tipo: task.tipo ?? "operacional",
+        titulo: task.titulo,
+        urgencia: task.urgencia ?? 2,
+      };
+
+      qc.setQueryData<Task[]>(["tasks"], [optimisticTask, ...previousTasks]);
+      return { previousTasks };
+    },
+    onError: (_error, _variables, context) => {
+      if (context?.previousTasks) {
+        qc.setQueryData(["tasks"], context.previousTasks);
+      }
+    },
+    onSuccess: (serverTask) => {
+      qc.setQueryData<Task[]>(["tasks"], (current = []) => {
+        const withoutTemp = current.filter((t) => !t.id.startsWith("tmp_task_"));
+        return [serverTask, ...withoutTemp];
+      });
+    },
+    onSettled: () => qc.invalidateQueries({ queryKey: ["tasks"] }),
   });
 
   const updateTaskMut = useMutation({
@@ -126,7 +168,20 @@ export function useFlowStore() {
       const { error } = await supabase.from("tasks").update(changes).eq("id", id);
       if (error) throw error;
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["tasks"] }),
+    onMutate: async ({ id, changes }) => {
+      await qc.cancelQueries({ queryKey: ["tasks"] });
+      const previousTasks = qc.getQueryData<Task[]>(["tasks"]) || [];
+      qc.setQueryData<Task[]>(["tasks"], (current = []) =>
+        current.map((task) => (task.id === id ? { ...task, ...changes } : task))
+      );
+      return { previousTasks };
+    },
+    onError: (_error, _variables, context) => {
+      if (context?.previousTasks) {
+        qc.setQueryData(["tasks"], context.previousTasks);
+      }
+    },
+    onSettled: () => qc.invalidateQueries({ queryKey: ["tasks"] }),
   });
 
   const addMedMut = useMutation({
@@ -134,7 +189,27 @@ export function useFlowStore() {
       const { error } = await supabase.from("medicamentos").insert(med);
       if (error) throw error;
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["medicamentos"] }),
+    onMutate: async (med) => {
+      await qc.cancelQueries({ queryKey: ["medicamentos"] });
+      const previousMeds = qc.getQueryData<Medicamento[]>(["medicamentos"]) || [];
+      const optimisticMed: Medicamento = {
+        id: makeTempId("med"),
+        criado_em: new Date().toISOString(),
+        dose: med.dose ?? "",
+        estoque: med.estoque ?? 0,
+        horarios: med.horarios ?? [],
+        instrucoes: med.instrucoes ?? null,
+        nome: med.nome,
+      };
+      qc.setQueryData<Medicamento[]>(["medicamentos"], [optimisticMed, ...previousMeds]);
+      return { previousMeds };
+    },
+    onError: (_error, _variables, context) => {
+      if (context?.previousMeds) {
+        qc.setQueryData(["medicamentos"], context.previousMeds);
+      }
+    },
+    onSettled: () => qc.invalidateQueries({ queryKey: ["medicamentos"] }),
   });
 
   const takeMedMut = useMutation({
@@ -147,7 +222,27 @@ export function useFlowStore() {
       });
       if (error) throw error;
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["registros_medicamento"] }),
+    onMutate: async ({ medicamento_id, horario_previsto }) => {
+      const todayStr = today();
+      await qc.cancelQueries({ queryKey: ["registros_medicamento", todayStr] });
+      const previousRegistros = qc.getQueryData<RegistroMedicamento[]>(["registros_medicamento", todayStr]) || [];
+      const optimisticRegistro: RegistroMedicamento = {
+        id: makeTempId("medreg"),
+        data: todayStr,
+        horario_previsto,
+        horario_tomado: new Date().toISOString(),
+        medicamento_id,
+        tomado: true,
+      };
+      qc.setQueryData<RegistroMedicamento[]>(["registros_medicamento", todayStr], [optimisticRegistro, ...previousRegistros]);
+      return { previousRegistros, todayStr };
+    },
+    onError: (_error, _variables, context) => {
+      if (context?.previousRegistros && context?.todayStr) {
+        qc.setQueryData(["registros_medicamento", context.todayStr], context.previousRegistros);
+      }
+    },
+    onSettled: () => qc.invalidateQueries({ queryKey: ["registros_medicamento"] }),
   });
 
   const moodMut = useMutation({
@@ -158,7 +253,28 @@ export function useFlowStore() {
       );
       if (error) throw error;
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["registros_humor"] }),
+    onMutate: async ({ valor, notas }) => {
+      await qc.cancelQueries({ queryKey: ["registros_humor"] });
+      const previousHumor = qc.getQueryData<RegistroHumor[]>(["registros_humor"]) || [];
+      const todayStr = today();
+      const optimisticHumor: RegistroHumor = {
+        id: previousHumor.find((h) => h.data === todayStr)?.id || makeTempId("humor"),
+        data: todayStr,
+        valor,
+        notas: notas ?? null,
+      };
+      qc.setQueryData<RegistroHumor[]>(["registros_humor"], [
+        optimisticHumor,
+        ...previousHumor.filter((h) => h.data !== todayStr),
+      ]);
+      return { previousHumor };
+    },
+    onError: (_error, _variables, context) => {
+      if (context?.previousHumor) {
+        qc.setQueryData(["registros_humor"], context.previousHumor);
+      }
+    },
+    onSettled: () => qc.invalidateQueries({ queryKey: ["registros_humor"] }),
   });
 
   const sleepMut = useMutation({
@@ -192,7 +308,53 @@ export function useFlowStore() {
         }
       }
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["registros_sono"] }),
+    onMutate: async ({ type, qualidade }) => {
+      await qc.cancelQueries({ queryKey: ["registros_sono"] });
+      const previousSono = qc.getQueryData<RegistroSono[]>(["registros_sono"]) || [];
+      const nowIso = new Date().toISOString();
+      const todayStr = today();
+
+      qc.setQueryData<RegistroSono[]>(["registros_sono"], (current = []) => {
+        const existing = current.find((r) => r.data === todayStr);
+
+        if (existing) {
+          if (type === "dormir") {
+            return current.map((r) =>
+              r.id === existing.id ? { ...r, horario_dormir: nowIso } : r
+            );
+          }
+
+          const duracao = existing.horario_dormir
+            ? Math.round((new Date(nowIso).getTime() - new Date(existing.horario_dormir).getTime()) / 60000)
+            : existing.duracao_min;
+
+          return current.map((r) =>
+            r.id === existing.id
+              ? { ...r, horario_acordar: nowIso, duracao_min: duracao, qualidade: qualidade ?? r.qualidade }
+              : r
+          );
+        }
+
+        const optimisticRegistro: RegistroSono = {
+          id: makeTempId("sono"),
+          data: todayStr,
+          duracao_min: null,
+          horario_acordar: type === "acordar" ? nowIso : null,
+          horario_dormir: type === "dormir" ? nowIso : null,
+          qualidade: type === "acordar" ? (qualidade ?? null) : null,
+        };
+
+        return [optimisticRegistro, ...current];
+      });
+
+      return { previousSono };
+    },
+    onError: (_error, _variables, context) => {
+      if (context?.previousSono) {
+        qc.setQueryData(["registros_sono"], context.previousSono);
+      }
+    },
+    onSettled: () => qc.invalidateQueries({ queryKey: ["registros_sono"] }),
   });
 
   const energyMut = useMutation({
@@ -324,15 +486,13 @@ export function useFlowStore() {
   // Add task with AI classification
   const addTaskWithAI = useCallback(
     async (task: Omit<Database["public"]["Tables"]["tasks"]["Insert"], "id" | "criado_em">) => {
-      const { data, error } = await supabase.from("tasks").insert(task).select().single();
-      if (error) throw error;
+      const data = await addTaskMut.mutateAsync(task);
       if (data) {
-        qc.invalidateQueries({ queryKey: ["tasks"] });
         // Classify in background
         classifyTask(data.id, data.titulo);
       }
     },
-    [qc, classifyTask]
+    [addTaskMut, classifyTask]
   );
 
   return {
