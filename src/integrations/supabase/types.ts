@@ -1180,6 +1180,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      reset_my_data: { Args: never; Returns: undefined }
       reset_user_data: { Args: { p_user_id: string }; Returns: undefined }
     }
     Enums: {
