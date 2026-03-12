@@ -147,14 +147,9 @@ export function useCasaStore() {
         .filter((t) => t.ativo !== false)
         .forEach((t) => {
           const lastDone = registros.find((r) => r.tarefa_casa_id === t.id);
-          if (!lastDone) {
-            // Never done — always due, show as urgent
-            const createdDate = t.created_at ? new Date(t.created_at) : now;
-            const daysSince = Math.max(1, Math.floor((now.getTime() - createdDate.getTime()) / 86400000));
-            result.push({ task: t, urgencia: 2, daysSince });
-            return;
-          }
-          const lastDate = new Date(lastDone.feito_em);
+          const lastDate = lastDone
+            ? new Date(lastDone.feito_em)
+            : t.created_at ? new Date(t.created_at) : now;
           const daysSince = Math.floor((now.getTime() - lastDate.getTime()) / 86400000);
           const freqDays = t.frequencia === "diario" ? 1 : t.frequencia === "semanal" ? 7 : t.frequencia === "quinzenal" ? 15 : 30;
           if (daysSince >= freqDays) {
