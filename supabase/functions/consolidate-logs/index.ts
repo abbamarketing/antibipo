@@ -51,122 +51,123 @@ async function generateSummary(logs: any[], periodoInicio: string, periodoFim: s
     }
   }
 
-  // Static fallback
   const topActions = Object.entries(actionCounts).sort((a, b) => b[1] - a[1]).slice(0, 5).map(([k, v]) => `${k}: ${v}x`).join(", ");
   return `${logs.length} ações registradas. Principais: ${topActions}`;
 }
 
 async function consolidateForUser(supabase: any, userId: string) {
-  const { data: logs, error: logsErr } = await supabase
+  // Get ALL logs ordered by date
+  const { data: allLogs, error: logsErr } = await supabase
     .from("activity_log").select("*").eq("user_id", userId)
     .order("criado_em", { ascending: true });
 
   if (logsErr) throw logsErr;
-  if (!logs || logs.length < 100) {
-    return new Response(JSON.stringify({ message: "Not enough logs" }), {
+  if (!allLogs || allLogs.length < 200) {
+    return new Response(JSON.stringify({ message: "Not enough logs to consolidate", count: allLogs?.length || 0 }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }
 
-  const actionCounts: Record<string, number> = {};
-  const periodoInicio = logs[0].criado_em;
-  const periodoFim = logs[logs.length - 1].criado_em;
-  for (const log of logs) actionCounts[log.acao] = (actionCounts[log.acao] || 0) + 1;
+  // KEEP the last 100 logs for AI context — consolidate the rest in batches of 100
+  const logsToKeep = allLogs.slice(-100);
+  const logsToConsolidate = allLogs.slice(0, -100);
 
-  const resumo = await generateSummary(logs, periodoInicio, periodoFim, actionCounts);
+  let batchesCreated = 0;
 
+  // Process in batches of 100
+  for (let i = 0; i < logsToConsolidate.length; i += 100) {
+    const batch = logsToConsolidate.slice(i, i + 100);
+    if (batch.length === 0) continue;
+
+    const periodoInicio = batch[0].criado_em;
+    const periodoFim = batch[batch.length - 1].criado_em;
+
+    const actionCounts: Record<string, number> = {};
+    for (const log of batch) {
+      actionCounts[log.acao] = (actionCounts[log.acao] || 0) + 1;
+    }
+
+    const resumo = await generateSummary(batch, periodoInicio, periodoFim, actionCounts);
+
+    // Store batch in log_consolidado with tipo "activity_batch"
+    await supabase.from("log_consolidado").insert({
+      tipo: "activity_batch",
+      periodo_inicio: periodoInicio.split("T")[0],
+      periodo_fim: periodoFim.split("T")[0],
+      resumo,
+      metricas: { total_logs: batch.length, por_acao: actionCounts, user_id: userId },
+      detalhes: batch.map((l: any) => ({
+        id: l.id,
+        acao: l.acao,
+        detalhes: l.detalhes,
+        contexto: l.contexto,
+        criado_em: l.criado_em,
+      })),
+    });
+
+    batchesCreated++;
+  }
+
+  // Delete only the consolidated logs (keep last 100)
+  const idsToDelete = logsToConsolidate.map((l: any) => l.id);
+  // Delete in chunks to avoid query limits
+  for (let i = 0; i < idsToDelete.length; i += 100) {
+    const chunk = idsToDelete.slice(i, i + 100);
+    await supabase.from("activity_log").delete().in("id", chunk);
+  }
+
+  // Save summary to configuracoes for AI memory
   await supabase.from("configuracoes").upsert({
     user_id: userId,
     chave: `resumo_logs_${new Date().toISOString().split("T")[0]}`,
-    valor: { resumo, periodo_inicio: periodoInicio, periodo_fim: periodoFim, total_acoes: logs.length, acoes: actionCounts },
+    valor: {
+      consolidado_em: new Date().toISOString(),
+      logs_consolidados: logsToConsolidate.length,
+      logs_mantidos: logsToKeep.length,
+      batches_criados: batchesCreated,
+    },
     updated_at: new Date().toISOString(),
   }, { onConflict: "user_id,chave" });
 
-  await supabase.from("log_consolidado").insert({
-    tipo: "activity_summary",
-    periodo_inicio: periodoInicio.split("T")[0],
-    periodo_fim: periodoFim.split("T")[0],
-    resumo,
-    metricas: actionCounts,
-    detalhes: logs.slice(-10).map((l: any) => ({ acao: l.acao, detalhes: l.detalhes })),
-  });
+  console.log(`Consolidated ${logsToConsolidate.length} logs into ${batchesCreated} batches for user ${userId}. Kept ${logsToKeep.length} recent logs.`);
 
-  const logIds = logs.map((l: any) => l.id);
-  await supabase.from("activity_log").delete().in("id", logIds);
-
-  console.log(`Consolidated ${logs.length} logs for user ${userId}`);
-  return new Response(JSON.stringify({ success: true, consolidated: logs.length, resumo }), {
+  return new Response(JSON.stringify({
+    success: true,
+    consolidated: logsToConsolidate.length,
+    kept: logsToKeep.length,
+    batches: batchesCreated,
+  }), {
     headers: { ...corsHeaders, "Content-Type": "application/json" },
   });
 }
 
 async function scheduledConsolidation(supabase: any) {
-  const now = new Date();
-  const today = now.toISOString().split("T")[0];
-  const weekAgo = new Date(now);
-  weekAgo.setDate(weekAgo.getDate() - 7);
-  const weekAgoStr = weekAgo.toISOString().split("T")[0];
+  // Find users with > 200 logs and consolidate each
+  const { data: users } = await supabase
+    .from("activity_log")
+    .select("user_id")
+    .not("user_id", "is", null);
 
-  const { data: existingWeekly } = await supabase
-    .from("log_consolidado").select("id").eq("tipo", "semanal").eq("periodo_fim", today).maybeSingle();
+  if (!users) {
+    return new Response(JSON.stringify({ ok: true, message: "No logs found" }), {
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
 
-  if (!existingWeekly) {
-    const { data: logs } = await supabase
-      .from("activity_log").select("*")
-      .gte("criado_em", weekAgo.toISOString()).lte("criado_em", now.toISOString())
-      .order("criado_em");
+  const uniqueUsers = [...new Set(users.map((u: any) => u.user_id))];
+  const results: any[] = [];
 
-    if (logs?.length) {
-      const acaoCounts: Record<string, number> = {};
-      logs.forEach((l: any) => { acaoCounts[l.acao] = (acaoCounts[l.acao] || 0) + 1; });
-
-      await supabase.from("log_consolidado").insert({
-        tipo: "semanal",
-        periodo_inicio: weekAgoStr,
-        periodo_fim: today,
-        resumo: `Semana ${weekAgoStr} a ${today}: ${logs.length} ações. ${Object.entries(acaoCounts).map(([k, v]) => `${k}: ${v}`).join(", ")}`,
-        metricas: { total_acoes: logs.length, por_acao: acaoCounts },
-        detalhes: logs.slice(0, 100),
-      });
+  for (const userId of uniqueUsers) {
+    try {
+      const resp = await consolidateForUser(supabase, userId as string);
+      const data = await resp.json();
+      results.push({ user_id: userId, ...data });
+    } catch (e) {
+      results.push({ user_id: userId, error: (e as Error).message });
     }
   }
 
-  const monthAgo = new Date(now);
-  monthAgo.setDate(monthAgo.getDate() - 30);
-  const monthAgoStr = monthAgo.toISOString().split("T")[0];
-
-  const { data: weeklyLogs } = await supabase
-    .from("log_consolidado").select("*").eq("tipo", "semanal")
-    .gte("periodo_inicio", monthAgoStr).order("periodo_inicio");
-
-  if (weeklyLogs && weeklyLogs.length >= 4) {
-    const { data: existingMonthly } = await supabase
-      .from("log_consolidado").select("id").eq("tipo", "mensal")
-      .gte("periodo_fim", monthAgoStr).maybeSingle();
-
-    if (!existingMonthly) {
-      const mergedMetrics: Record<string, number> = {};
-      let totalAcoes = 0;
-      weeklyLogs.forEach((wl: any) => {
-        const m = wl.metricas as any;
-        if (m?.por_acao) Object.entries(m.por_acao).forEach(([k, v]) => { mergedMetrics[k] = (mergedMetrics[k] || 0) + (v as number); });
-        totalAcoes += m?.total_acoes || 0;
-      });
-
-      await supabase.from("log_consolidado").insert({
-        tipo: "mensal",
-        periodo_inicio: monthAgoStr,
-        periodo_fim: today,
-        resumo: `Mês ${monthAgoStr} a ${today}: ${totalAcoes} ações em ${weeklyLogs.length} semanas.`,
-        metricas: { total_acoes: totalAcoes, por_acao: mergedMetrics, semanas: weeklyLogs.length },
-        detalhes: weeklyLogs.map((wl: any) => ({ id: wl.id, periodo: `${wl.periodo_inicio} - ${wl.periodo_fim}`, resumo: wl.resumo })),
-      });
-
-      await supabase.from("activity_log").delete().lt("criado_em", monthAgo.toISOString());
-    }
-  }
-
-  return new Response(JSON.stringify({ ok: true }), {
+  return new Response(JSON.stringify({ ok: true, results }), {
     headers: { ...corsHeaders, "Content-Type": "application/json" },
   });
 }

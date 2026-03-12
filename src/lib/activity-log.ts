@@ -33,7 +33,8 @@ export type ActivityAction =
   | "tarefa_estruturada_criada"
   | "tarefa_excluida";
 
-const CONSOLIDATION_THRESHOLD = 100;
+// Consolidate every 200 logs, keeping the last 100 for AI context
+const CONSOLIDATION_THRESHOLD = 200;
 
 export async function logActivity(
   acao: ActivityAction,
@@ -76,9 +77,8 @@ async function checkAndConsolidate(userId: string) {
     if (error || !count) return;
 
     if (count >= CONSOLIDATION_THRESHOLD) {
-      console.log(`Activity log hit ${count} entries, triggering consolidation...`);
+      console.log(`Activity log hit ${count} entries, triggering consolidation (keeping last 100)...`);
       
-      // Call edge function to consolidate
       const { error: fnError } = await supabase.functions.invoke("consolidate-logs", {
         body: { user_id: userId },
       });
@@ -89,5 +89,95 @@ async function checkAndConsolidate(userId: string) {
     }
   } catch (e) {
     console.error("Consolidation check failed:", e);
+  }
+}
+
+/** Get the last 100 logs for AI context */
+export async function getRecentLogsForAI(userId?: string): Promise<any[]> {
+  try {
+    let query = supabase
+      .from("activity_log" as any)
+      .select("*")
+      .order("criado_em", { ascending: false })
+      .limit(100);
+    
+    if (userId) {
+      query = query.eq("user_id", userId);
+    }
+
+    const { data, error } = await query;
+    if (error) throw error;
+    return data || [];
+  } catch (e) {
+    console.error("Failed to get recent logs for AI:", e);
+    return [];
+  }
+}
+
+/** Get total log count (active + consolidated) for download threshold */
+export async function getTotalLogCount(userId: string): Promise<{ active: number; consolidated: number; total: number }> {
+  try {
+    const { count: activeCount } = await supabase
+      .from("activity_log" as any)
+      .select("*", { count: "exact", head: true })
+      .eq("user_id", userId);
+
+    const { data: consolidated } = await supabase
+      .from("log_consolidado")
+      .select("metricas")
+      .eq("tipo", "activity_batch");
+
+    let consolidatedCount = 0;
+    if (consolidated) {
+      consolidated.forEach((c: any) => {
+        consolidatedCount += (c.metricas as any)?.total_logs || 0;
+      });
+    }
+
+    const active = activeCount || 0;
+    return { active, consolidated: consolidatedCount, total: active + consolidatedCount };
+  } catch {
+    return { active: 0, consolidated: 0, total: 0 };
+  }
+}
+
+/** Export all logs (active + consolidated details) as JSON */
+export async function exportAllLogs(userId: string): Promise<any[]> {
+  try {
+    // Get active logs
+    const { data: activeLogs } = await supabase
+      .from("activity_log" as any)
+      .select("*")
+      .eq("user_id", userId)
+      .order("criado_em", { ascending: true });
+
+    // Get consolidated batches
+    const { data: batches } = await supabase
+      .from("log_consolidado")
+      .select("*")
+      .eq("tipo", "activity_batch")
+      .order("periodo_inicio", { ascending: true });
+
+    const allLogs: any[] = [];
+
+    // Add consolidated logs from batches
+    if (batches) {
+      batches.forEach((batch: any) => {
+        const details = batch.detalhes as any[];
+        if (details) {
+          allLogs.push(...details);
+        }
+      });
+    }
+
+    // Add active logs
+    if (activeLogs) {
+      allLogs.push(...activeLogs);
+    }
+
+    return allLogs;
+  } catch (e) {
+    console.error("Export logs failed:", e);
+    return [];
   }
 }
