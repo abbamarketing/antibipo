@@ -204,7 +204,7 @@ export function StructuredTaskForm({ open, onClose, onCreated }: StructuredTaskF
         tempo_min: 30,
         estado_ideal: "qualquer" as any,
         impacto: urgencia >= 3 ? 3 : 2,
-        status: "hoje" as any,
+        status: "backlog" as any,
         cliente_id: fields.cliente_id || null,
         data_limite: dataEntrega ? format(dataEntrega, "yyyy-MM-dd") : null,
         recorrente,
