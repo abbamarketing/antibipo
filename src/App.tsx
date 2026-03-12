@@ -12,6 +12,7 @@ import Configuracoes from "./pages/Configuracoes.tsx";
 import Documentacao from "./pages/Documentacao.tsx";
 import AuthPage from "./pages/Auth.tsx";
 import NotFound from "./pages/NotFound.tsx";
+import AjudaCRM from "./pages/AjudaCRM.tsx";
 
 const queryClient = new QueryClient();
 
@@ -29,6 +30,7 @@ const App = () => (
           <Route path="/calendario" element={<AuthGuard><Calendario /></AuthGuard>} />
           <Route path="/config" element={<AuthGuard><Configuracoes /></AuthGuard>} />
           <Route path="/docs" element={<AuthGuard><Documentacao /></AuthGuard>} />
+          <Route path="/ajuda-crm" element={<AjudaCRM />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
