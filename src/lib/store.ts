@@ -486,15 +486,13 @@ export function useFlowStore() {
   // Add task with AI classification
   const addTaskWithAI = useCallback(
     async (task: Omit<Database["public"]["Tables"]["tasks"]["Insert"], "id" | "criado_em">) => {
-      const { data, error } = await supabase.from("tasks").insert(task).select().single();
-      if (error) throw error;
+      const data = await addTaskMut.mutateAsync(task);
       if (data) {
-        qc.invalidateQueries({ queryKey: ["tasks"] });
         // Classify in background
         classifyTask(data.id, data.titulo);
       }
     },
-    [qc, classifyTask]
+    [addTaskMut, classifyTask]
   );
 
   return {
