@@ -15,6 +15,7 @@ import { useEffect, useRef } from "react";
 interface UnifiedKanbanProps {
   energy: EnergyState;
   lastMoodValue?: number;
+  preferredModule?: "trabalho" | "casa" | "saude" | null;
 }
 
 interface UnifiedTask {
@@ -71,7 +72,7 @@ const TYPE_LABELS: Record<string, string> = {
   domestico: "Doméstico",
 };
 
-export function UnifiedKanban({ energy, lastMoodValue }: UnifiedKanbanProps) {
+export function UnifiedKanban({ energy, lastMoodValue, preferredModule = null }: UnifiedKanbanProps) {
   const { state, completeTask, updateTask } = useFlowStore();
   const casa = useCasaStore();
   const { trackers, getTodayRegistros, getLastCompletion } = useTrackerStore();
@@ -79,8 +80,12 @@ export function UnifiedKanban({ energy, lastMoodValue }: UnifiedKanbanProps) {
   const [collapsedCols, setCollapsedCols] = useState<Set<string>>(
     () => new Set(energy === "basico" ? ["em_andamento", "aguardando", "backlog"] : energy === "modo_leve" ? ["backlog"] : [])
   );
-  const [filterModule, setFilterModule] = useState<string | null>(null);
+  const [filterModule, setFilterModule] = useState<"trabalho" | "casa" | "saude" | null>(preferredModule);
   const [showCompleted, setShowCompleted] = useState(false);
+
+  useEffect(() => {
+    setFilterModule(preferredModule);
+  }, [preferredModule]);
 
   // Pomodoro
   const [pomodoroTaskId, setPomodoroTaskId] = useState<string | null>(null);
@@ -217,6 +222,15 @@ export function UnifiedKanban({ energy, lastMoodValue }: UnifiedKanbanProps) {
     ? allItems.filter((i) => i.modulo === filterModule)
     : allItems;
 
+  const moduleCounts = useMemo(
+    () => ({
+      trabalho: allItems.filter((i) => i.modulo === "trabalho").length,
+      casa: allItems.filter((i) => i.modulo === "casa").length,
+      saude: allItems.filter((i) => i.modulo === "saude").length,
+    }),
+    [allItems]
+  );
+
   const getColumnTasks = useCallback(
     (status: string) =>
       filtered
@@ -326,7 +340,7 @@ export function UnifiedKanban({ energy, lastMoodValue }: UnifiedKanbanProps) {
         </button>
         {(["trabalho", "casa", "saude"] as const).map((m) => {
           const Icon = MODULE_ICONS[m];
-          const count = allItems.filter((i) => i.modulo === m).length;
+          const count = moduleCounts[m];
           return (
             <button
               key={m}
@@ -537,7 +551,13 @@ function KanbanCard({
               const isToday = diffDays === 0;
               const isTomorrow = diffDays === 1;
               const label = isOverdue ? `Atrasada (${Math.abs(diffDays)}d)` : isToday ? "Hoje" : isTomorrow ? "Amanhã" : deadline.toLocaleDateString("pt-BR", { day: "2-digit", month: "short" });
-              const colorClass = isOverdue ? "text-red-600 bg-red-500/15" : isToday ? "text-amber-600 bg-amber-500/15" : isTomorrow ? "text-orange-600 bg-orange-500/15" : "text-muted-foreground bg-secondary";
+              const colorClass = isOverdue
+                ? "text-destructive bg-destructive/15"
+                : isToday
+                ? "text-primary bg-primary/15"
+                : isTomorrow
+                ? "text-accent-foreground bg-accent"
+                : "text-muted-foreground bg-secondary";
               return (
                 <span className={`inline-flex items-center gap-0.5 text-[9px] font-mono px-1 py-0.5 rounded ${colorClass}`}>
                   <Calendar className="w-2.5 h-2.5" />

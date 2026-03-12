@@ -113,7 +113,7 @@ function Funcionalidades() {
     <div>
       <DocCard icon={Home} title="Visão Central (Meu Dia)">
         <p><strong>Kanban Unificado:</strong> Todas as tarefas de trabalho, casa e saúde em um único quadro com colunas Hoje, Em Andamento, Aguardando e Backlog.</p>
-        <p><strong>Visibilidade Adaptativa:</strong> O modo Básico mostra apenas "Hoje", Leve adiciona "Em Andamento", Foco Total revela todas as colunas.</p>
+        <p><strong>Organização Objetiva:</strong> Ao trocar a aba de contexto (Trabalho/Casa/Saúde), o Kanban já abre filtrado no módulo correspondente e ordena por urgência + prazo.</p>
         <p><strong>Revelação Progressiva:</strong> As tarefas aparecem gradualmente conforme seu estado de energia e humor atual.</p>
         <p><strong>Quick Capture:</strong> Campo de captura rápida para adicionar tarefas por texto livre.</p>
         <p><strong>Dashboard Único:</strong> Métricas consolidadas — tarefas feitas, pendentes, taxa de conclusão e trackers — em um só painel.</p>
