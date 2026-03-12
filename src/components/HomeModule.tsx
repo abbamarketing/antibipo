@@ -121,9 +121,8 @@ export function HomeModule({ energy }: HomeModuleProps) {
       {activeTab === "tarefas" && (
         <div className="space-y-4">
           <WeeklyTaskView
-            tarefas={casa.tarefas}
+            tarefasDevidas={casa.getTarefasDevidas()}
             registros={casa.registros}
-            comodos={casa.comodos}
             energy={energy}
             onCompletarTarefa={(t) => {
               casa.completarTarefa(t);

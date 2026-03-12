@@ -195,25 +195,13 @@ export function UnifiedKanban({ energy, lastMoodValue, preferredModule = null }:
         });
       });
 
-    // Casa tasks due — limited by mood+energy context
+    // Casa tasks due — use shared logic from casa store
     const casaLimit = dayCtx.casaLimit;
-    const today = new Date();
-    const casaDue: { task: typeof casa.tarefas[0]; urgencia: number; daysSince: number }[] = [];
-    casa.tarefas
-      .filter((t) => t.ativo !== false)
-      .forEach((t) => {
-        const lastDone = casa.registros.find((r) => r.tarefa_casa_id === t.id);
-        const lastDate = lastDone ? new Date(lastDone.feito_em) : null;
-        const daysSince = lastDate ? Math.floor((today.getTime() - lastDate.getTime()) / 86400000) : 999;
-        const freqDays = t.frequencia === "diario" ? 1 : t.frequencia === "semanal" ? 7 : t.frequencia === "quinzenal" ? 15 : 30;
-        if (daysSince >= freqDays) {
-          casaDue.push({ task: t, urgencia: daysSince > freqDays * 1.5 ? 3 : 2, daysSince });
-        }
-      });
-    // Sort by urgency (highest first) then days overdue, then take limit
-    casaDue
-      .sort((a, b) => b.urgencia - a.urgencia || b.daysSince - a.daysSince)
-      .slice(0, casaLimit)
+    const moodBonus = dayCtx.moodLabel === "muito_bom" ? 3 : dayCtx.moodLabel === "bom" ? 1 : 0;
+    const effectiveCasaLimit = casaLimit + moodBonus;
+    
+    casa.getTarefasDevidas()
+      .slice(0, effectiveCasaLimit)
       .forEach(({ task: t, urgencia }) => {
         items.push({
           id: `casa_${t.id}`,
