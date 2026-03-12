@@ -130,7 +130,7 @@ function AIKeySettings() {
 export default function Configuracoes() {
   const navigate = useNavigate();
   const { profile } = useProfileStore();
-  const [confirmReset, setConfirmReset] = useState(false);
+  const [resetting, setResetting] = useState(false);
   const [resumos, setResumos] = useState<any[]>([]);
   const [logCount, setLogCount] = useState<number | null>(null);
 
