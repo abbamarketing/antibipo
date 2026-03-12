@@ -7,7 +7,7 @@ import { brasiliaTimeString } from "@/lib/brasilia";
 import { WeeklyTaskView } from "@/components/casa/WeeklyTaskView";
 import { seedTarefasCasa } from "@/lib/casa-seed";
 import { useProfileStore } from "@/lib/profile-store";
-import { CustomTrackers } from "@/components/CustomTrackers";
+
 import {
   Home,
   Check,
