@@ -147,8 +147,10 @@ export function UnifiedKanban({ energy, lastMoodValue, preferredModule = null }:
         });
       });
 
-    // Casa tasks due
+    // Casa tasks due — limited by energy level to avoid overwhelm
+    const casaLimit = energy === "basico" ? 2 : energy === "modo_leve" ? 3 : 5;
     const today = new Date();
+    const casaDue: { task: typeof casa.tarefas[0]; urgencia: number; daysSince: number }[] = [];
     casa.tarefas
       .filter((t) => t.ativo !== false)
       .forEach((t) => {
@@ -157,18 +159,25 @@ export function UnifiedKanban({ energy, lastMoodValue, preferredModule = null }:
         const daysSince = lastDate ? Math.floor((today.getTime() - lastDate.getTime()) / 86400000) : 999;
         const freqDays = t.frequencia === "diario" ? 1 : t.frequencia === "semanal" ? 7 : t.frequencia === "quinzenal" ? 15 : 30;
         if (daysSince >= freqDays) {
-          items.push({
-            id: `casa_${t.id}`,
-            titulo: `${t.tarefa} — ${t.comodo}`,
-            modulo: "casa",
-            tipo: "casa",
-            status: "hoje",
-            urgencia: daysSince > freqDays * 1.5 ? 3 : 2,
-            done: false,
-            sourceData: t,
-            tempo_min: t.tempo_min || undefined,
-          });
+          casaDue.push({ task: t, urgencia: daysSince > freqDays * 1.5 ? 3 : 2, daysSince });
         }
+      });
+    // Sort by urgency (highest first) then days overdue, then take limit
+    casaDue
+      .sort((a, b) => b.urgencia - a.urgencia || b.daysSince - a.daysSince)
+      .slice(0, casaLimit)
+      .forEach(({ task: t, urgencia }) => {
+        items.push({
+          id: `casa_${t.id}`,
+          titulo: `${t.tarefa} — ${t.comodo}`,
+          modulo: "casa",
+          tipo: "casa",
+          status: "hoje",
+          urgencia,
+          done: false,
+          sourceData: t,
+          tempo_min: t.tempo_min || undefined,
+        });
       });
 
     // Trackers due
