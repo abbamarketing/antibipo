@@ -12,6 +12,7 @@ import { HomeModule } from "@/components/HomeModule";
 import { HealthModule } from "@/components/HealthModule";
 import { MetasModule } from "@/components/MetasModule";
 import { QuickCapture } from "@/components/QuickCapture";
+import { CustomTrackers } from "@/components/CustomTrackers";
 import { WeatherWidget } from "@/components/WeatherWidget";
 import { NotificationManager } from "@/components/NotificationManager";
 import { ModuleOnboardingGuard } from "@/components/ModuleOnboardingGuard";
@@ -215,9 +216,12 @@ const Index = () => {
                 {/* Unified Daily Tasks - always visible */}
                   <UnifiedKanban energy={current_energy!} lastMoodValue={lastMoodValue} />
 
-                {/* Dashboard */}
+                {/* Dashboard + Trackers */}
                 <div className="mb-6">
                   <ModuleDashboard />
+                  <div className="mt-4">
+                    <CustomTrackers modulo={activeNav === "metas" ? "saude" : activeNav} />
+                  </div>
                 </div>
 
                 <div className="mb-6">
@@ -240,13 +244,6 @@ const Index = () => {
                   </ModuleOnboardingGuard>
                 )}
                 {activeNav === "metas" && <MetasModule />}
-
-                {/* Module-specific dashboard */}
-                {activeNav !== "metas" && (
-                  <div className="mt-6">
-                    <ModuleDashboard modulo={activeNav} />
-                  </div>
-                )}
               </>
             )}
           </>

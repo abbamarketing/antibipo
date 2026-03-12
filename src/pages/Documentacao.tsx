@@ -111,10 +111,12 @@ function GuiaUsuario() {
 function Funcionalidades() {
   return (
     <div>
-      <DocCard icon={Home} title="Módulo Início (Meu Dia)">
-        <p><strong>Tarefas Unificadas:</strong> Mostra tarefas de todos os módulos (trabalho, casa, saúde) em uma única lista priorizada.</p>
-        <p><strong>Revelação Progressiva:</strong> As tarefas aparecem gradualmente. O número visível depende do seu estado de energia e humor atual.</p>
-        <p><strong>Quick Capture:</strong> Campo de captura rápida para adicionar tarefas por texto livre ou comando de voz.</p>
+      <DocCard icon={Home} title="Visão Central (Meu Dia)">
+        <p><strong>Kanban Unificado:</strong> Todas as tarefas de trabalho, casa e saúde em um único quadro com colunas Hoje, Em Andamento, Aguardando e Backlog.</p>
+        <p><strong>Visibilidade Adaptativa:</strong> O modo Básico mostra apenas "Hoje", Leve adiciona "Em Andamento", Foco Total revela todas as colunas.</p>
+        <p><strong>Revelação Progressiva:</strong> As tarefas aparecem gradualmente conforme seu estado de energia e humor atual.</p>
+        <p><strong>Quick Capture:</strong> Campo de captura rápida para adicionar tarefas por texto livre.</p>
+        <p><strong>Dashboard Único:</strong> Métricas consolidadas — tarefas feitas, pendentes, taxa de conclusão e trackers — em um só painel.</p>
         <p><strong>Eventos do Dia:</strong> Exibe reuniões e compromissos do calendário para hoje.</p>
       </DocCard>
 
@@ -124,21 +126,20 @@ function Funcionalidades() {
         <p><strong>Refeições:</strong> Acompanhamento de qualidade alimentar e refeições puladas.</p>
         <p><strong>Sono:</strong> Registro de qualidade e duração do sono.</p>
         <p><strong>Peso:</strong> Acompanhamento de peso com histórico e gráficos.</p>
-        <p><strong>Escovação:</strong> Tracker de higiene bucal diária.</p>
-        <p><strong>Check-in Emocional:</strong> Registro de humor a cada 3 horas com escala de 1-5.</p>
+        <p><strong>Check-in Emocional:</strong> Registro de humor a cada 3 horas com escala de 5 níveis.</p>
       </DocCard>
 
       <DocCard icon={Briefcase} title="Módulo Trabalho">
-        <p><strong>Tarefas por Tipo:</strong> Estratégico, operacional, delegável e administrativo.</p>
-        <p><strong>Gestão de Clientes:</strong> Cadastro de clientes com status, valor e data de renovação.</p>
-        <p><strong>Estado Ideal:</strong> Cada tarefa indica o estado de energia ideal para execução.</p>
+        <p><strong>Contexto de Clientes:</strong> Clientes ativos com valor mensal e tarefas vinculadas.</p>
+        <p><strong>Pomodoro:</strong> Timer de 25 minutos integrado às tarefas do dia.</p>
+        <p><strong>Classificação IA:</strong> Novas tarefas são automaticamente classificadas por tipo, impacto, urgência e estado ideal.</p>
         <p><strong>Subtarefas:</strong> Tarefas podem ter sub-tarefas vinculadas.</p>
       </DocCard>
 
       <DocCard icon={Home} title="Módulo Casa">
-        <p><strong>Tarefas por Cômodo:</strong> Organização de tarefas domésticas por área da casa.</p>
-        <p><strong>Frequência:</strong> Tarefas com frequência diária, semanal ou mensal.</p>
-        <p><strong>Registros de Limpeza:</strong> Histórico completo de o que foi feito e quando.</p>
+        <p><strong>Tarefas por Cômodo:</strong> Organização de tarefas domésticas por área da casa com frequência configurável.</p>
+        <p><strong>Lista de Compras:</strong> Lista categorizada (mercado, farmácia, casa) com itens pendentes e comprados.</p>
+        <p><strong>Seeding Inteligente:</strong> Plano de organização base gerado automaticamente com base no perfil do usuário.</p>
       </DocCard>
 
       <DocCard icon={DollarSign} title="Módulo Financeiro">
@@ -155,14 +156,8 @@ function Funcionalidades() {
         <p><strong>Eventos:</strong> Alertas antes de reuniões e compromissos do calendário.</p>
       </DocCard>
 
-      <DocCard icon={BarChart3} title="Dashboards de Análise">
-        <p><strong>Dashboard Geral:</strong> Taxa de conclusão, tarefas feitas vs pendentes, tendência em relação a ontem.</p>
-        <p><strong>Dashboard por Módulo:</strong> Métricas específicas de cada área (saúde, trabalho, casa).</p>
-        <p><strong>Trackers Personalizados:</strong> Crie seus próprios indicadores com diferentes tipos de visualização.</p>
-      </DocCard>
-
       <DocCard icon={Brain} title="Metas Pessoais">
-        <p><strong>Definição de Metas:</strong> Crie metas com prazo, descrição e data-alvo.</p>
+        <p><strong>Definição de Metas:</strong> Crie metas de curto (1 mês), médio (6 meses) e longo prazo (1 ano).</p>
         <p><strong>Acompanhamento:</strong> Barra de progresso com notas de evolução.</p>
         <p><strong>Revisão Semanal:</strong> Obrigatória às segundas-feiras antes de acessar o app.</p>
       </DocCard>
@@ -180,8 +175,10 @@ function LogicaFuncionamento() {
           <p>├── Sexta? → Relatório Semanal → Libera app</p>
           <p>└── Outro dia → Acesso direto</p>
           <p className="mt-2">Dentro do app:</p>
-          <p>Selecionar Estado de Energia → Ver tarefas filtradas</p>
-          <p>→ Check-in emocional (3h) → Ajuste de tarefas visíveis</p>
+          <p>Selecionar Estado de Energia → Kanban Unificado</p>
+          <p>→ Dashboard Único + Trackers</p>
+          <p>→ Tabs de contexto (Trabalho/Casa/Saúde/Metas)</p>
+          <p>→ Check-in emocional (3h) → Ajuste de tarefas</p>
           <p>→ Completar tarefas → Análise IA fim do dia</p>
         </div>
       </DocCard>
@@ -271,9 +268,9 @@ function Tecnologias() {
       </DocCard>
 
       <DocCard icon={Brain} title="Inteligência Artificial">
-        <p><strong>Modelo:</strong> Google Gemini 2.5 Flash via Lovable AI gateway — sem necessidade de API key.</p>
+        <p><strong>Modelo:</strong> Configurável pelo usuário via chave de API nas Configurações.</p>
         <p><strong>Uso:</strong> Classificação de tarefas, análise diária, nudges personalizados, consolidação de logs e geração de insights semanais.</p>
-        <p><strong>Privacidade:</strong> Os dados são processados em edge functions seguras. Nenhum dado é compartilhado com terceiros.</p>
+        <p><strong>Privacidade:</strong> Os dados são processados em funções backend seguras. Nenhum dado é compartilhado com terceiros.</p>
       </DocCard>
 
       <DocCard icon={Smartphone} title="PWA (Progressive Web App)">
