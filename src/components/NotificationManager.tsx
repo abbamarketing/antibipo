@@ -5,6 +5,7 @@ import { useMetasStore } from "@/lib/metas-store";
 import { useCasaStore } from "@/lib/casa-store";
 import { useTrackerStore } from "@/lib/tracker-store";
 import { isRecorrenteDue, type RecorrenteConfig } from "@/lib/tracker-blueprints";
+import { subscribeToPush } from "@/lib/push-subscription";
 
 interface NotificationManagerProps {
   medicamentos: Medicamento[];
