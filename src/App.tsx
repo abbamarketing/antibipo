@@ -30,6 +30,7 @@ const App = () => (
           <Route path="/calendario" element={<AuthGuard><Calendario /></AuthGuard>} />
           <Route path="/config" element={<AuthGuard><Configuracoes /></AuthGuard>} />
           <Route path="/docs" element={<AuthGuard><Documentacao /></AuthGuard>} />
+          <Route path="/ajuda-crm" element={<AjudaCRM />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
