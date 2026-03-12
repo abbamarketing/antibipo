@@ -1,6 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { useFlowStore } from "@/lib/store";
 import { logActivity } from "@/lib/activity-log";
 import { brasiliaTimeString } from "@/lib/brasilia";
 import { format } from "date-fns";
@@ -10,6 +9,8 @@ import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import {
   X, Plus, CalendarIcon, Trash2, ChevronDown, Loader2, CheckCircle2,
+  Repeat, UserPlus, Briefcase, Home, Heart, AlertTriangle,
+  Clock, Zap, FileText, Users, Wrench, Stethoscope,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -21,17 +22,16 @@ interface StructuredTaskFormProps {
 
 // ─── Templates ──────────────────────────────────────────────
 const TEMPLATES = [
-  { id: "acao_cliente", label: "Fazer ação para cliente", fields: ["acao", "cliente", "data_entrega"] },
-  { id: "reuniao", label: "Reunião / call", fields: ["assunto", "participante", "data_entrega"] },
-  { id: "entrega", label: "Entregar projeto", fields: ["projeto", "cliente", "data_entrega"] },
-  { id: "tarefa_geral", label: "Tarefa operacional", fields: ["descricao", "data_entrega"] },
-  { id: "domestico", label: "Tarefa doméstica", fields: ["tarefa_casa", "comodo", "data_entrega"] },
-  { id: "saude", label: "Tarefa de saúde", fields: ["atividade", "data_entrega"] },
+  { id: "acao_cliente", label: "Ação / Cliente", icon: Briefcase, fields: ["acao", "cliente", "data_entrega"] },
+  { id: "reuniao", label: "Reunião / Call", icon: Users, fields: ["assunto", "participante", "data_entrega"] },
+  { id: "entrega", label: "Entregar projeto", icon: FileText, fields: ["projeto", "cliente", "data_entrega"] },
+  { id: "tarefa_geral", label: "Tarefa operacional", icon: Wrench, fields: ["descricao", "data_entrega"] },
+  { id: "domestico", label: "Tarefa doméstica", icon: Home, fields: ["tarefa_casa", "comodo", "data_entrega"] },
+  { id: "saude", label: "Tarefa de saúde", icon: Stethoscope, fields: ["atividade", "data_entrega"] },
 ] as const;
 
 type TemplateId = typeof TEMPLATES[number]["id"];
 
-// ─── Field options ──────────────────────────────────────────
 const ACOES = [
   "Integração", "Deploy", "Design", "Desenvolvimento", "Revisão",
   "Configuração", "Análise", "Documentação", "Teste", "Suporte",
@@ -64,15 +64,22 @@ const PROJETOS = [
 ];
 
 const URGENCIA_OPTIONS = [
-  { value: 1, label: "Baixa", color: "bg-secondary text-muted-foreground" },
-  { value: 2, label: "Média", color: "bg-amber-500/15 text-amber-700 dark:text-amber-300" },
-  { value: 3, label: "Alta", color: "bg-destructive/15 text-destructive" },
+  { value: 1, label: "Baixa", icon: Clock, color: "bg-secondary text-muted-foreground", activeColor: "bg-secondary border-muted-foreground text-foreground" },
+  { value: 2, label: "Média", icon: AlertTriangle, color: "bg-amber-500/15 text-amber-700 dark:text-amber-300", activeColor: "bg-amber-500/15 border-amber-500 text-amber-700 dark:text-amber-300" },
+  { value: 3, label: "Alta", icon: Zap, color: "bg-destructive/15 text-destructive", activeColor: "bg-destructive/15 border-destructive text-destructive" },
 ];
 
 const MODULO_OPTIONS = [
-  { value: "trabalho", label: "Trabalho" },
-  { value: "casa", label: "Casa" },
-  { value: "saude", label: "Saúde" },
+  { value: "trabalho", label: "Trabalho", icon: Briefcase },
+  { value: "casa", label: "Casa", icon: Home },
+  { value: "saude", label: "Saúde", icon: Heart },
+];
+
+const RECURRENCE_OPTIONS = [
+  { value: "diario", label: "Diário" },
+  { value: "semanal", label: "Semanal" },
+  { value: "quinzenal", label: "Quinzenal" },
+  { value: "mensal", label: "Mensal" },
 ];
 
 type FieldValues = Record<string, string>;
@@ -84,19 +91,22 @@ export function StructuredTaskForm({ open, onClose, onCreated }: StructuredTaskF
   const [urgencia, setUrgencia] = useState(2);
   const [modulo, setModulo] = useState<"trabalho" | "casa" | "saude">("trabalho");
   const [subtarefas, setSubtarefas] = useState<string[]>([]);
-  const [newSubIdx, setNewSubIdx] = useState<number | null>(null);
   const [saving, setSaving] = useState(false);
   const [success, setSuccess] = useState(false);
+  const [recorrente, setRecorrente] = useState(false);
+  const [frequencia, setFrequencia] = useState<string>("semanal");
+  const [showNewClient, setShowNewClient] = useState(false);
+  const [newClientName, setNewClientName] = useState("");
+  const [savingClient, setSavingClient] = useState(false);
 
-  // Load clients for dropdown
   const [clientes, setClientes] = useState<{ id: string; nome: string }[]>([]);
   useEffect(() => {
+    if (!open) return;
     supabase.from("clientes").select("id, nome").eq("status", "ativo").order("nome").then(({ data }) => {
       if (data) setClientes(data);
     });
-  }, []);
+  }, [open]);
 
-  // Auto-set modulo based on template
   useEffect(() => {
     if (template === "domestico" as string) setModulo("casa");
     else if (template === "saude" as string) setModulo("saude");
@@ -110,39 +120,30 @@ export function StructuredTaskForm({ open, onClose, onCreated }: StructuredTaskF
     setUrgencia(2);
     setModulo("trabalho");
     setSubtarefas([]);
-    setNewSubIdx(null);
     setSuccess(false);
+    setRecorrente(false);
+    setFrequencia("semanal");
+    setShowNewClient(false);
+    setNewClientName("");
   };
 
-  const handleClose = () => {
-    reset();
-    onClose();
-  };
+  const handleClose = () => { reset(); onClose(); };
 
-  // Build title from template + fields
   const buildTitle = (): string => {
     switch (template) {
-      case "acao_cliente":
-        return `${fields.acao || "Ação"} para ${fields.cliente || "cliente"}`;
-      case "reuniao":
-        return `${fields.assunto || "Reunião"} com ${fields.participante || "participante"}`;
-      case "entrega":
-        return `Entregar ${fields.projeto || "projeto"} — ${fields.cliente || "cliente"}`;
-      case "tarefa_geral":
-        return fields.descricao || "Tarefa";
-      case "domestico":
-        return `${fields.tarefa_casa || "Tarefa"} — ${fields.comodo || "Geral"}`;
-      case "saude":
-        return fields.atividade || "Saúde";
-      default:
-        return "";
+      case "acao_cliente": return `${fields.acao || "Ação"} para ${fields.cliente || "cliente"}`;
+      case "reuniao": return `${fields.assunto || "Reunião"} com ${fields.participante || "participante"}`;
+      case "entrega": return `Entregar ${fields.projeto || "projeto"} — ${fields.cliente || "cliente"}`;
+      case "tarefa_geral": return fields.descricao || "Tarefa";
+      case "domestico": return `${fields.tarefa_casa || "Tarefa"} — ${fields.comodo || "Geral"}`;
+      case "saude": return fields.atividade || "Saúde";
+      default: return "";
     }
   };
 
   const titulo = buildTitle();
   const isValid = template && titulo.length > 3;
 
-  // Subtask options from predefined list based on template
   const SUBTASK_OPTIONS = useMemo(() => {
     switch (template) {
       case "acao_cliente":
@@ -156,10 +157,33 @@ export function StructuredTaskForm({ open, onClose, onCreated }: StructuredTaskF
         return ["Separar materiais", "Executar", "Guardar tudo", "Verificar resultado"];
       case "saude":
         return ["Agendar", "Preparar documentos", "Ir ao local", "Registrar resultado"];
-      default:
-        return [];
+      default: return [];
     }
   }, [template]);
+
+  const handleAddClient = async () => {
+    if (!newClientName.trim() || savingClient) return;
+    setSavingClient(true);
+    try {
+      const { data, error } = await supabase.from("clientes").insert({
+        nome: newClientName.trim(),
+        tipo: "pj",
+        status: "ativo",
+      }).select("id, nome").single();
+      if (error) throw error;
+      if (data) {
+        setClientes((prev) => [...prev, data].sort((a, b) => a.nome.localeCompare(b.nome)));
+        setFields({ ...fields, cliente: data.nome, cliente_id: data.id });
+        toast.success("Cliente adicionado");
+      }
+    } catch {
+      toast.error("Erro ao adicionar cliente");
+    } finally {
+      setSavingClient(false);
+      setShowNewClient(false);
+      setNewClientName("");
+    }
+  };
 
   const handleSubmit = async () => {
     if (!isValid || saving) return;
@@ -178,11 +202,12 @@ export function StructuredTaskForm({ open, onClose, onCreated }: StructuredTaskF
         status: "hoje" as any,
         cliente_id: fields.cliente_id || null,
         data_limite: dataEntrega ? format(dataEntrega, "yyyy-MM-dd") : null,
+        recorrente,
+        frequencia_recorrencia: recorrente ? frequencia : null,
       } as any).select().single();
 
       if (error) throw error;
 
-      // Create subtasks
       if (subtarefas.length > 0 && mainTask) {
         const subs = subtarefas.map((sub) => ({
           titulo: sub,
@@ -199,18 +224,10 @@ export function StructuredTaskForm({ open, onClose, onCreated }: StructuredTaskF
         await supabase.from("tasks").insert(subs as any);
       }
 
-      // AI classify in background
-      try {
-        await supabase.functions.invoke("classify-task", {
-          body: { titulo },
-        });
-      } catch {}
+      try { await supabase.functions.invoke("classify-task", { body: { titulo } }); } catch {}
 
       logActivity("tarefa_estruturada_criada", {
-        titulo,
-        template,
-        modulo,
-        urgencia,
+        titulo, template, modulo, urgencia, recorrente, frequencia: recorrente ? frequencia : null,
         subtarefas: subtarefas.length,
         data_entrega: dataEntrega ? format(dataEntrega, "yyyy-MM-dd") : null,
         hora: brasiliaTimeString(),
@@ -219,10 +236,7 @@ export function StructuredTaskForm({ open, onClose, onCreated }: StructuredTaskF
       setSuccess(true);
       toast.success("Tarefa criada!");
       onCreated?.();
-
-      setTimeout(() => {
-        reset();
-      }, 1200);
+      setTimeout(() => reset(), 1200);
     } catch (err) {
       console.error("Task creation error:", err);
       toast.error("Erro ao criar tarefa");
@@ -233,26 +247,22 @@ export function StructuredTaskForm({ open, onClose, onCreated }: StructuredTaskF
 
   if (!open) return null;
 
-  // ─── Render ───────────────────────────────────────────────
   return (
-    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center">
+    <div className="fixed inset-0 z-50 flex items-end justify-center">
       <div className="absolute inset-0 bg-foreground/20 backdrop-blur-sm" onClick={handleClose} />
-      <div className="relative w-full max-w-lg mx-4 mb-4 sm:mb-0 bg-card rounded-lg border shadow-lg animate-slide-up max-h-[85vh] overflow-y-auto">
-        {/* Header */}
-        <div className="flex items-center justify-between p-4 pb-2 sticky top-0 bg-card z-10">
-          <div>
+      <div className="relative w-full max-w-lg bg-card rounded-t-2xl border-t border-x shadow-lg max-h-[90vh] overflow-y-auto overscroll-contain">
+        {/* Handle bar */}
+        <div className="sticky top-0 bg-card z-10 pt-2 pb-1 px-4">
+          <div className="w-10 h-1 rounded-full bg-muted mx-auto mb-3" />
+          <div className="flex items-center justify-between">
             <h3 className="font-mono text-sm font-semibold tracking-wider">NOVA TAREFA</h3>
-            <p className="font-mono text-[9px] text-muted-foreground/60 tracking-wider mt-0.5">
-              Preencha os campos • sem texto livre
-            </p>
+            <button onClick={handleClose} className="p-2 -mr-2 text-muted-foreground hover:text-foreground transition-colors">
+              <X className="w-5 h-5" />
+            </button>
           </div>
-          <button onClick={handleClose} className="text-muted-foreground hover:text-foreground transition-colors p-1">
-            <X className="w-4 h-4" />
-          </button>
         </div>
 
-        <div className="p-4 pt-2 space-y-4">
-          {/* Success state */}
+        <div className="p-4 pt-2 space-y-4 pb-8">
           {success && (
             <div className="flex flex-col items-center justify-center py-8 gap-2 animate-fade-in">
               <CheckCircle2 className="w-8 h-8 text-primary" />
@@ -262,51 +272,85 @@ export function StructuredTaskForm({ open, onClose, onCreated }: StructuredTaskF
 
           {!success && (
             <>
-              {/* Step 1: Template */}
+              {/* Template selector */}
               <div>
-                <label className="font-mono text-[10px] text-muted-foreground tracking-wider block mb-1.5">
+                <label className="font-mono text-[10px] text-muted-foreground tracking-wider block mb-2">
                   TIPO DE TAREFA
                 </label>
-                <div className="grid grid-cols-2 gap-1.5">
-                  {TEMPLATES.map((t) => (
-                    <button
-                      key={t.id}
-                      onClick={() => { setTemplate(t.id); setFields({}); setSubtarefas([]); }}
-                      className={cn(
-                        "px-3 py-2 rounded-md text-xs font-mono text-left transition-all border",
-                        template === t.id
-                          ? "bg-primary text-primary-foreground border-primary"
-                          : "bg-secondary text-muted-foreground border-transparent hover:border-primary/30"
-                      )}
-                    >
-                      {t.label}
-                    </button>
-                  ))}
+                <div className="grid grid-cols-2 gap-2">
+                  {TEMPLATES.map((t) => {
+                    const TIcon = t.icon;
+                    return (
+                      <button
+                        key={t.id}
+                        onClick={() => { setTemplate(t.id); setFields({}); setSubtarefas([]); }}
+                        className={cn(
+                          "flex items-center gap-2 px-3 py-3 rounded-lg text-xs font-mono text-left transition-all border min-h-[48px]",
+                          template === t.id
+                            ? "bg-primary text-primary-foreground border-primary"
+                            : "bg-secondary text-muted-foreground border-transparent hover:border-primary/30 active:bg-secondary/80"
+                        )}
+                      >
+                        <TIcon className="w-4 h-4 shrink-0" />
+                        <span className="leading-tight">{t.label}</span>
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
 
-              {/* Step 2: Fields based on template */}
               {template && (
-                <div className="space-y-3 animate-fade-in">
+                <div className="space-y-4 animate-fade-in">
                   {/* Dynamic fields */}
                   {template === "acao_cliente" && (
                     <>
                       <DropdownField label="AÇÃO" options={ACOES} value={fields.acao} onChange={(v) => setFields({ ...fields, acao: v })} />
-                      <ClientField clients={clientes} value={fields.cliente} onChange={(nome, id) => setFields({ ...fields, cliente: nome, cliente_id: id })} />
+                      <ClientFieldEnhanced
+                        clients={clientes}
+                        value={fields.cliente}
+                        onChange={(nome, id) => setFields({ ...fields, cliente: nome, cliente_id: id })}
+                        showNewClient={showNewClient}
+                        setShowNewClient={setShowNewClient}
+                        newClientName={newClientName}
+                        setNewClientName={setNewClientName}
+                        onAddClient={handleAddClient}
+                        savingClient={savingClient}
+                      />
                     </>
                   )}
 
                   {template === "reuniao" && (
                     <>
                       <DropdownField label="ASSUNTO" options={ASSUNTOS} value={fields.assunto} onChange={(v) => setFields({ ...fields, assunto: v })} />
-                      <ClientField clients={clientes} value={fields.participante} onChange={(nome) => setFields({ ...fields, participante: nome })} label="PARTICIPANTE" />
+                      <ClientFieldEnhanced
+                        clients={clientes}
+                        value={fields.participante}
+                        onChange={(nome) => setFields({ ...fields, participante: nome })}
+                        label="PARTICIPANTE"
+                        showNewClient={showNewClient}
+                        setShowNewClient={setShowNewClient}
+                        newClientName={newClientName}
+                        setNewClientName={setNewClientName}
+                        onAddClient={handleAddClient}
+                        savingClient={savingClient}
+                      />
                     </>
                   )}
 
                   {template === "entrega" && (
                     <>
                       <DropdownField label="PROJETO" options={PROJETOS} value={fields.projeto} onChange={(v) => setFields({ ...fields, projeto: v })} />
-                      <ClientField clients={clientes} value={fields.cliente} onChange={(nome, id) => setFields({ ...fields, cliente: nome, cliente_id: id })} />
+                      <ClientFieldEnhanced
+                        clients={clientes}
+                        value={fields.cliente}
+                        onChange={(nome, id) => setFields({ ...fields, cliente: nome, cliente_id: id })}
+                        showNewClient={showNewClient}
+                        setShowNewClient={setShowNewClient}
+                        newClientName={newClientName}
+                        setNewClientName={setNewClientName}
+                        onAddClient={handleAddClient}
+                        savingClient={savingClient}
+                      />
                     </>
                   )}
 
@@ -333,10 +377,10 @@ export function StructuredTaskForm({ open, onClose, onCreated }: StructuredTaskF
                     <Popover>
                       <PopoverTrigger asChild>
                         <button className={cn(
-                          "w-full flex items-center gap-2 px-3 py-2 rounded-md border text-xs font-mono text-left transition-all",
+                          "w-full flex items-center gap-2 px-3 py-3 rounded-lg border text-xs font-mono text-left transition-all min-h-[48px]",
                           dataEntrega ? "text-foreground" : "text-muted-foreground"
                         )}>
-                          <CalendarIcon className="w-3.5 h-3.5" />
+                          <CalendarIcon className="w-4 h-4 shrink-0" />
                           {dataEntrega
                             ? format(dataEntrega, "dd 'de' MMM, yyyy", { locale: ptBR })
                             : "Selecionar data"}
@@ -349,10 +393,45 @@ export function StructuredTaskForm({ open, onClose, onCreated }: StructuredTaskF
                           onSelect={setDataEntrega}
                           disabled={(date) => date < new Date(new Date().setHours(0, 0, 0, 0))}
                           initialFocus
-                          className={cn("p-3 pointer-events-auto")}
+                          className="p-3 pointer-events-auto"
                         />
                       </PopoverContent>
                     </Popover>
+                  </div>
+
+                  {/* Recurrence toggle */}
+                  <div>
+                    <label className="font-mono text-[10px] text-muted-foreground tracking-wider block mb-1.5">
+                      RECORRÊNCIA
+                    </label>
+                    <button
+                      onClick={() => setRecorrente(!recorrente)}
+                      className={cn(
+                        "w-full flex items-center gap-2 px-3 py-3 rounded-lg border text-xs font-mono transition-all min-h-[48px]",
+                        recorrente ? "bg-blue-500/10 border-blue-500/30 text-blue-700 dark:text-blue-300" : "text-muted-foreground"
+                      )}
+                    >
+                      <Repeat className="w-4 h-4 shrink-0" />
+                      {recorrente ? "Tarefa recorrente" : "Tarefa única"}
+                    </button>
+                    {recorrente && (
+                      <div className="flex gap-1.5 mt-2">
+                        {RECURRENCE_OPTIONS.map((opt) => (
+                          <button
+                            key={opt.value}
+                            onClick={() => setFrequencia(opt.value)}
+                            className={cn(
+                              "flex-1 px-2 py-2 rounded-lg text-[10px] font-mono transition-all border min-h-[40px]",
+                              frequencia === opt.value
+                                ? "bg-blue-500/15 border-blue-500/30 text-blue-700 dark:text-blue-300"
+                                : "bg-secondary text-muted-foreground border-transparent"
+                            )}
+                          >
+                            {opt.label}
+                          </button>
+                        ))}
+                      </div>
+                    )}
                   </div>
 
                   {/* Urgência */}
@@ -360,21 +439,25 @@ export function StructuredTaskForm({ open, onClose, onCreated }: StructuredTaskF
                     <label className="font-mono text-[10px] text-muted-foreground tracking-wider block mb-1.5">
                       URGÊNCIA
                     </label>
-                    <div className="flex gap-1.5">
-                      {URGENCIA_OPTIONS.map((opt) => (
-                        <button
-                          key={opt.value}
-                          onClick={() => setUrgencia(opt.value)}
-                          className={cn(
-                            "flex-1 px-3 py-1.5 rounded-md text-[10px] font-mono transition-all border",
-                            urgencia === opt.value
-                              ? `${opt.color} border-current`
-                              : "bg-secondary text-muted-foreground border-transparent"
-                          )}
-                        >
-                          {opt.label}
-                        </button>
-                      ))}
+                    <div className="flex gap-2">
+                      {URGENCIA_OPTIONS.map((opt) => {
+                        const UIcon = opt.icon;
+                        return (
+                          <button
+                            key={opt.value}
+                            onClick={() => setUrgencia(opt.value)}
+                            className={cn(
+                              "flex-1 flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-lg text-[11px] font-mono transition-all border min-h-[44px]",
+                              urgencia === opt.value
+                                ? opt.activeColor
+                                : "bg-secondary text-muted-foreground border-transparent"
+                            )}
+                          >
+                            <UIcon className="w-3.5 h-3.5" />
+                            {opt.label}
+                          </button>
+                        );
+                      })}
                     </div>
                   </div>
 
@@ -383,21 +466,25 @@ export function StructuredTaskForm({ open, onClose, onCreated }: StructuredTaskF
                     <label className="font-mono text-[10px] text-muted-foreground tracking-wider block mb-1.5">
                       MÓDULO
                     </label>
-                    <div className="flex gap-1.5">
-                      {MODULO_OPTIONS.map((opt) => (
-                        <button
-                          key={opt.value}
-                          onClick={() => setModulo(opt.value as any)}
-                          className={cn(
-                            "flex-1 px-3 py-1.5 rounded-md text-[10px] font-mono transition-all border",
-                            modulo === opt.value
-                              ? "bg-primary text-primary-foreground border-primary"
-                              : "bg-secondary text-muted-foreground border-transparent"
-                          )}
-                        >
-                          {opt.label}
-                        </button>
-                      ))}
+                    <div className="flex gap-2">
+                      {MODULO_OPTIONS.map((opt) => {
+                        const MIcon = opt.icon;
+                        return (
+                          <button
+                            key={opt.value}
+                            onClick={() => setModulo(opt.value as any)}
+                            className={cn(
+                              "flex-1 flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-lg text-[11px] font-mono transition-all border min-h-[44px]",
+                              modulo === opt.value
+                                ? "bg-primary text-primary-foreground border-primary"
+                                : "bg-secondary text-muted-foreground border-transparent"
+                            )}
+                          >
+                            <MIcon className="w-3.5 h-3.5" />
+                            {opt.label}
+                          </button>
+                        );
+                      })}
                     </div>
                   </div>
 
@@ -407,29 +494,30 @@ export function StructuredTaskForm({ open, onClose, onCreated }: StructuredTaskF
                       SUBTAREFAS ({subtarefas.length})
                     </label>
                     {subtarefas.length > 0 && (
-                      <div className="space-y-1 mb-2">
+                      <div className="space-y-1.5 mb-2">
                         {subtarefas.map((sub, i) => (
-                          <div key={i} className="flex items-center gap-2 bg-secondary/50 rounded-md px-3 py-1.5">
+                          <div key={i} className="flex items-center gap-2 bg-secondary/50 rounded-lg px-3 py-2.5 min-h-[40px]">
                             <span className="text-xs font-mono flex-1">{sub}</span>
                             <button
                               onClick={() => setSubtarefas(subtarefas.filter((_, idx) => idx !== i))}
-                              className="text-muted-foreground hover:text-destructive transition-colors"
+                              className="text-muted-foreground hover:text-destructive transition-colors p-1"
                             >
-                              <Trash2 className="w-3 h-3" />
+                              <Trash2 className="w-3.5 h-3.5" />
                             </button>
                           </div>
                         ))}
                       </div>
                     )}
                     {SUBTASK_OPTIONS.length > 0 && (
-                      <div className="flex flex-wrap gap-1">
+                      <div className="flex flex-wrap gap-1.5">
                         {SUBTASK_OPTIONS.filter((s) => !subtarefas.includes(s)).map((opt) => (
                           <button
                             key={opt}
                             onClick={() => setSubtarefas([...subtarefas, opt])}
-                            className="px-2 py-1 rounded text-[9px] font-mono bg-secondary text-muted-foreground hover:bg-primary/10 hover:text-primary transition-all"
+                            className="flex items-center gap-1 px-2.5 py-2 rounded-lg text-[10px] font-mono bg-secondary text-muted-foreground hover:bg-primary/10 hover:text-primary transition-all min-h-[36px]"
                           >
-                            + {opt}
+                            <Plus className="w-3 h-3" />
+                            {opt}
                           </button>
                         ))}
                       </div>
@@ -438,16 +526,25 @@ export function StructuredTaskForm({ open, onClose, onCreated }: StructuredTaskF
 
                   {/* Preview */}
                   {titulo.length > 3 && (
-                    <div className="bg-secondary/50 rounded-md p-3 border border-dashed">
+                    <div className="bg-secondary/50 rounded-lg p-3 border border-dashed">
                       <p className="font-mono text-[9px] text-muted-foreground tracking-wider mb-1">PREVIEW</p>
                       <p className="text-sm font-medium">{titulo}</p>
-                      <div className="flex flex-wrap gap-1.5 mt-1.5">
-                        <span className="text-[9px] font-mono px-1.5 py-0.5 rounded bg-primary/10 text-primary">{modulo}</span>
-                        <span className={`text-[9px] font-mono px-1.5 py-0.5 rounded ${URGENCIA_OPTIONS[urgencia - 1]?.color}`}>
+                      <div className="flex flex-wrap gap-1.5 mt-2">
+                        <span className="inline-flex items-center gap-1 text-[9px] font-mono px-1.5 py-0.5 rounded bg-primary/10 text-primary">
+                          {MODULO_OPTIONS.find(m => m.value === modulo)?.label}
+                        </span>
+                        <span className={cn("text-[9px] font-mono px-1.5 py-0.5 rounded", URGENCIA_OPTIONS[urgencia - 1]?.color)}>
                           {URGENCIA_OPTIONS[urgencia - 1]?.label}
                         </span>
+                        {recorrente && (
+                          <span className="inline-flex items-center gap-1 text-[9px] font-mono px-1.5 py-0.5 rounded bg-blue-500/10 text-blue-600">
+                            <Repeat className="w-2.5 h-2.5" />
+                            {RECURRENCE_OPTIONS.find(r => r.value === frequencia)?.label}
+                          </span>
+                        )}
                         {dataEntrega && (
-                          <span className="text-[9px] font-mono px-1.5 py-0.5 rounded bg-secondary text-muted-foreground">
+                          <span className="inline-flex items-center gap-1 text-[9px] font-mono px-1.5 py-0.5 rounded bg-secondary text-muted-foreground">
+                            <CalendarIcon className="w-2.5 h-2.5" />
                             {format(dataEntrega, "dd/MM")}
                           </span>
                         )}
@@ -464,9 +561,9 @@ export function StructuredTaskForm({ open, onClose, onCreated }: StructuredTaskF
                   <button
                     onClick={handleSubmit}
                     disabled={!isValid || saving}
-                    className="w-full py-3 rounded-md bg-primary text-primary-foreground font-mono text-xs tracking-wider disabled:opacity-40 hover:opacity-90 transition-opacity flex items-center justify-center gap-2"
+                    className="w-full py-4 rounded-lg bg-primary text-primary-foreground font-mono text-xs tracking-wider disabled:opacity-40 hover:opacity-90 active:scale-[0.98] transition-all flex items-center justify-center gap-2 min-h-[52px]"
                   >
-                    {saving ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Plus className="w-3.5 h-3.5" />}
+                    {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
                     {saving ? "CRIANDO..." : "CRIAR TAREFA"}
                   </button>
                 </div>
@@ -481,33 +578,25 @@ export function StructuredTaskForm({ open, onClose, onCreated }: StructuredTaskF
 
 // ─── Dropdown Field ─────────────────────────────────────────
 function DropdownField({
-  label,
-  options,
-  value,
-  onChange,
+  label, options, value, onChange,
 }: {
-  label: string;
-  options: string[];
-  value?: string;
-  onChange: (v: string) => void;
+  label: string; options: string[]; value?: string; onChange: (v: string) => void;
 }) {
   const [isOpen, setIsOpen] = useState(false);
 
   return (
     <div>
-      <label className="font-mono text-[10px] text-muted-foreground tracking-wider block mb-1.5">
-        {label}
-      </label>
+      <label className="font-mono text-[10px] text-muted-foreground tracking-wider block mb-1.5">{label}</label>
       <div className="relative">
         <button
           onClick={() => setIsOpen(!isOpen)}
           className={cn(
-            "w-full flex items-center justify-between px-3 py-2 rounded-md border text-xs font-mono text-left transition-all",
+            "w-full flex items-center justify-between px-3 py-3 rounded-lg border text-xs font-mono text-left transition-all min-h-[48px]",
             value ? "text-foreground" : "text-muted-foreground"
           )}
         >
           {value || `Selecionar ${label.toLowerCase()}`}
-          <ChevronDown className={cn("w-3.5 h-3.5 transition-transform", isOpen && "rotate-180")} />
+          <ChevronDown className={cn("w-4 h-4 transition-transform shrink-0", isOpen && "rotate-180")} />
         </button>
         {isOpen && (
           <div className="absolute top-full left-0 right-0 mt-1 bg-card border rounded-lg shadow-lg z-20 max-h-48 overflow-y-auto animate-fade-in">
@@ -516,7 +605,7 @@ function DropdownField({
                 key={opt}
                 onClick={() => { onChange(opt); setIsOpen(false); }}
                 className={cn(
-                  "w-full text-left px-3 py-2 text-xs font-mono hover:bg-secondary transition-colors",
+                  "w-full text-left px-3 py-3 text-xs font-mono hover:bg-secondary transition-colors min-h-[44px]",
                   value === opt && "bg-primary/10 text-primary"
                 )}
               >
@@ -530,55 +619,94 @@ function DropdownField({
   );
 }
 
-// ─── Client Field ───────────────────────────────────────────
-function ClientField({
-  clients,
-  value,
-  onChange,
-  label = "CLIENTE",
+// ─── Enhanced Client Field with inline add ──────────────────
+function ClientFieldEnhanced({
+  clients, value, onChange, label = "CLIENTE",
+  showNewClient, setShowNewClient, newClientName, setNewClientName,
+  onAddClient, savingClient,
 }: {
   clients: { id: string; nome: string }[];
   value?: string;
   onChange: (nome: string, id?: string) => void;
   label?: string;
+  showNewClient: boolean;
+  setShowNewClient: (v: boolean) => void;
+  newClientName: string;
+  setNewClientName: (v: string) => void;
+  onAddClient: () => void;
+  savingClient: boolean;
 }) {
   const [isOpen, setIsOpen] = useState(false);
 
   return (
     <div>
-      <label className="font-mono text-[10px] text-muted-foreground tracking-wider block mb-1.5">
-        {label}
-      </label>
+      <label className="font-mono text-[10px] text-muted-foreground tracking-wider block mb-1.5">{label}</label>
       <div className="relative">
         <button
           onClick={() => setIsOpen(!isOpen)}
           className={cn(
-            "w-full flex items-center justify-between px-3 py-2 rounded-md border text-xs font-mono text-left transition-all",
+            "w-full flex items-center justify-between px-3 py-3 rounded-lg border text-xs font-mono text-left transition-all min-h-[48px]",
             value ? "text-foreground" : "text-muted-foreground"
           )}
         >
           {value || `Selecionar ${label.toLowerCase()}`}
-          <ChevronDown className={cn("w-3.5 h-3.5 transition-transform", isOpen && "rotate-180")} />
+          <ChevronDown className={cn("w-4 h-4 transition-transform shrink-0", isOpen && "rotate-180")} />
         </button>
         {isOpen && (
-          <div className="absolute top-full left-0 right-0 mt-1 bg-card border rounded-lg shadow-lg z-20 max-h-48 overflow-y-auto animate-fade-in">
-            {clients.length === 0 ? (
-              <p className="px-3 py-2 text-[10px] text-muted-foreground font-mono">
-                Nenhum cliente cadastrado
-              </p>
+          <div className="absolute top-full left-0 right-0 mt-1 bg-card border rounded-lg shadow-lg z-20 max-h-56 overflow-y-auto animate-fade-in">
+            {clients.length === 0 && !showNewClient && (
+              <p className="px-3 py-3 text-[10px] text-muted-foreground font-mono">Nenhum cliente cadastrado</p>
+            )}
+            {clients.map((c) => (
+              <button
+                key={c.id}
+                onClick={() => { onChange(c.nome, c.id); setIsOpen(false); }}
+                className={cn(
+                  "w-full text-left px-3 py-3 text-xs font-mono hover:bg-secondary transition-colors min-h-[44px]",
+                  value === c.nome && "bg-primary/10 text-primary"
+                )}
+              >
+                {c.nome}
+              </button>
+            ))}
+
+            {/* Inline add client */}
+            {!showNewClient ? (
+              <button
+                onClick={() => setShowNewClient(true)}
+                className="w-full flex items-center gap-2 px-3 py-3 text-xs font-mono text-primary hover:bg-primary/5 transition-colors border-t min-h-[44px]"
+              >
+                <UserPlus className="w-3.5 h-3.5" />
+                Adicionar novo cliente
+              </button>
             ) : (
-              clients.map((c) => (
-                <button
-                  key={c.id}
-                  onClick={() => { onChange(c.nome, c.id); setIsOpen(false); }}
-                  className={cn(
-                    "w-full text-left px-3 py-2 text-xs font-mono hover:bg-secondary transition-colors",
-                    value === c.nome && "bg-primary/10 text-primary"
-                  )}
-                >
-                  {c.nome}
-                </button>
-              ))
+              <div className="p-2 border-t space-y-2">
+                <input
+                  type="text"
+                  value={newClientName}
+                  onChange={(e) => setNewClientName(e.target.value)}
+                  placeholder="Nome do cliente"
+                  className="w-full px-3 py-2.5 rounded-lg border bg-background text-xs font-mono focus:outline-none focus:ring-1 focus:ring-primary min-h-[44px]"
+                  style={{ fontSize: "16px" }}
+                  autoFocus
+                  onKeyDown={(e) => e.key === "Enter" && onAddClient()}
+                />
+                <div className="flex gap-1.5">
+                  <button
+                    onClick={onAddClient}
+                    disabled={!newClientName.trim() || savingClient}
+                    className="flex-1 py-2 rounded-lg bg-primary text-primary-foreground text-[10px] font-mono disabled:opacity-40 min-h-[40px]"
+                  >
+                    {savingClient ? <Loader2 className="w-3 h-3 animate-spin mx-auto" /> : "Adicionar"}
+                  </button>
+                  <button
+                    onClick={() => { setShowNewClient(false); setNewClientName(""); }}
+                    className="px-3 py-2 rounded-lg bg-secondary text-muted-foreground text-[10px] font-mono min-h-[40px]"
+                  >
+                    <X className="w-3 h-3" />
+                  </button>
+                </div>
+              </div>
             )}
           </div>
         )}

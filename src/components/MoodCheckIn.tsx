@@ -111,9 +111,10 @@ export function MoodCheckIn({ onMoodUpdated }: MoodCheckInProps) {
         })}
       </div>
       {selected !== null && (
-        <p className="text-center text-[10px] text-primary mt-2 font-mono animate-fade-in">
-          Registrado ✓ Suas tarefas foram ajustadas.
-        </p>
+    <div className="flex items-center justify-center gap-1 mt-2 animate-fade-in">
+          <CheckCircle2 className="w-3 h-3 text-primary" />
+          <p className="text-[10px] text-primary font-mono">Registrado. Tarefas ajustadas.</p>
+        </div>
       )}
     </div>
   );
