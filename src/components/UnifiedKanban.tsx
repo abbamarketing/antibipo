@@ -5,7 +5,7 @@ import { useCasaStore } from "@/lib/casa-store";
 import { useTrackerStore } from "@/lib/tracker-store";
 import { isRecorrenteDue, type RecorrenteConfig, type ChecklistConfig } from "@/lib/tracker-blueprints";
 import { logActivity } from "@/lib/activity-log";
-import { brasiliaTimeString } from "@/lib/brasilia";
+import { brasiliaTimeString, brasiliaISO } from "@/lib/brasilia";
 import {
   CheckCircle2, Clock, Briefcase, Home, Heart, ChevronDown, ChevronRight,
   Sparkles, Timer, Play, Pause, RotateCcw, X, ArrowRight, Send, Check,
