@@ -142,8 +142,16 @@ export function UnifiedKanban({ energy, lastMoodValue, preferredModule = null }:
   const allItems = useMemo(() => {
     const items: UnifiedTask[] = [];
 
-    // Smart promotion: only backlog tasks with deadline === today → "hoje"
+    // Smart promotion based on deadline + mood
     const todayStr = brasiliaISO();
+    const addDays = (iso: string, days: number) => {
+      const d = new Date(iso + "T12:00:00");
+      d.setDate(d.getDate() + days);
+      return d.toISOString().split("T")[0];
+    };
+    const tomorrowStr = addDays(todayStr, 1);
+    const day2Str = addDays(todayStr, 2);
+    const mood = dayCtx.moodLabel;
 
     // All non-completed tasks from tasks table (no subtasks as top-level)
     state.tasks
@@ -151,13 +159,17 @@ export function UnifiedKanban({ energy, lastMoodValue, preferredModule = null }:
       .forEach((t) => {
         let displayStatus = t.status;
 
-        // Auto-promote backlog tasks ONLY if deadline is exactly today
         if (t.status === "backlog" && t.data_limite) {
-          if (t.data_limite === todayStr) {
+          // Overdue or due today → always promote
+          if (t.data_limite <= todayStr) {
             displayStatus = "hoje";
           }
-          // Overdue tasks (past deadline) also promote to hoje
-          if (t.data_limite < todayStr) {
+          // Due tomorrow → promote if mood is "bom" or better
+          else if (t.data_limite === tomorrowStr && (mood === "bom" || mood === "muito_bom")) {
+            displayStatus = "hoje";
+          }
+          // Due in 2 days → promote only if mood is "muito_bom"
+          else if (t.data_limite === day2Str && mood === "muito_bom") {
             displayStatus = "hoje";
           }
         }
@@ -257,7 +269,7 @@ export function UnifiedKanban({ energy, lastMoodValue, preferredModule = null }:
       });
 
     return items;
-  }, [state.tasks, casa.tarefas, casa.registros, trackers, getTodayRegistros, getLastCompletion, subtaskMap, energy, dayCtx.casaLimit]);
+  }, [state.tasks, casa.tarefas, casa.registros, trackers, getTodayRegistros, getLastCompletion, subtaskMap, energy, dayCtx.casaLimit, dayCtx.moodLabel]);
 
   const completedToday = state.tasks.filter(
     (t) => t.status === "feito" && t.feito_em && t.feito_em.startsWith(new Date().toISOString().split("T")[0])
