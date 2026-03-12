@@ -184,6 +184,27 @@ export function useFlowStore() {
     onSettled: () => qc.invalidateQueries({ queryKey: ["tasks"] }),
   });
 
+  const deleteTaskMut = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from("tasks").delete().eq("id", id);
+      if (error) throw error;
+    },
+    onMutate: async (id) => {
+      await qc.cancelQueries({ queryKey: ["tasks"] });
+      const previousTasks = qc.getQueryData<Task[]>(["tasks"]) || [];
+      qc.setQueryData<Task[]>(["tasks"], (current = []) =>
+        current.filter((t) => t.id !== id && t.parent_task_id !== id)
+      );
+      return { previousTasks };
+    },
+    onError: (_error, _variables, context) => {
+      if (context?.previousTasks) {
+        qc.setQueryData(["tasks"], context.previousTasks);
+      }
+    },
+    onSettled: () => qc.invalidateQueries({ queryKey: ["tasks"] }),
+  });
+
   const addMedMut = useMutation({
     mutationFn: async (med: Database["public"]["Tables"]["medicamentos"]["Insert"]) => {
       const { error } = await supabase.from("medicamentos").insert(med);
