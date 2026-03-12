@@ -214,12 +214,16 @@ const Index = () => {
 
             {!showMondayReview && !showFridayReport && (
               <>
+                {/* Integrated day score — crosses mood, meds, sleep, tasks */}
+                <div className="mb-4">
+                  <DayScore />
+                </div>
+
                 {/* Unified Daily Tasks - always visible */}
                   <UnifiedKanban energy={current_energy!} lastMoodValue={lastMoodValue} preferredModule={activeNav === "metas" ? null : activeNav} />
 
-                {/* Dashboard + Trackers */}
+                {/* Trackers */}
                 <div className="mb-6">
-                  <ModuleDashboard />
                   <div className="mt-4">
                     <CustomTrackers modulo={activeNav === "metas" ? "saude" : activeNav} />
                   </div>
