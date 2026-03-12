@@ -340,7 +340,7 @@ export function UnifiedKanban({ energy, lastMoodValue, preferredModule = null }:
         </button>
         {(["trabalho", "casa", "saude"] as const).map((m) => {
           const Icon = MODULE_ICONS[m];
-          const count = allItems.filter((i) => i.modulo === m).length;
+          const count = moduleCounts[m];
           return (
             <button
               key={m}
