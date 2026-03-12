@@ -142,16 +142,34 @@ export function UnifiedKanban({ energy, lastMoodValue, preferredModule = null }:
   const allItems = useMemo(() => {
     const items: UnifiedTask[] = [];
 
+    // Smart promotion: backlog tasks with deadline today/tomorrow → "hoje"
+    const todayStr = new Date().toISOString().split("T")[0];
+    const tomorrowDate = new Date();
+    tomorrowDate.setDate(tomorrowDate.getDate() + 1);
+    const tomorrowStr = tomorrowDate.toISOString().split("T")[0];
+    const goodMood = dayCtx.moodLabel === "bom" || dayCtx.moodLabel === "muito_bom";
+
     // All non-completed tasks from tasks table (no subtasks as top-level)
     state.tasks
       .filter((t) => !t.parent_task_id && t.status !== "feito" && t.status !== "descartado")
       .forEach((t) => {
+        let displayStatus = t.status;
+
+        // Auto-promote backlog tasks based on deadline + mood
+        if (t.status === "backlog" && t.data_limite) {
+          if (t.data_limite <= todayStr) {
+            displayStatus = "hoje";
+          } else if (t.data_limite === tomorrowStr && goodMood) {
+            displayStatus = "hoje";
+          }
+        }
+
         items.push({
           id: t.id,
           titulo: t.titulo,
           modulo: t.modulo as "trabalho" | "casa" | "saude",
           tipo: "task",
-          status: t.status,
+          status: displayStatus,
           urgencia: t.urgencia,
           done: false,
           sourceData: t,
@@ -241,7 +259,7 @@ export function UnifiedKanban({ energy, lastMoodValue, preferredModule = null }:
       });
 
     return items;
-  }, [state.tasks, casa.tarefas, casa.registros, trackers, getTodayRegistros, getLastCompletion, subtaskMap, energy, dayCtx.casaLimit]);
+  }, [state.tasks, casa.tarefas, casa.registros, trackers, getTodayRegistros, getLastCompletion, subtaskMap, energy, dayCtx.casaLimit, dayCtx.moodLabel]);
 
   const completedToday = state.tasks.filter(
     (t) => t.status === "feito" && t.feito_em && t.feito_em.startsWith(new Date().toISOString().split("T")[0])
