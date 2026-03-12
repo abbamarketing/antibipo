@@ -146,12 +146,26 @@ export function useCasaStore() {
       tarefas
         .filter((t) => t.ativo !== false)
         .forEach((t) => {
-          const lastDone = registros.find((r) => r.tarefa_casa_id === t.id);
-          const lastDate = lastDone
-            ? new Date(lastDone.feito_em)
-            : t.created_at ? new Date(t.created_at) : now;
-          const daysSince = Math.floor((now.getTime() - lastDate.getTime()) / 86400000);
           const freqDays = t.frequencia === "diario" ? 1 : t.frequencia === "semanal" ? 7 : t.frequencia === "quinzenal" ? 15 : 30;
+          const lastDone = registros.find((r) => r.tarefa_casa_id === t.id);
+
+          // Never done yet: daily tasks are due immediately; others follow frequency from creation date
+          if (!lastDone) {
+            if (freqDays === 1) {
+              result.push({ task: t, urgencia: 2, daysSince: 1 });
+              return;
+            }
+
+            const createdDate = t.created_at ? new Date(t.created_at) : now;
+            const daysSinceFromCreation = Math.floor((now.getTime() - createdDate.getTime()) / 86400000);
+            if (daysSinceFromCreation >= freqDays) {
+              result.push({ task: t, urgencia: daysSinceFromCreation > freqDays * 1.5 ? 3 : 2, daysSince: daysSinceFromCreation });
+            }
+            return;
+          }
+
+          const lastDate = new Date(lastDone.feito_em);
+          const daysSince = Math.floor((now.getTime() - lastDate.getTime()) / 86400000);
           if (daysSince >= freqDays) {
             result.push({ task: t, urgencia: daysSince > freqDays * 1.5 ? 3 : 2, daysSince });
           }
