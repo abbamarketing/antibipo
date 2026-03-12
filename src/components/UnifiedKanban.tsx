@@ -289,7 +289,7 @@ export function UnifiedKanban({ energy, lastMoodValue, preferredModule = null }:
       if (status === "hoje") return tasks.slice(0, dayCtx.taskLimit);
       return tasks;
     },
-    [filtered, energy]
+    [filtered, energy, dayCtx.taskLimit]
   );
 
   const toggleCol = (key: string) => {
