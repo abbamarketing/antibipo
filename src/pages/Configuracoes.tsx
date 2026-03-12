@@ -130,7 +130,7 @@ function AIKeySettings() {
 export default function Configuracoes() {
   const navigate = useNavigate();
   const { profile } = useProfileStore();
-  const [confirmReset, setConfirmReset] = useState(false);
+  const [resetting, setResetting] = useState(false);
   const [resumos, setResumos] = useState<any[]>([]);
   const [logCount, setLogCount] = useState<number | null>(null);
 
@@ -155,14 +155,28 @@ export default function Configuracoes() {
   }, []);
 
   const handleResetAccount = async () => {
-    if (!confirmReset) { setConfirmReset(true); return; }
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return;
-    const { error } = await supabase.rpc("reset_user_data" as any, { p_user_id: user.id });
-    if (error) { console.error("Reset failed:", error); return; }
-    localStorage.clear();
-    setConfirmReset(false);
-    window.location.href = "/";
+    if (resetting) return;
+
+    const confirmed = window.confirm("Isso vai apagar TODOS os dados da conta e reiniciar do zero. Deseja continuar?");
+    if (!confirmed) return;
+
+    setResetting(true);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("Usuário não autenticado");
+
+      const { error } = await supabase.rpc("reset_user_data" as any, { p_user_id: user.id });
+      if (error) throw error;
+
+      localStorage.clear();
+      sessionStorage.clear();
+      window.location.href = "/";
+    } catch (error) {
+      console.error("Reset failed:", error);
+      alert("Não foi possível resetar agora. Tente novamente em alguns segundos.");
+    } finally {
+      setResetting(false);
+    }
   };
 
   const handleLogout = async () => {
@@ -303,14 +317,13 @@ export default function Configuracoes() {
 
           <button
             onClick={handleResetAccount}
-            className={`w-full flex items-center gap-3 p-4 rounded-lg border transition-colors ${
-              confirmReset ? "bg-destructive/10 border-destructive/30" : "bg-card hover:bg-secondary/50"
-            }`}
+            disabled={resetting}
+            className="w-full flex items-center gap-3 p-4 rounded-lg border bg-card hover:bg-secondary/50 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
           >
             <RotateCcw className="w-4 h-4 text-muted-foreground" />
             <div className="text-left">
               <p className="font-mono text-xs font-medium">
-                {confirmReset ? "Confirmar reset? Clique novamente" : "Resetar conta"}
+                {resetting ? "Resetando conta..." : "Resetar conta"}
               </p>
               <p className="font-mono text-[10px] text-muted-foreground">
                 Apaga TODOS os dados e reinicia do zero
