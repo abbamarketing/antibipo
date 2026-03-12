@@ -472,6 +472,8 @@ export function UnifiedKanban({ energy, lastMoodValue, preferredModule = null }:
                           completeTask(subId);
                           logActivity("subtarefa_concluida", { task_id: subId, hora: brasiliaTimeString() });
                         }}
+                        onOpen={() => setDetailTask(item)}
+                        onDelete={() => handleDelete(item)}
                       />
                     ))
                   )}
