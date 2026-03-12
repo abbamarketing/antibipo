@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { lovable } from "@/integrations/lovable/index";
 import { useNavigate } from "react-router-dom";
 import { Zap } from "lucide-react";
 
@@ -26,16 +27,8 @@ export default function AuthPage() {
 
   const handleGoogleLogin = async () => {
     setLoading(true);
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider: "google",
-      options: {
-        scopes: "https://www.googleapis.com/auth/cloud-platform https://www.googleapis.com/auth/generative-language.retriever",
-        queryParams: {
-          access_type: "offline",
-          prompt: "consent",
-        },
-        redirectTo: window.location.origin,
-      },
+    const { error } = await lovable.auth.signInWithOAuth("google", {
+      redirect_uri: window.location.origin,
     });
     if (error) {
       console.error("Login error:", error);
