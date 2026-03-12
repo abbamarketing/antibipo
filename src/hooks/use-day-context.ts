@@ -118,7 +118,7 @@ function computeTaskLimits(energy: EnergyState | null, moodValue: number | null)
     return { taskLimit: base.tasks + 2, casaLimit: base.casa + 1 };
   }
 
-  return base;
+  return { taskLimit: base.tasks, casaLimit: base.casa };
 }
 
 function computeSuggestions(ctx: {
