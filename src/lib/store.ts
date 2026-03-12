@@ -417,6 +417,13 @@ export function useFlowStore() {
     [updateTaskMut]
   );
 
+  const deleteTask = useCallback(
+    (id: string) => {
+      deleteTaskMut.mutate(id);
+    },
+    [deleteTaskMut]
+  );
+
   const addMedicamento = useCallback(
     (med: Omit<Database["public"]["Tables"]["medicamentos"]["Insert"], "id">) => {
       addMedMut.mutate(med);
