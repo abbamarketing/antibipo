@@ -199,13 +199,15 @@ export function useFlowStore() {
     mutationFn: async (estado: EnergyState) => {
       await supabase.from("sessoes_energia").insert({ estado, data: today() });
     },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["current_energy"] }),
   });
 
   // ===== DERIVED =====
   const setEnergy = useCallback((energy: EnergyState) => {
-    setCurrentEnergyLocal(energy);
+    // Optimistically update the cache for instant reactivity
+    qc.setQueryData(["current_energy"], { estado: energy, hora_inicio: new Date().toISOString(), data: today() });
     energyMut.mutate(energy);
-  }, [energyMut]);
+  }, [energyMut, qc]);
 
   const setModulo = useCallback((modulo: Modulo) => {
     setCurrentModulo(modulo);
