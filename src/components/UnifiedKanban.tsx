@@ -222,6 +222,15 @@ export function UnifiedKanban({ energy, lastMoodValue, preferredModule = null }:
     ? allItems.filter((i) => i.modulo === filterModule)
     : allItems;
 
+  const moduleCounts = useMemo(
+    () => ({
+      trabalho: allItems.filter((i) => i.modulo === "trabalho").length,
+      casa: allItems.filter((i) => i.modulo === "casa").length,
+      saude: allItems.filter((i) => i.modulo === "saude").length,
+    }),
+    [allItems]
+  );
+
   const getColumnTasks = useCallback(
     (status: string) =>
       filtered
