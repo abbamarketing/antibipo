@@ -359,6 +359,7 @@ export function UnifiedKanban({ energy, lastMoodValue, preferredModule = null }:
 
   return (
     <>
+    <div className="space-y-4 animate-fade-in">
       {/* Header */}
       <div>
         <h2 className="font-mono text-lg font-bold tracking-tight flex items-center gap-2">
