@@ -160,8 +160,8 @@ export function UnifiedKanban({ energy, lastMoodValue, preferredModule = null }:
         });
       });
 
-    // Casa tasks due — limited by energy level to avoid overwhelm
-    const casaLimit = energy === "basico" ? 2 : energy === "modo_leve" ? 3 : 5;
+    // Casa tasks due — limited by mood+energy context
+    const casaLimit = dayCtx.casaLimit;
     const today = new Date();
     const casaDue: { task: typeof casa.tarefas[0]; urgencia: number; daysSince: number }[] = [];
     casa.tarefas
