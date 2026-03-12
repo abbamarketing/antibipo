@@ -234,7 +234,7 @@ export function UnifiedKanban({ energy, lastMoodValue, preferredModule = null }:
       });
 
     return items;
-  }, [state.tasks, casa.tarefas, casa.registros, trackers, getTodayRegistros, getLastCompletion, subtaskMap, energy]);
+  }, [state.tasks, casa.tarefas, casa.registros, trackers, getTodayRegistros, getLastCompletion, subtaskMap, energy, dayCtx.casaLimit]);
 
   const completedToday = state.tasks.filter(
     (t) => t.status === "feito" && t.feito_em && t.feito_em.startsWith(new Date().toISOString().split("T")[0])
