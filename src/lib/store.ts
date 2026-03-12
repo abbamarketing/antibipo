@@ -111,6 +111,8 @@ export function useFlowStore() {
     },
   });
 
+  const makeTempId = (prefix: string) => `tmp_${prefix}_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+
   // ===== MUTATIONS =====
   const addTaskMut = useMutation({
     mutationFn: async (task: Database["public"]["Tables"]["tasks"]["Insert"]) => {
