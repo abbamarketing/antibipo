@@ -9,9 +9,15 @@ import { brasiliaTimeString } from "@/lib/brasilia";
 import {
   CheckCircle2, Clock, Briefcase, Home, Heart, ChevronDown, ChevronRight,
   Sparkles, Timer, Play, Pause, RotateCcw, X, ArrowRight, Send, Check,
-  Repeat, Calendar, UserCheck,
+  Repeat, Calendar, UserCheck, Trash2, Eye, FileText, MoreVertical,
 } from "lucide-react";
 import { useEffect, useRef } from "react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { Textarea } from "@/components/ui/textarea";
+import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 interface UnifiedKanbanProps {
   energy: EnergyState;
@@ -74,10 +80,11 @@ const TYPE_LABELS: Record<string, string> = {
 };
 
 export function UnifiedKanban({ energy, lastMoodValue, preferredModule = null }: UnifiedKanbanProps) {
-  const { state, completeTask, updateTask } = useFlowStore();
+  const { state, completeTask, updateTask, deleteTask } = useFlowStore();
   const casa = useCasaStore();
   const { trackers, getTodayRegistros, getLastCompletion } = useTrackerStore();
   const dayCtx = useDayContext();
+  const [detailTask, setDetailTask] = useState<UnifiedTask | null>(null);
 
   const [collapsedCols, setCollapsedCols] = useState<Set<string>>(
     () => new Set(energy === "basico" ? ["em_andamento", "aguardando", "backlog"] : energy === "modo_leve" ? ["backlog"] : [])
@@ -320,6 +327,14 @@ export function UnifiedKanban({ energy, lastMoodValue, preferredModule = null }:
     logActivity("tarefa_empurrada", { task_id: id, hora: brasiliaTimeString() });
   };
 
+  const handleDelete = (item: UnifiedTask) => {
+    if (item.tipo === "task") {
+      deleteTask(item.id);
+      logActivity("tarefa_excluida", { task_id: item.id, titulo: item.titulo, hora: brasiliaTimeString() });
+    }
+    setDetailTask(null);
+  };
+
   const handleMoveStatus = (id: string, newStatus: string) => {
     updateTask(id, { status: newStatus as any });
     logActivity("tarefa_movida", { task_id: id, status: newStatus, hora: brasiliaTimeString() });
@@ -343,6 +358,7 @@ export function UnifiedKanban({ energy, lastMoodValue, preferredModule = null }:
     : STATUS_COLUMNS;
 
   return (
+    <>
     <div className="space-y-4 animate-fade-in">
       {/* Header */}
       <div>
@@ -457,6 +473,8 @@ export function UnifiedKanban({ energy, lastMoodValue, preferredModule = null }:
                           completeTask(subId);
                           logActivity("subtarefa_concluida", { task_id: subId, hora: brasiliaTimeString() });
                         }}
+                        onOpen={() => setDetailTask(item)}
+                        onDelete={() => handleDelete(item)}
                       />
                     ))
                   )}
@@ -503,6 +521,24 @@ export function UnifiedKanban({ energy, lastMoodValue, preferredModule = null }:
         </div>
       )}
     </div>
+
+      {/* Task Detail Dialog */}
+      {detailTask && (
+        <TaskDetailDialog
+          item={detailTask}
+          onClose={() => setDetailTask(null)}
+          onUpdateNotes={(notes) => {
+            if (detailTask.tipo === "task") {
+              updateTask(detailTask.id, { notas: notes || null });
+              setDetailTask({ ...detailTask, notas: notes || null });
+            }
+          }}
+          onDelete={() => handleDelete(detailTask)}
+          onComplete={() => { handleComplete(detailTask); setDetailTask(null); }}
+          onMoveStatus={(s) => { if (detailTask.tipo === "task") handleMoveStatus(detailTask.id, s); }}
+        />
+      )}
+    </>
   );
 }
 
@@ -516,6 +552,8 @@ function KanbanCard({
   onStartPomodoro,
   showPomodoro,
   onCompleteSubtask,
+  onOpen,
+  onDelete,
 }: {
   item: UnifiedTask;
   onComplete: () => void;
@@ -525,9 +563,10 @@ function KanbanCard({
   onStartPomodoro: () => void;
   showPomodoro: boolean;
   onCompleteSubtask: (id: string) => void;
+  onOpen: () => void;
+  onDelete: () => void;
 }) {
   const [showSubs, setShowSubs] = useState(false);
-  const [showMoveMenu, setShowMoveMenu] = useState(false);
   const Icon = MODULE_ICONS[item.modulo];
   const hasSubs = item.subtasks && item.subtasks.length > 0;
   const completedSubs = item.subtasks?.filter((s) => s.status === "feito").length || 0;
@@ -539,7 +578,7 @@ function KanbanCard({
     <div className={`bg-card rounded-lg border p-3 border-l-[3px] ${urgencyBorder} transition-all hover:border-primary/20`}>
       {/* Title row */}
       <div className="flex items-start gap-2">
-        <div className="flex-1 min-w-0">
+        <div className="flex-1 min-w-0 cursor-pointer" onClick={onOpen}>
           <p className="text-sm font-medium leading-snug">{item.titulo}</p>
 
           {/* Meta row */}
@@ -640,7 +679,7 @@ function KanbanCard({
       )}
 
       {/* Actions */}
-      <div className="flex flex-wrap gap-1.5 mt-2.5">
+      <div className="flex flex-wrap items-center gap-1.5 mt-2.5">
         <button onClick={onComplete} className="flex items-center gap-1 px-2.5 py-1 rounded-md bg-primary text-primary-foreground font-mono text-[10px] hover:opacity-90 transition-opacity">
           <Check className="w-3 h-3" /> Feito
         </button>
@@ -654,29 +693,6 @@ function KanbanCard({
                 <Send className="w-3 h-3" /> Delegar
               </button>
             )}
-            {/* Move status */}
-            <div className="relative">
-              <button
-                onClick={() => setShowMoveMenu(!showMoveMenu)}
-                className="px-2 py-1 rounded-md bg-secondary text-secondary-foreground font-mono text-[10px] hover:bg-secondary/80 transition-colors"
-              >
-                Mover ▾
-              </button>
-              {showMoveMenu && (
-                <div className="absolute top-full left-0 mt-1 bg-card border rounded-lg shadow-lg z-10 py-1 min-w-[120px] animate-fade-in">
-                  {STATUS_COLUMNS.filter((c) => c.key !== item.status).map((col) => (
-                    <button
-                      key={col.key}
-                      onClick={() => { onMoveStatus(col.key); setShowMoveMenu(false); }}
-                      className="w-full text-left px-3 py-1.5 text-[10px] font-mono text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors flex items-center gap-2"
-                    >
-                      <div className={`w-2 h-2 rounded-full ${col.dot}`} />
-                      {col.label}
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
           </>
         )}
         {showPomodoro && (
@@ -684,6 +700,38 @@ function KanbanCard({
             <Timer className="w-3 h-3" /> Pomodoro
           </button>
         )}
+
+        {/* Context menu */}
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <button className="ml-auto p-1 rounded-md text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors">
+              <MoreVertical className="w-3.5 h-3.5" />
+            </button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="min-w-[140px]">
+            <DropdownMenuItem onClick={onOpen} className="text-xs gap-2">
+              <Eye className="w-3.5 h-3.5" /> Abrir detalhes
+            </DropdownMenuItem>
+            {item.tipo === "task" && (
+              <>
+                <DropdownMenuSeparator />
+                {STATUS_COLUMNS.filter((c) => c.key !== item.status).map((col) => (
+                  <DropdownMenuItem key={col.key} onClick={() => onMoveStatus(col.key)} className="text-xs gap-2">
+                    <div className={`w-2 h-2 rounded-full ${col.dot}`} /> {col.label}
+                  </DropdownMenuItem>
+                ))}
+              </>
+            )}
+            {item.tipo === "task" && (
+              <>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={onDelete} className="text-xs gap-2 text-destructive focus:text-destructive">
+                  <Trash2 className="w-3.5 h-3.5" /> Excluir
+                </DropdownMenuItem>
+              </>
+            )}
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
     </div>
   );
@@ -699,4 +747,177 @@ function getMoodMessage(mood?: number, todayCount?: number): string {
   if (mood === 1) return "Bom dia! Vamos manter o ritmo.";
   if (mood >= 2) return `Dia excelente! ${todayCount || 0} tarefas te esperam.`;
   return "Suas tarefas do dia.";
+}
+
+// ─── Task Detail Dialog ─────────────────────────────────────
+function TaskDetailDialog({
+  item,
+  onClose,
+  onUpdateNotes,
+  onDelete,
+  onComplete,
+  onMoveStatus,
+}: {
+  item: UnifiedTask;
+  onClose: () => void;
+  onUpdateNotes: (notes: string) => void;
+  onDelete: () => void;
+  onComplete: () => void;
+  onMoveStatus: (status: string) => void;
+}) {
+  const [notes, setNotes] = useState(item.notas || "");
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  const Icon = MODULE_ICONS[item.modulo];
+
+  const handleSaveNotes = () => {
+    onUpdateNotes(notes);
+  };
+
+  return (
+    <Dialog open onOpenChange={(open) => !open && onClose()}>
+      <DialogContent className="max-w-md max-h-[85vh] overflow-y-auto">
+        <DialogHeader>
+          <div className="flex items-center gap-2 mb-1">
+            <span className={`inline-flex items-center gap-1 text-[10px] font-mono px-1.5 py-0.5 rounded ${MODULE_COLORS[item.modulo]}`}>
+              <Icon className="w-3 h-3" />
+              {MODULE_LABELS[item.modulo]}
+            </span>
+            {item.taskType && (
+              <span className="text-[10px] font-mono text-muted-foreground">
+                {TYPE_LABELS[item.taskType] || item.taskType}
+              </span>
+            )}
+          </div>
+          <DialogTitle className="text-base">{item.titulo}</DialogTitle>
+          <DialogDescription className="sr-only">Detalhes da tarefa</DialogDescription>
+        </DialogHeader>
+
+        {/* Meta info */}
+        <div className="space-y-3">
+          <div className="flex flex-wrap gap-2 text-xs text-muted-foreground">
+            {item.tempo_min && (
+              <span className="flex items-center gap-1">
+                <Clock className="w-3.5 h-3.5" /> {item.tempo_min} min
+              </span>
+            )}
+            {item.dono && item.dono !== "eu" && (
+              <span className="flex items-center gap-1 text-primary">
+                <UserCheck className="w-3.5 h-3.5" />
+                {item.dono === "socio_medico" ? "Sócio Médico" : "Editor"}
+              </span>
+            )}
+            {item.recorrente && (
+              <span className="flex items-center gap-1 text-blue-600">
+                <Repeat className="w-3.5 h-3.5" />
+                {item.frequencia_recorrencia || "Recorrente"}
+              </span>
+            )}
+            {item.data_limite && (
+              <span className="flex items-center gap-1">
+                <Calendar className="w-3.5 h-3.5" />
+                {new Date(item.data_limite + "T00:00:00").toLocaleDateString("pt-BR", { day: "2-digit", month: "long", year: "numeric" })}
+              </span>
+            )}
+            {item.depende_de && (
+              <span className="flex items-center gap-1 text-amber-600">
+                <UserCheck className="w-3.5 h-3.5" /> Depende: {item.depende_de}
+              </span>
+            )}
+          </div>
+
+          {/* Status */}
+          {item.tipo === "task" && (
+            <div className="flex items-center gap-2">
+              <span className="text-[10px] font-mono text-muted-foreground">STATUS:</span>
+              <div className="flex gap-1">
+                {STATUS_COLUMNS.map((col) => (
+                  <button
+                    key={col.key}
+                    onClick={() => onMoveStatus(col.key)}
+                    className={`flex items-center gap-1 px-2 py-1 rounded-md text-[10px] font-mono transition-colors ${
+                      item.status === col.key
+                        ? "bg-primary text-primary-foreground"
+                        : "bg-secondary text-muted-foreground hover:text-foreground"
+                    }`}
+                  >
+                    <div className={`w-1.5 h-1.5 rounded-full ${col.dot}`} />
+                    {col.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Subtasks */}
+          {item.subtasks && item.subtasks.length > 0 && (
+            <div>
+              <span className="text-[10px] font-mono text-muted-foreground">
+                SUBTAREFAS ({item.subtasks.filter(s => s.status === "feito").length}/{item.subtasks.length})
+              </span>
+              <div className="mt-1.5 space-y-1.5">
+                {item.subtasks.map((sub) => (
+                  <div key={sub.id} className="flex items-center gap-2">
+                    <div className={`w-4 h-4 rounded border flex items-center justify-center ${
+                      sub.status === "feito" ? "bg-primary border-primary" : "border-muted-foreground/40"
+                    }`}>
+                      {sub.status === "feito" && <Check className="w-3 h-3 text-primary-foreground" />}
+                    </div>
+                    <span className={`text-sm ${sub.status === "feito" ? "line-through text-muted-foreground/50" : ""}`}>
+                      {sub.titulo}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Description / Notes */}
+          <div>
+            <label className="text-[10px] font-mono text-muted-foreground flex items-center gap-1 mb-1.5">
+              <FileText className="w-3 h-3" /> DESCRIÇÃO / NOTAS
+            </label>
+            <Textarea
+              value={notes}
+              onChange={(e) => setNotes(e.target.value)}
+              placeholder="Adicione uma descrição ou notas..."
+              className="min-h-[100px] text-sm resize-none"
+              style={{ fontSize: 16 }}
+            />
+            {notes !== (item.notas || "") && (
+              <Button size="sm" onClick={handleSaveNotes} className="mt-2 text-xs h-8">
+                Salvar notas
+              </Button>
+            )}
+          </div>
+        </div>
+
+        {/* Footer actions */}
+        <div className="flex items-center gap-2 pt-2 border-t">
+          <Button size="sm" onClick={onComplete} className="text-xs h-8 gap-1">
+            <Check className="w-3 h-3" /> Concluir
+          </Button>
+          <div className="flex-1" />
+          {item.tipo === "task" && (
+            <>
+              {!confirmDelete ? (
+                <Button size="sm" variant="ghost" onClick={() => setConfirmDelete(true)} className="text-xs h-8 gap-1 text-destructive hover:text-destructive">
+                  <Trash2 className="w-3 h-3" /> Excluir
+                </Button>
+              ) : (
+                <div className="flex items-center gap-1">
+                  <span className="text-[10px] text-destructive font-mono">Confirmar?</span>
+                  <Button size="sm" variant="destructive" onClick={onDelete} className="text-xs h-7 px-2">
+                    Sim
+                  </Button>
+                  <Button size="sm" variant="ghost" onClick={() => setConfirmDelete(false)} className="text-xs h-7 px-2">
+                    Não
+                  </Button>
+                </div>
+              )}
+            </>
+          )}
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
 }

@@ -30,7 +30,8 @@ export type ActivityAction =
   | "analise_dia"
   | "tarefa_movida"
   | "subtarefa_concluida"
-  | "tarefa_estruturada_criada";
+  | "tarefa_estruturada_criada"
+  | "tarefa_excluida";
 
 const CONSOLIDATION_THRESHOLD = 100;
 
