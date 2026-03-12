@@ -142,12 +142,8 @@ export function UnifiedKanban({ energy, lastMoodValue, preferredModule = null }:
   const allItems = useMemo(() => {
     const items: UnifiedTask[] = [];
 
-    // Smart promotion: backlog tasks with deadline today/tomorrow → "hoje"
-    const todayStr = new Date().toISOString().split("T")[0];
-    const tomorrowDate = new Date();
-    tomorrowDate.setDate(tomorrowDate.getDate() + 1);
-    const tomorrowStr = tomorrowDate.toISOString().split("T")[0];
-    const goodMood = dayCtx.moodLabel === "bom" || dayCtx.moodLabel === "muito_bom";
+    // Smart promotion: only backlog tasks with deadline === today → "hoje"
+    const todayStr = brasiliaISO();
 
     // All non-completed tasks from tasks table (no subtasks as top-level)
     state.tasks
@@ -155,11 +151,13 @@ export function UnifiedKanban({ energy, lastMoodValue, preferredModule = null }:
       .forEach((t) => {
         let displayStatus = t.status;
 
-        // Auto-promote backlog tasks based on deadline + mood
+        // Auto-promote backlog tasks ONLY if deadline is exactly today
         if (t.status === "backlog" && t.data_limite) {
-          if (t.data_limite <= todayStr) {
+          if (t.data_limite === todayStr) {
             displayStatus = "hoje";
-          } else if (t.data_limite === tomorrowStr && goodMood) {
+          }
+          // Overdue tasks (past deadline) also promote to hoje
+          if (t.data_limite < todayStr) {
             displayStatus = "hoje";
           }
         }
