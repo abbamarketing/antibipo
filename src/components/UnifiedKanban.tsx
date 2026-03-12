@@ -72,7 +72,7 @@ const TYPE_LABELS: Record<string, string> = {
   domestico: "Doméstico",
 };
 
-export function UnifiedKanban({ energy, lastMoodValue }: UnifiedKanbanProps) {
+export function UnifiedKanban({ energy, lastMoodValue, preferredModule = null }: UnifiedKanbanProps) {
   const { state, completeTask, updateTask } = useFlowStore();
   const casa = useCasaStore();
   const { trackers, getTodayRegistros, getLastCompletion } = useTrackerStore();
@@ -80,8 +80,12 @@ export function UnifiedKanban({ energy, lastMoodValue }: UnifiedKanbanProps) {
   const [collapsedCols, setCollapsedCols] = useState<Set<string>>(
     () => new Set(energy === "basico" ? ["em_andamento", "aguardando", "backlog"] : energy === "modo_leve" ? ["backlog"] : [])
   );
-  const [filterModule, setFilterModule] = useState<string | null>(null);
+  const [filterModule, setFilterModule] = useState<"trabalho" | "casa" | "saude" | null>(preferredModule);
   const [showCompleted, setShowCompleted] = useState(false);
+
+  useEffect(() => {
+    setFilterModule(preferredModule);
+  }, [preferredModule]);
 
   // Pomodoro
   const [pomodoroTaskId, setPomodoroTaskId] = useState<string | null>(null);
