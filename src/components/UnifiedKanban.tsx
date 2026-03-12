@@ -154,7 +154,7 @@ export function UnifiedKanban({ energy, lastMoodValue }: UnifiedKanbanProps) {
         if (daysSince >= freqDays) {
           items.push({
             id: `casa_${t.id}`,
-            titulo: `${t.tarefa} (${t.comodo})`,
+            titulo: `${t.tarefa} — ${t.comodo}`,
             modulo: "casa",
             tipo: "casa",
             status: "hoje",
