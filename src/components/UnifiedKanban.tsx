@@ -252,10 +252,20 @@ export function UnifiedKanban({ energy, lastMoodValue, preferredModule = null }:
   );
 
   const getColumnTasks = useCallback(
-    (status: string) =>
-      filtered
+    (status: string) => {
+      let tasks = filtered
         .filter((t) => t.status === status)
         .sort((a, b) => {
+          // Boost tasks matching current energy state
+          const energyMatch = (t: UnifiedTask) => {
+            const ideal = t.sourceData?.estado_ideal;
+            if (!ideal || ideal === "qualquer") return 0;
+            if (ideal === energy) return 1;
+            return -1;
+          };
+          const emA = energyMatch(a);
+          const emB = energyMatch(b);
+          if (emB !== emA) return emB - emA;
           // 1. Urgência (3=crítica primeiro)
           if (b.urgencia !== a.urgencia) return b.urgencia - a.urgencia;
           // 2. Data limite (mais próxima primeiro, sem data vai pro final)
