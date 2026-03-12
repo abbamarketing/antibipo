@@ -15,6 +15,7 @@ import { useEffect, useRef } from "react";
 interface UnifiedKanbanProps {
   energy: EnergyState;
   lastMoodValue?: number;
+  preferredModule?: "trabalho" | "casa" | "saude" | null;
 }
 
 interface UnifiedTask {
