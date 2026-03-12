@@ -219,6 +219,9 @@ const Index = () => {
                 {/* Dashboard + Trackers */}
                 <div className="mb-6">
                   <ModuleDashboard />
+                  <div className="mt-4">
+                    <CustomTrackers modulo={activeNav === "metas" ? "saude" : activeNav} />
+                  </div>
                 </div>
 
                 <div className="mb-6">
