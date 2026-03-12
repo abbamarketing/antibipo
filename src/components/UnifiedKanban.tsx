@@ -80,10 +80,11 @@ const TYPE_LABELS: Record<string, string> = {
 };
 
 export function UnifiedKanban({ energy, lastMoodValue, preferredModule = null }: UnifiedKanbanProps) {
-  const { state, completeTask, updateTask } = useFlowStore();
+  const { state, completeTask, updateTask, deleteTask } = useFlowStore();
   const casa = useCasaStore();
   const { trackers, getTodayRegistros, getLastCompletion } = useTrackerStore();
   const dayCtx = useDayContext();
+  const [detailTask, setDetailTask] = useState<UnifiedTask | null>(null);
 
   const [collapsedCols, setCollapsedCols] = useState<Set<string>>(
     () => new Set(energy === "basico" ? ["em_andamento", "aguardando", "backlog"] : energy === "modo_leve" ? ["backlog"] : [])
