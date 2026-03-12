@@ -9,9 +9,15 @@ import { brasiliaTimeString } from "@/lib/brasilia";
 import {
   CheckCircle2, Clock, Briefcase, Home, Heart, ChevronDown, ChevronRight,
   Sparkles, Timer, Play, Pause, RotateCcw, X, ArrowRight, Send, Check,
-  Repeat, Calendar, UserCheck,
+  Repeat, Calendar, UserCheck, Trash2, Eye, FileText, MoreVertical,
 } from "lucide-react";
 import { useEffect, useRef } from "react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { Textarea } from "@/components/ui/textarea";
+import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 interface UnifiedKanbanProps {
   energy: EnergyState;
