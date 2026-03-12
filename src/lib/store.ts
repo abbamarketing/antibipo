@@ -29,7 +29,7 @@ export function useFlowStore() {
   const [currentModulo, setCurrentModulo] = useState<Modulo>("trabalho");
 
   // Energy state — derived from React Query (single source of truth, globally reactive)
-  const { data: energySession, isLoading: energyLoading } = useQuery({
+  const { data: energySession } = useQuery({
     queryKey: ["current_energy"],
     queryFn: async () => {
       const { data, error } = await supabase
