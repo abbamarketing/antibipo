@@ -77,6 +77,7 @@ export function UnifiedKanban({ energy, lastMoodValue, preferredModule = null }:
   const { state, completeTask, updateTask } = useFlowStore();
   const casa = useCasaStore();
   const { trackers, getTodayRegistros, getLastCompletion } = useTrackerStore();
+  const dayCtx = useDayContext();
 
   const [collapsedCols, setCollapsedCols] = useState<Set<string>>(
     () => new Set(energy === "basico" ? ["em_andamento", "aguardando", "backlog"] : energy === "modo_leve" ? ["backlog"] : [])
