@@ -1,6 +1,7 @@
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, BookOpen, Cpu, GitBranch, Layers, Smartphone, Brain, Calendar, Heart, Home, Briefcase, DollarSign, Bell, Shield, BarChart3 } from "lucide-react";
+import { ArrowLeft, BookOpen, Cpu, GitBranch, Layers, Smartphone, Brain, Calendar, Heart, Home, Briefcase, DollarSign, Bell, Shield, BarChart3, Download } from "lucide-react";
 import { useState } from "react";
+import { generateDocMarkdown } from "@/lib/doc-markdown";
 
 type Section = "guia" | "funcionalidades" | "logica" | "tecnologias";
 
