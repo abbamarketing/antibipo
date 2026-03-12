@@ -239,18 +239,21 @@ export function useFinancialStore(ano: number, mes: number) {
     const today = new Date();
     const isCurrentMonth = today.getFullYear() === ano && today.getMonth() + 1 === mes;
     const todayDay = today.getDate();
+    const isMonthPast = ano < today.getFullYear() || (ano === today.getFullYear() && mes < today.getMonth() + 1);
 
     const result = [];
     for (let d = 1; d <= days; d++) {
       if (!isValidDay(ano, mes, d)) continue;
       const lanc = lancMap.get(d);
-      const isPast = isCurrentMonth ? d < todayDay : (ano < today.getFullYear() || (ano === today.getFullYear() && mes < today.getMonth() + 1));
+      const isPast = isCurrentMonth ? d < todayDay : isMonthPast;
       const isToday = isCurrentMonth && d === todayDay;
+      // Only show saldo for days up to today (past months show all, future months show none)
+      const isFutureDay = isCurrentMonth ? d > todayDay : !isMonthPast;
       result.push({
         dia: d,
         entrada: lanc?.entrada || 0,
         saida: lanc?.saida || 0,
-        saldo: lanc?.saldo ?? null,
+        saldo: isFutureDay ? null : (lanc?.saldo ?? null),
         diario: lanc?.diario || null,
         hasData: !!lanc && (lanc.entrada > 0 || lanc.saida > 0),
         isPast,

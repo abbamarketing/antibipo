@@ -22,9 +22,11 @@ export function SaldosTab({ dailyList, onDayClick }: SaldosTabProps) {
   const [showAllDays, setShowAllDays] = useState(false);
 
   const { summary, visibleDays, hiddenCount } = useMemo(() => {
-    const totalEntradas = dailyList.reduce((s, r) => s + r.entrada, 0);
-    const totalSaidas = dailyList.reduce((s, r) => s + r.saida, 0);
-    const lastSaldo = [...dailyList].reverse().find((r) => r.saldo !== null)?.saldo ?? null;
+    // Only count entries up to today (past + today), not future
+    const upToToday = dailyList.filter((r) => r.isPast || r.isToday);
+    const totalEntradas = upToToday.reduce((s, r) => s + r.entrada, 0);
+    const totalSaidas = upToToday.reduce((s, r) => s + r.saida, 0);
+    const lastSaldo = [...upToToday].reverse().find((r) => r.saldo !== null)?.saldo ?? null;
 
     // Show: today, days with data, and 2 future days without data
     const todayIdx = dailyList.findIndex((r) => r.isToday);
