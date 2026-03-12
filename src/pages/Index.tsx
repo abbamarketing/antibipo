@@ -12,6 +12,7 @@ import { HomeModule } from "@/components/HomeModule";
 import { HealthModule } from "@/components/HealthModule";
 import { MetasModule } from "@/components/MetasModule";
 import { QuickCapture } from "@/components/QuickCapture";
+import { CustomTrackers } from "@/components/CustomTrackers";
 import { WeatherWidget } from "@/components/WeatherWidget";
 import { NotificationManager } from "@/components/NotificationManager";
 import { ModuleOnboardingGuard } from "@/components/ModuleOnboardingGuard";
