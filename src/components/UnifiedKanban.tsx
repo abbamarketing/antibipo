@@ -579,7 +579,7 @@ function KanbanCard({
     <div className={`bg-card rounded-lg border p-3 border-l-[3px] ${urgencyBorder} transition-all hover:border-primary/20`}>
       {/* Title row */}
       <div className="flex items-start gap-2">
-        <div className="flex-1 min-w-0">
+        <div className="flex-1 min-w-0 cursor-pointer" onClick={onOpen}>
           <p className="text-sm font-medium leading-snug">{item.titulo}</p>
 
           {/* Meta row */}
