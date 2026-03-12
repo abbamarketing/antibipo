@@ -680,7 +680,7 @@ function KanbanCard({
       )}
 
       {/* Actions */}
-      <div className="flex flex-wrap gap-1.5 mt-2.5">
+      <div className="flex flex-wrap items-center gap-1.5 mt-2.5">
         <button onClick={onComplete} className="flex items-center gap-1 px-2.5 py-1 rounded-md bg-primary text-primary-foreground font-mono text-[10px] hover:opacity-90 transition-opacity">
           <Check className="w-3 h-3" /> Feito
         </button>
@@ -694,29 +694,6 @@ function KanbanCard({
                 <Send className="w-3 h-3" /> Delegar
               </button>
             )}
-            {/* Move status */}
-            <div className="relative">
-              <button
-                onClick={() => setShowMoveMenu(!showMoveMenu)}
-                className="px-2 py-1 rounded-md bg-secondary text-secondary-foreground font-mono text-[10px] hover:bg-secondary/80 transition-colors"
-              >
-                Mover ▾
-              </button>
-              {showMoveMenu && (
-                <div className="absolute top-full left-0 mt-1 bg-card border rounded-lg shadow-lg z-10 py-1 min-w-[120px] animate-fade-in">
-                  {STATUS_COLUMNS.filter((c) => c.key !== item.status).map((col) => (
-                    <button
-                      key={col.key}
-                      onClick={() => { onMoveStatus(col.key); setShowMoveMenu(false); }}
-                      className="w-full text-left px-3 py-1.5 text-[10px] font-mono text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors flex items-center gap-2"
-                    >
-                      <div className={`w-2 h-2 rounded-full ${col.dot}`} />
-                      {col.label}
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
           </>
         )}
         {showPomodoro && (
@@ -724,6 +701,38 @@ function KanbanCard({
             <Timer className="w-3 h-3" /> Pomodoro
           </button>
         )}
+
+        {/* Context menu */}
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <button className="ml-auto p-1 rounded-md text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors">
+              <MoreVertical className="w-3.5 h-3.5" />
+            </button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="min-w-[140px]">
+            <DropdownMenuItem onClick={onOpen} className="text-xs gap-2">
+              <Eye className="w-3.5 h-3.5" /> Abrir detalhes
+            </DropdownMenuItem>
+            {item.tipo === "task" && (
+              <>
+                <DropdownMenuSeparator />
+                {STATUS_COLUMNS.filter((c) => c.key !== item.status).map((col) => (
+                  <DropdownMenuItem key={col.key} onClick={() => onMoveStatus(col.key)} className="text-xs gap-2">
+                    <div className={`w-2 h-2 rounded-full ${col.dot}`} /> {col.label}
+                  </DropdownMenuItem>
+                ))}
+              </>
+            )}
+            {item.tipo === "task" && (
+              <>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={onDelete} className="text-xs gap-2 text-destructive focus:text-destructive">
+                  <Trash2 className="w-3.5 h-3.5" /> Excluir
+                </DropdownMenuItem>
+              </>
+            )}
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
     </div>
   );
