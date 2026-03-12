@@ -12,7 +12,7 @@ import Configuracoes from "./pages/Configuracoes.tsx";
 import Documentacao from "./pages/Documentacao.tsx";
 import AuthPage from "./pages/Auth.tsx";
 import NotFound from "./pages/NotFound.tsx";
-import AjudaCRM from "./pages/AjudaCRM.tsx";
+
 
 const queryClient = new QueryClient();
 
