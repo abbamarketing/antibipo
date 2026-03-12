@@ -155,14 +155,28 @@ export default function Configuracoes() {
   }, []);
 
   const handleResetAccount = async () => {
-    if (!confirmReset) { setConfirmReset(true); return; }
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return;
-    const { error } = await supabase.rpc("reset_user_data" as any, { p_user_id: user.id });
-    if (error) { console.error("Reset failed:", error); return; }
-    localStorage.clear();
-    setConfirmReset(false);
-    window.location.href = "/";
+    if (resetting) return;
+
+    const confirmed = window.confirm("Isso vai apagar TODOS os dados da conta e reiniciar do zero. Deseja continuar?");
+    if (!confirmed) return;
+
+    setResetting(true);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("Usuário não autenticado");
+
+      const { error } = await supabase.rpc("reset_user_data" as any, { p_user_id: user.id });
+      if (error) throw error;
+
+      localStorage.clear();
+      sessionStorage.clear();
+      window.location.href = "/";
+    } catch (error) {
+      console.error("Reset failed:", error);
+      alert("Não foi possível resetar agora. Tente novamente em alguns segundos.");
+    } finally {
+      setResetting(false);
+    }
   };
 
   const handleLogout = async () => {
