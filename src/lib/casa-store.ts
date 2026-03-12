@@ -138,6 +138,27 @@ export function useCasaStore() {
     [tarefas]
   );
 
+  // Shared logic: get overdue casa tasks sorted by urgency
+  const getTarefasDevidas = useCallback(
+    () => {
+      const now = new Date();
+      const result: { task: TarefaCasa; urgencia: number; daysSince: number }[] = [];
+      tarefas
+        .filter((t) => t.ativo !== false)
+        .forEach((t) => {
+          const lastDone = registros.find((r) => r.tarefa_casa_id === t.id);
+          const lastDate = lastDone ? new Date(lastDone.feito_em) : null;
+          const daysSince = lastDate ? Math.floor((now.getTime() - lastDate.getTime()) / 86400000) : 999;
+          const freqDays = t.frequencia === "diario" ? 1 : t.frequencia === "semanal" ? 7 : t.frequencia === "quinzenal" ? 15 : 30;
+          if (daysSince >= freqDays) {
+            result.push({ task: t, urgencia: daysSince > freqDays * 1.5 ? 3 : 2, daysSince });
+          }
+        });
+      return result.sort((a, b) => b.urgencia - a.urgencia || b.daysSince - a.daysSince);
+    },
+    [tarefas, registros]
+  );
+
   return {
     tarefas,
     registros,
@@ -150,5 +171,6 @@ export function useCasaStore() {
     toggleComprado: toggleCompradoMut.mutate,
     removeItemCompra: removeItemCompraMut.mutate,
     getUltimaLimpeza,
+    getTarefasDevidas,
   };
 }
