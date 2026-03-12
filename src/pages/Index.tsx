@@ -215,7 +215,7 @@ const Index = () => {
                 {/* Unified Daily Tasks - always visible */}
                   <UnifiedKanban energy={current_energy!} lastMoodValue={lastMoodValue} />
 
-                {/* Dashboard */}
+                {/* Dashboard + Trackers */}
                 <div className="mb-6">
                   <ModuleDashboard />
                 </div>
@@ -240,13 +240,6 @@ const Index = () => {
                   </ModuleOnboardingGuard>
                 )}
                 {activeNav === "metas" && <MetasModule />}
-
-                {/* Module-specific dashboard */}
-                {activeNav !== "metas" && (
-                  <div className="mt-6">
-                    <ModuleDashboard modulo={activeNav} />
-                  </div>
-                )}
               </>
             )}
           </>

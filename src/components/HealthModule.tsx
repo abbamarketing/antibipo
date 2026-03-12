@@ -142,8 +142,6 @@ export function HealthModule({
         )}
       </div>
 
-      {/* Custom Trackers (módulos pré-scriptados) */}
-      <CustomTrackers modulo="saude" />
 
       {/* Humor */}
       {showMood && (

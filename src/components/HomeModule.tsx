@@ -320,8 +320,6 @@ export function HomeModule({ energy }: HomeModuleProps) {
         </div>
       )}
 
-      {/* Custom Trackers for casa module */}
-      <CustomTrackers modulo="casa" />
     </div>
   );
 }
