@@ -281,8 +281,14 @@ export function UnifiedKanban({ energy, lastMoodValue, preferredModule = null }:
           const realA = a.tipo === "task" ? 1 : 0;
           const realB = b.tipo === "task" ? 1 : 0;
           return realB - realA;
-        }),
-    [filtered]
+        });
+
+      // In basico mode, limit "hoje" to max 3 tasks total
+      if (status === "hoje" && energy === "basico") return tasks.slice(0, 3);
+      if (status === "hoje" && energy === "modo_leve") return tasks.slice(0, 6);
+      return tasks;
+    },
+    [filtered, energy]
   );
 
   const toggleCol = (key: string) => {
