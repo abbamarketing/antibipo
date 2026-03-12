@@ -21,6 +21,13 @@ export default function Documentacao() {
           </button>
           <BookOpen className="w-4 h-4 text-primary" />
           <h1 className="font-mono text-sm font-bold tracking-wider">DOCUMENTAÇÃO</h1>
+          <button
+            onClick={() => downloadDocMarkdown()}
+            className="ml-auto flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-primary text-primary-foreground font-mono text-[10px] hover:bg-primary/90 transition-colors"
+          >
+            <Download className="w-3 h-3" />
+            Baixar .md
+          </button>
         </header>
 
         {/* Navigation pills */}
