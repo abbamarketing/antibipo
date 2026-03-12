@@ -520,6 +520,24 @@ export function UnifiedKanban({ energy, lastMoodValue, preferredModule = null }:
         </div>
       )}
     </div>
+
+      {/* Task Detail Dialog */}
+      {detailTask && (
+        <TaskDetailDialog
+          item={detailTask}
+          onClose={() => setDetailTask(null)}
+          onUpdateNotes={(notes) => {
+            if (detailTask.tipo === "task") {
+              updateTask(detailTask.id, { notas: notes || null });
+              setDetailTask({ ...detailTask, notas: notes || null });
+            }
+          }}
+          onDelete={() => handleDelete(detailTask)}
+          onComplete={() => { handleComplete(detailTask); setDetailTask(null); }}
+          onMoveStatus={(s) => { if (detailTask.tipo === "task") handleMoveStatus(detailTask.id, s); }}
+        />
+      )}
+    </>
   );
 }
 
