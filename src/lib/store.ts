@@ -538,6 +538,7 @@ export function useFlowStore() {
     addTask: addTaskWithAI,
     updateTask,
     completeTask,
+    deleteTask,
     addMedicamento,
     registrarMedicamento,
     registrarHumor,
