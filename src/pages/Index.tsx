@@ -260,7 +260,7 @@ const Index = () => {
         </button>
       )}
 
-      <QuickCapture open={captureOpen} onClose={() => setCaptureOpen(false)} onActionComplete={() => {}} />
+      <StructuredTaskForm open={captureOpen} onClose={() => setCaptureOpen(false)} onCreated={() => {}} />
     </div>
     </DayGate>
   );
