@@ -327,6 +327,14 @@ export function UnifiedKanban({ energy, lastMoodValue, preferredModule = null }:
     logActivity("tarefa_empurrada", { task_id: id, hora: brasiliaTimeString() });
   };
 
+  const handleDelete = (item: UnifiedTask) => {
+    if (item.tipo === "task") {
+      deleteTask(item.id);
+      logActivity("tarefa_excluida", { task_id: item.id, titulo: item.titulo, hora: brasiliaTimeString() });
+    }
+    setDetailTask(null);
+  };
+
   const handleMoveStatus = (id: string, newStatus: string) => {
     updateTask(id, { status: newStatus as any });
     logActivity("tarefa_movida", { task_id: id, status: newStatus, hora: brasiliaTimeString() });
