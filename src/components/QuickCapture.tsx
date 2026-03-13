@@ -243,6 +243,29 @@ export function QuickCapture({ open, onClose, onActionComplete }: QuickCapturePr
             await supabase.from("tasks").insert(subtaskInserts as any);
           }
 
+          // Classify with AI context (mood/energy aware)
+          if (mainTask) {
+            try {
+              const { data: classifyData } = await supabase.functions.invoke("classify-task", {
+                body: {
+                  titulo: dados.titulo || input,
+                  dayContext: {
+                    mood: dayCtx.moodLabel,
+                    energy: dayCtx.energy || undefined,
+                    alertLevel: dayCtx.alertLevel,
+                    dayScore: dayCtx.dayScore,
+                  },
+                },
+              });
+              if (classifyData?.classification) {
+                await supabase.from("tasks").update(classifyData.classification).eq("id", (mainTask as any).id);
+              }
+              if (classifyData?.adaptation_note) {
+                return classifyData.adaptation_note as string;
+              }
+            } catch {}
+          }
+
           logActivity("tarefa_capturada", {
             titulo: dados.titulo,
             modulo: dados.modulo || "trabalho",
