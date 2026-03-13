@@ -41,6 +41,8 @@ export function useCalendarStore(ano: number, mes: number) {
       if (error) throw error;
       return (data || []) as unknown as Reuniao[];
     },
+    staleTime: 5 * 60 * 1000,
+    refetchOnWindowFocus: false,
   });
 
   const { data: todayMeetings = [] } = useQuery<Reuniao[]>({
