@@ -40,6 +40,7 @@ export function today(): string {
 
 export function useFlowStore() {
   const qc = useQueryClient();
+  const userId = useUserId();
   const [currentModulo, setCurrentModulo] = useState<Modulo>("trabalho");
 
   // Energy state — derived from React Query (single source of truth, globally reactive)
