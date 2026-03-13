@@ -11,7 +11,7 @@ import type { NavModulo } from "@/components/ModuleNav";
 interface ContextWidgetsProps {
   isCrisis: boolean;
   activeNav: NavModulo;
-  pending: { medId: string; horario: string; nome: string }[];
+  pending: { medicamento: { id: string; nome: string; dose: string }; horario: string }[];
   onTakeMed: (medId: string, horario: string) => void;
   onMoodUpdated: (val: number) => void;
 }
