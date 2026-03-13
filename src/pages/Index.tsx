@@ -162,7 +162,7 @@ const Index = () => {
 
   const handleModulo = (m: NavModulo) => {
     setActiveNav(m);
-    if (m !== "metas") setModulo(m as typeof current_modulo);
+    if (m !== "metas" && m !== "inicio") setModulo(m as typeof current_modulo);
   };
 
   const handleAddMed = (med: Parameters<typeof addMedicamento>[0]) => {
