@@ -129,7 +129,7 @@ export function TagsTab({ tags, lancamentoTags, lancamentos, onCreateTag, onUpda
             <input
               value={emoji}
               onChange={(e) => setEmoji(e.target.value.slice(0, 2))}
-              placeholder="Emoji (opcional)"
+              placeholder="Ícone (opcional)"
               className="w-full bg-background border rounded-md p-2.5 text-sm font-body focus:outline-none focus:ring-1 focus:ring-primary mb-3"
             />
 

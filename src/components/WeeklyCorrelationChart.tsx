@@ -109,7 +109,7 @@ export function WeeklyCorrelationChart() {
               tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }}
               tickLine={false}
               axisLine={false}
-              tickFormatter={(v: number) => ["😢", "😕", "😐", "🙂", "😄"][v] || ""}
+              tickFormatter={(v: number) => ["-2", "-1", "0", "+1", "+2"][v] || ""}
             />
             <Tooltip
               contentStyle={{
