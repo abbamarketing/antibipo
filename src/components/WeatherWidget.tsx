@@ -15,6 +15,7 @@ interface WeatherData {
     code: number;
     tempMax: number;
     tempMin: number;
+    precipProb: number;
   }[];
 }
 
@@ -29,6 +30,10 @@ function weatherIcon(code: number) {
   if (code <= 82) return CloudRain;
   if (code <= 99) return CloudLightning;
   return Cloud;
+}
+
+function isRainy(code: number): boolean {
+  return code >= 51; // drizzle, rain, snow, thunderstorm
 }
 
 function weatherLabel(code: number): string {
@@ -93,7 +98,7 @@ export function WeatherWidget({ compact = false }: WeatherWidgetProps) {
 
       const [weatherRes, city] = await Promise.all([
         fetch(
-          `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,relative_humidity_2m,apparent_temperature,precipitation,weather_code,wind_speed_10m&daily=weather_code,temperature_2m_max,temperature_2m_min&timezone=America/Sao_Paulo&forecast_days=7`
+          `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,relative_humidity_2m,apparent_temperature,precipitation,weather_code,wind_speed_10m&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max&timezone=America/Sao_Paulo&forecast_days=7`
         ),
         reverseGeocode(lat, lon),
       ]);
@@ -117,6 +122,7 @@ export function WeatherWidget({ compact = false }: WeatherWidgetProps) {
           code: data.daily.weather_code[i],
           tempMax: Math.round(data.daily.temperature_2m_max[i]),
           tempMin: Math.round(data.daily.temperature_2m_min[i]),
+          precipProb: data.daily.precipitation_probability_max?.[i] ?? 0,
         })),
       };
     },
@@ -148,16 +154,17 @@ export function WeatherWidget({ compact = false }: WeatherWidgetProps) {
   if (!weather || !weather.forecast) return null;
 
   const CurrentIcon = weatherIcon(weather.currentCode);
+  const todayRain = isRainy(weather.currentCode);
 
   return (
     <div>
-      {/* Header - always visible */}
+      {/* Header */}
       <button
         onClick={toggleExpanded}
         className="w-full flex items-center justify-between p-3 hover:bg-secondary/20 active:scale-[0.99] transition-all duration-150 rounded-xl"
       >
         <div className="flex items-center gap-3">
-          <CurrentIcon className="w-5 h-5 text-primary" />
+          <CurrentIcon className={`w-5 h-5 ${todayRain ? "text-blue-400" : "text-primary"}`} />
           <span className="font-mono text-sm font-bold">{weather.currentTemp}°</span>
           <span className="text-xs text-muted-foreground font-body">{weatherLabel(weather.currentCode)}</span>
           <span className="font-mono text-[10px] text-muted-foreground/60">· {weather.city}</span>
@@ -165,9 +172,10 @@ export function WeatherWidget({ compact = false }: WeatherWidgetProps) {
         {expanded ? <ChevronUp className="w-4 h-4 text-muted-foreground/50" /> : <ChevronDown className="w-4 h-4 text-muted-foreground/50" />}
       </button>
 
-      {/* Expanded content */}
+      {/* Expanded: 7-day forecast */}
       {expanded && (
         <div className="px-4 pb-4 animate-fade-in">
+          {/* Current details */}
           <div className="flex gap-4 mb-4 text-muted-foreground/70">
             <div className="flex items-center gap-1">
               <Droplets className="w-3 h-3" />
@@ -180,20 +188,39 @@ export function WeatherWidget({ compact = false }: WeatherWidgetProps) {
             <span className="font-mono text-[10px]">Sensação {weather.feelsLike}°</span>
           </div>
 
+          {/* 7-day forecast */}
           <div className="border-t border-border/40 pt-3">
-            <div className="flex justify-between">
+            <div className="flex justify-between gap-1">
               {weather.forecast.map((d, i) => {
                 const Icon = weatherIcon(d.code);
                 const isToday = i === 0;
+                const hasRain = isRainy(d.code) || d.precipProb >= 40;
+
                 return (
                   <div
                     key={d.day + i}
-                    className={`flex flex-col items-center gap-0.5 ${isToday ? "text-foreground" : "text-muted-foreground/60"}`}
+                    className={`flex flex-col items-center gap-1 flex-1 py-2 rounded-lg transition-colors ${
+                      isToday
+                        ? hasRain
+                          ? "bg-blue-500/10 text-foreground"
+                          : "bg-primary/10 text-foreground"
+                        : hasRain
+                        ? "text-blue-400"
+                        : "text-muted-foreground/60"
+                    }`}
                   >
-                    <span className={`font-mono text-[9px] uppercase tracking-wider ${isToday ? "font-bold text-primary" : ""}`}>
+                    <span className={`font-mono text-[9px] uppercase tracking-wider ${isToday ? "font-bold" : ""} ${
+                      isToday ? (hasRain ? "text-blue-400" : "text-primary") : ""
+                    }`}>
                       {isToday ? "hoje" : d.day}
                     </span>
-                    <Icon className={`w-4 h-4 ${isToday ? "text-primary" : ""}`} />
+                    <Icon className={`w-4 h-4 ${hasRain ? "text-blue-400" : isToday ? "text-primary" : ""}`} />
+                    {hasRain && d.precipProb > 0 && (
+                      <span className="font-mono text-[8px] text-blue-400 flex items-center gap-0.5">
+                        <Droplets className="w-2.5 h-2.5" />
+                        {d.precipProb}%
+                      </span>
+                    )}
                     <div className="flex gap-0.5 font-mono text-[9px]">
                       <span className="font-medium">{d.tempMax}°</span>
                       <span className="text-muted-foreground/40">{d.tempMin}°</span>
