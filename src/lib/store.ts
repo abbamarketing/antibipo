@@ -252,11 +252,13 @@ export function useFlowStore() {
 
   const takeMedMut = useMutation({
     mutationFn: async ({ medicamento_id, horario_previsto }: { medicamento_id: string; horario_previsto: string }) => {
+      const { data: { user } } = await supabase.auth.getUser();
       const { error } = await supabase.from("registros_medicamento").insert({
         medicamento_id,
         horario_previsto,
         horario_tomado: brasiliaTime().toISOString(),
         tomado: true,
+        user_id: user!.id,
       });
       if (error) throw error;
     },
