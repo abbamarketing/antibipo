@@ -3,10 +3,10 @@ import { useNavigate } from "react-router-dom";
 import { useIsMobile } from "@/hooks/use-mobile";
 import {
   Plus, X, ArrowDownLeft, ArrowUpRight,
-  ClipboardList, CalendarPlus, Target,
+  ClipboardList, CalendarPlus,
 } from "lucide-react";
 
-export type SpeedDialAction = "tarefa" | "entrada" | "saida" | "evento" | "meta";
+export type SpeedDialAction = "tarefa" | "entrada" | "saida" | "evento";
 
 interface SpeedDialFABProps {
   onAction: (action: SpeedDialAction) => void;
