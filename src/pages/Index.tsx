@@ -388,14 +388,27 @@ const Index = () => {
           )
         )}
 
-        {/* FAB — positioned above bottom nav on mobile */}
+        {/* Speed Dial FAB */}
         {current_energy && (
-          <button
-            onClick={() => setCaptureOpen(true)}
-            className={`fixed ${isMobile ? "bottom-[4.5rem]" : "bottom-6"} right-5 w-14 h-14 rounded-full bg-primary text-primary-foreground shadow-lg shadow-primary/20 flex items-center justify-center hover:opacity-90 active:scale-90 transition-all duration-200 z-50`}
-          >
-            <Plus className="w-6 h-6" />
-          </button>
+          <SpeedDialFAB
+            onAction={(action: SpeedDialAction) => {
+              switch (action) {
+                case "tarefa":
+                  setCaptureOpen(true);
+                  break;
+                case "entrada":
+                case "saida":
+                  navigate("/financeiro");
+                  break;
+                case "evento":
+                  navigate("/calendario");
+                  break;
+                case "meta":
+                  setActiveNav("metas");
+                  break;
+              }
+            }}
+          />
         )}
 
         <StructuredTaskForm open={captureOpen} onClose={() => setCaptureOpen(false)} onCreated={() => {}} />
