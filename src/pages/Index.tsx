@@ -205,51 +205,57 @@ const Index = () => {
     </div>
   );
 
-  /* ── Main content (kanban + modules) ── */
-  const MainContent = () => (
-    <div className="space-y-4">
+  /* ── Início (overview) content ── */
+  const InicioContent = () => (
+    <div className="space-y-4 animate-fade-in">
       {!isCrisis && <TodayEvents />}
-
-      {isOptimal && (
-        <button
-          onClick={() => { setActiveNav("trabalho"); setModulo("trabalho"); }}
-          className="w-full flex items-center justify-center gap-2 py-3 rounded-3xl bg-primary/10 text-primary font-mono text-xs tracking-wider hover:bg-primary/15 active:scale-[0.98] transition-all duration-200 animate-fade-in"
-        >
-          <Target className="w-4 h-4" />
-          TAREFAS ESTRATÉGICAS — DIA FORTE
-        </button>
-      )}
 
       {showMondayReview && <MondayGoalsReview onDismiss={() => setShowMondayReview(false)} />}
       {showFridayReport && <FridayWeeklyReport onDismiss={() => setShowFridayReport(false)} />}
 
-      {!showMondayReview && !showFridayReport && (
-        <>
-          <UnifiedKanban energy={current_energy!} lastMoodValue={lastMoodValue} preferredModule={activeNav === "metas" ? null : activeNav} />
+      <QuickOverview />
 
-          {!isCrisis && (
-            <div className="animate-fade-in">
-              {activeNav === "trabalho" && (
-                <ModuleOnboardingGuard modulo="trabalho">
-                  <WorkModule energy={current_energy!} tasks={getFilteredTasks("trabalho", current_energy!)} allTasks={state.tasks} onComplete={handleCompleteTask} onDelegate={handleDelegate} onPush={handlePush} />
-                </ModuleOnboardingGuard>
-              )}
-              {activeNav === "casa" && (
-                <ModuleOnboardingGuard modulo="casa">
-                  <HomeModule energy={current_energy!} />
-                </ModuleOnboardingGuard>
-              )}
-              {activeNav === "saude" && (
-                <ModuleOnboardingGuard modulo="saude">
-                  <HealthModule energy={current_energy!} medicamentos={state.medicamentos} registros_humor={state.registros_humor} registros_sono={state.registros_sono} onTakeMed={handleTakeMed} isMedTaken={isMedTakenToday} onMood={handleMood} onSleep={handleSleep} onAddMed={handleAddMed} todayHumor={todayHumor} />
-                </ModuleOnboardingGuard>
-              )}
-              {activeNav === "metas" && <MetasModule />}
-            </div>
-          )}
-        </>
+      {!isCrisis && (
+        <GlassCard className="p-4">
+          <WeeklyCorrelationChart />
+        </GlassCard>
       )}
     </div>
+  );
+
+  /* ── Module content (kanban + specific modules) ── */
+  const ModuleContent = () => {
+    const kanbanModule = activeNav === "metas" ? null : (activeNav as "trabalho" | "casa" | "saude");
+    return (
+      <div className="space-y-4">
+        <UnifiedKanban energy={current_energy!} lastMoodValue={lastMoodValue} preferredModule={kanbanModule} />
+
+        {!isCrisis && (
+          <div className="animate-fade-in">
+            {activeNav === "trabalho" && (
+              <ModuleOnboardingGuard modulo="trabalho">
+                <WorkModule energy={current_energy!} tasks={getFilteredTasks("trabalho", current_energy!)} allTasks={state.tasks} onComplete={handleCompleteTask} onDelegate={handleDelegate} onPush={handlePush} />
+              </ModuleOnboardingGuard>
+            )}
+            {activeNav === "casa" && (
+              <ModuleOnboardingGuard modulo="casa">
+                <HomeModule energy={current_energy!} />
+              </ModuleOnboardingGuard>
+            )}
+            {activeNav === "saude" && (
+              <ModuleOnboardingGuard modulo="saude">
+                <HealthModule energy={current_energy!} medicamentos={state.medicamentos} registros_humor={state.registros_humor} registros_sono={state.registros_sono} onTakeMed={handleTakeMed} isMedTaken={isMedTakenToday} onMood={handleMood} onSleep={handleSleep} onAddMed={handleAddMed} todayHumor={todayHumor} />
+              </ModuleOnboardingGuard>
+            )}
+            {activeNav === "metas" && <MetasModule />}
+          </div>
+        )}
+      </div>
+    );
+  };
+
+  const MainContent = () => (
+    activeNav === "inicio" ? <InicioContent /> : <ModuleContent />
   );
 
   return (
