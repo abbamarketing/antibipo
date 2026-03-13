@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useFlowStore } from "@/lib/store";
+import { useDayContext } from "@/hooks/use-day-context";
 import { startTimeThemeWatcher } from "@/lib/time-theme";
 import { brasiliaTimeString, brasiliaDateString, brasiliaTime } from "@/lib/brasilia";
 import { logActivity } from "@/lib/activity-log";
@@ -26,7 +27,7 @@ import { MoodCheckIn } from "@/components/MoodCheckIn";
 import { ModuleDashboard } from "@/components/ModuleDashboard";
 import { DayScore } from "@/components/DayScore";
 import { WeeklyCorrelationChart } from "@/components/WeeklyCorrelationChart";
-import { Plus, Zap, Sun, Battery, Wallet, Settings, CalendarDays, Activity } from "lucide-react";
+import { Plus, Zap, Sun, Battery, Wallet, Settings, CalendarDays, Activity, Target } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 /** Reusable glass-card wrapper */
@@ -38,6 +39,26 @@ function GlassCard({ children, className = "" }: { children: React.ReactNode; cl
   );
 }
 
+/** Adaptive micro-copy based on dayScore */
+function AdaptiveGreeting({ dayScore, alertLevel }: { dayScore: number; alertLevel: string }) {
+  let message: string;
+  if (dayScore >= 75) {
+    message = "Você está voando hoje! Aproveite o momentum.";
+  } else if (dayScore >= 50) {
+    message = "Dia estável. Mantenha o ritmo, sem pressa.";
+  } else if (dayScore >= 30) {
+    message = "Um passo de cada vez hoje. Tudo bem ir devagar.";
+  } else {
+    message = "Dia de cuidar de si. Só o essencial, sem cobranças.";
+  }
+
+  return (
+    <p className="font-body text-xs text-foreground/70 leading-relaxed">
+      {message}
+    </p>
+  );
+}
+
 const Index = () => {
   const {
     state, setEnergy, setModulo, addTask, completeTask, updateTask,
@@ -45,6 +66,7 @@ const Index = () => {
     isMedTakenToday, pendingMeds, getFilteredTasks, todayHumor,
   } = useFlowStore();
 
+  const dayCtx = useDayContext();
   const navigate = useNavigate();
   const [captureOpen, setCaptureOpen] = useState(false);
   
@@ -65,6 +87,10 @@ const Index = () => {
   const pending = pendingMeds();
   const { current_energy, current_modulo } = state;
   const showEnergySelector = !current_energy;
+
+  // Adaptive layout: crisis mode hides non-essentials
+  const isCrisis = dayCtx.alertLevel === "crise";
+  const isOptimal = dayCtx.alertLevel === "otimo";
 
   const energyConfig: Record<string, { icon: typeof Zap; label: string }> = {
     foco_total: { icon: Zap, label: "FOCO TOTAL" },
@@ -176,23 +202,31 @@ const Index = () => {
               ))}
             </div>
           </div>
+          {/* Adaptive greeting + nudge */}
+          {current_energy && (
+            <div className="mb-1">
+              <AdaptiveGreeting dayScore={dayCtx.dayScore} alertLevel={dayCtx.alertLevel} />
+            </div>
+          )}
           <DailyNudge />
         </header>
 
-        {/* Weather */}
-        <GlassCard>
-          <WeatherWidget />
-        </GlassCard>
+        {/* Weather — hidden in crisis mode */}
+        {!isCrisis && (
+          <GlassCard>
+            <WeatherWidget />
+          </GlassCard>
+        )}
 
         {/* Mood Check-In (every 3h) */}
         <MoodCheckIn onMoodUpdated={(val) => setLastMoodValue(val)} />
 
-        {/* Today's events */}
-        <TodayEvents />
+        {/* Today's events — hidden in crisis mode */}
+        {!isCrisis && <TodayEvents />}
 
-        {/* Med Alert */}
+        {/* Med Alert — always visible, priority in crisis */}
         {pending.length > 0 && (
-          <GlassCard className="p-1">
+          <GlassCard className={`p-1 ${isCrisis ? "ring-2 ring-destructive/30" : ""}`}>
             <MedAlert pendingMeds={pending} onTake={handleTakeMed} />
           </GlassCard>
         )}
@@ -227,48 +261,70 @@ const Index = () => {
 
             {!showMondayReview && !showFridayReport && (
               <div className="space-y-5">
-                {/* Integrated day score */}
+                {/* Day score — always visible */}
                 <GlassCard className="p-4">
                   <DayScore />
                 </GlassCard>
 
-                {/* Weekly Correlation Chart */}
-                <GlassCard className="p-4">
-                  <WeeklyCorrelationChart />
-                </GlassCard>
+                {/* Strategic tasks CTA — shown only in optimal days */}
+                {isOptimal && (
+                  <button
+                    onClick={() => {
+                      setActiveNav("trabalho");
+                      setModulo("trabalho");
+                    }}
+                    className="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-green-500/10 text-green-700 dark:text-green-400 font-mono text-xs tracking-wider hover:bg-green-500/15 active:scale-[0.98] transition-all duration-200 animate-fade-in"
+                  >
+                    <Target className="w-4 h-4" />
+                    TAREFAS ESTRATÉGICAS — DIA FORTE
+                  </button>
+                )}
+
+                {/* Weekly Correlation Chart — hidden in crisis */}
+                {!isCrisis && (
+                  <GlassCard className="p-4">
+                    <WeeklyCorrelationChart />
+                  </GlassCard>
+                )}
 
                 {/* Unified Daily Tasks */}
                 <UnifiedKanban energy={current_energy!} lastMoodValue={lastMoodValue} preferredModule={activeNav === "metas" ? null : activeNav} />
 
-                {/* Trackers */}
-                <div>
-                  <CustomTrackers modulo={activeNav === "metas" ? "saude" : activeNav} />
-                </div>
+                {/* Trackers — hidden in crisis */}
+                {!isCrisis && (
+                  <div>
+                    <CustomTrackers modulo={activeNav === "metas" ? "saude" : activeNav} />
+                  </div>
+                )}
 
-                {/* Module Nav */}
-                <GlassCard className="p-1.5">
-                  <ModuleNav current={activeNav} onSelect={handleModulo} />
-                </GlassCard>
+                {/* Module Nav — hidden in crisis (focus on essentials) */}
+                {!isCrisis && (
+                  <GlassCard className="p-1.5">
+                    <ModuleNav current={activeNav} onSelect={handleModulo} />
+                  </GlassCard>
+                )}
 
-                {/* Module content with transition */}
-                <div className="animate-fade-in">
-                  {activeNav === "trabalho" && (
-                    <ModuleOnboardingGuard modulo="trabalho">
-                      <WorkModule energy={current_energy!} tasks={getFilteredTasks("trabalho", current_energy!)} allTasks={state.tasks} onComplete={handleCompleteTask} onDelegate={handleDelegate} onPush={handlePush} />
-                    </ModuleOnboardingGuard>
-                  )}
-                  {activeNav === "casa" && (
-                    <ModuleOnboardingGuard modulo="casa">
-                      <HomeModule energy={current_energy!} />
-                    </ModuleOnboardingGuard>
-                  )}
-                  {activeNav === "saude" && (
-                    <ModuleOnboardingGuard modulo="saude">
-                      <HealthModule energy={current_energy!} medicamentos={state.medicamentos} registros_humor={state.registros_humor} registros_sono={state.registros_sono} onTakeMed={handleTakeMed} isMedTaken={isMedTakenToday} onMood={handleMood} onSleep={handleSleep} onAddMed={handleAddMed} todayHumor={todayHumor} />
-                    </ModuleOnboardingGuard>
-                  )}
-                  {activeNav === "metas" && <MetasModule />}
-                </div>
+                {/* Module content with transition — hidden in crisis */}
+                {!isCrisis && (
+                  <div className="animate-fade-in">
+                    {activeNav === "trabalho" && (
+                      <ModuleOnboardingGuard modulo="trabalho">
+                        <WorkModule energy={current_energy!} tasks={getFilteredTasks("trabalho", current_energy!)} allTasks={state.tasks} onComplete={handleCompleteTask} onDelegate={handleDelegate} onPush={handlePush} />
+                      </ModuleOnboardingGuard>
+                    )}
+                    {activeNav === "casa" && (
+                      <ModuleOnboardingGuard modulo="casa">
+                        <HomeModule energy={current_energy!} />
+                      </ModuleOnboardingGuard>
+                    )}
+                    {activeNav === "saude" && (
+                      <ModuleOnboardingGuard modulo="saude">
+                        <HealthModule energy={current_energy!} medicamentos={state.medicamentos} registros_humor={state.registros_humor} registros_sono={state.registros_sono} onTakeMed={handleTakeMed} isMedTaken={isMedTakenToday} onMood={handleMood} onSleep={handleSleep} onAddMed={handleAddMed} todayHumor={todayHumor} />
+                      </ModuleOnboardingGuard>
+                    )}
+                    {activeNav === "metas" && <MetasModule />}
+                  </div>
+                )}
               </div>
             )}
           </div>
