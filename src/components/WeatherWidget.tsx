@@ -69,7 +69,7 @@ interface WeatherWidgetProps {
   inline?: boolean;
 }
 
-export function WeatherWidget({ compact = false }: WeatherWidgetProps) {
+export function WeatherWidget({ compact = false, inline = false }: WeatherWidgetProps) {
   const [expanded, setExpanded] = useState(() => {
     const saved = localStorage.getItem("ab_weather_expanded");
     return saved !== null ? saved === "true" : true;
