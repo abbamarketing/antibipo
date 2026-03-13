@@ -33,7 +33,9 @@ export function ModuleContent({
 
   return (
     <div className="space-y-4">
-      <UnifiedKanban energy={energy} lastMoodValue={lastMoodValue} preferredModule={kanbanModule} />
+      {activeNav !== "metas" && (
+        <UnifiedKanban energy={energy} lastMoodValue={lastMoodValue} preferredModule={kanbanModule} />
+      )}
 
       {!isCrisis && (
         <div className="animate-fade-in">
