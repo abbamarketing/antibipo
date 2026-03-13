@@ -50,7 +50,6 @@ export function useTrackerStore() {
     queryFn: async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return [];
-      // Get last 60 days of records
       const since = new Date();
       since.setDate(since.getDate() - 60);
       const { data, error } = await supabase
@@ -62,6 +61,8 @@ export function useTrackerStore() {
       if (error) throw error;
       return (data || []) as unknown as TrackerRegistro[];
     },
+    staleTime: 5 * 60 * 1000,
+    refetchOnWindowFocus: false,
   });
 
   const createMut = useMutation({
