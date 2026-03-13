@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useState, useRef, useCallback } from "react";
+import confetti from "canvas-confetti";
 import {
   Clock, ChevronDown, ChevronRight, ArrowRight, Send, Check,
   Repeat, Calendar, UserCheck, Trash2, Eye, Timer, MoreVertical,
