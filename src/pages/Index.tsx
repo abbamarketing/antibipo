@@ -192,11 +192,13 @@ const Index = () => {
                     </GlassCard>
                   )}
 
-                  {/* DayScore — always visible */}
-                  <GlassCard className="p-3"><DayScore /></GlassCard>
-
-                  {/* Mood — always visible */}
-                  <MoodCheckIn onMoodUpdated={(val) => setLastMoodValue(val)} />
+                  {/* DayScore & Mood — only on inicio */}
+                  {activeNav === "inicio" && (
+                    <>
+                      <GlassCard className="p-3"><DayScore /></GlassCard>
+                      <MoodCheckIn onMoodUpdated={(val) => setLastMoodValue(val)} />
+                    </>
+                  )}
 
                   {/* Low state message */}
                   {isVeryLow && (
