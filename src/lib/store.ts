@@ -306,9 +306,9 @@ export function useFlowStore() {
 
       if (type === "dormir") {
         if (existing) {
-          await supabase.from("registros_sono").update({ horario_dormir: new Date().toISOString() }).eq("id", existing.id);
+          await supabase.from("registros_sono").update({ horario_dormir: brasiliaTime().toISOString() }).eq("id", existing.id);
         } else {
-          await supabase.from("registros_sono").insert({ data: todayStr, horario_dormir: new Date().toISOString() });
+          await supabase.from("registros_sono").insert({ data: todayStr, horario_dormir: brasiliaTime().toISOString() });
         }
       } else {
         const now = new Date();
