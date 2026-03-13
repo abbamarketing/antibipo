@@ -94,7 +94,7 @@ function computeAlert(score: number, moodValue: number | null, medsAdherence: nu
   if (score >= 75) {
     return { level: "otimo", message: "Dia forte! Bom momento para tarefas estratégicas." };
   }
-  return { level: "estavel", message: "Dia estável. Mantenha o ritmo." };
+  return { level: "estavel", message: "Siga no seu ritmo. Tudo fluindo." };
 }
 
 function computeTaskLimits(energy: EnergyState | null, moodValue: number | null): { taskLimit: number; casaLimit: number } {

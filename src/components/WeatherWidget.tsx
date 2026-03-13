@@ -66,9 +66,10 @@ async function reverseGeocode(lat: number, lon: number): Promise<string> {
 
 interface WeatherWidgetProps {
   compact?: boolean;
+  inline?: boolean;
 }
 
-export function WeatherWidget({ compact = false }: WeatherWidgetProps) {
+export function WeatherWidget({ compact = false, inline = false }: WeatherWidgetProps) {
   const [expanded, setExpanded] = useState(() => {
     const saved = localStorage.getItem("ab_weather_expanded");
     return saved !== null ? saved === "true" : true;
@@ -138,6 +139,38 @@ export function WeatherWidget({ compact = false }: WeatherWidgetProps) {
       <div className="flex items-center gap-1.5 px-2 py-1.5 rounded-xl text-muted-foreground" title={`${weather.currentTemp}° · ${weatherLabel(weather.currentCode)}`}>
         <CompactIcon className="w-4 h-4" />
         <span className="font-mono text-[10px] font-medium">{weather.currentTemp}°</span>
+      </div>
+    );
+  }
+
+  if (inline) {
+    if (isLoading) return <div className="h-10 flex items-center"><Loader2 className="w-3 h-3 animate-spin text-muted-foreground" /></div>;
+    if (!weather?.forecast) return null;
+    return (
+      <div className="flex justify-between gap-0.5 py-2">
+        {weather.forecast.map((d, i) => {
+          const Icon = weatherIcon(d.code);
+          const isToday = i === 0;
+          const hasRain = isRainy(d.code) || d.precipProb >= 40;
+          return (
+            <div
+              key={d.day + i}
+              className={`flex flex-col items-center gap-0.5 flex-1 py-1.5 rounded-lg transition-colors ${
+                isToday ? "bg-secondary/40" : ""
+              }`}
+            >
+              <span className={`font-mono text-[9px] uppercase tracking-wider ${
+                isToday ? "font-bold text-foreground" : "text-muted-foreground/60"
+              }`}>
+                {isToday ? "hoje" : d.day}
+              </span>
+              <Icon className={`w-3.5 h-3.5 ${hasRain ? "text-cyan-400" : isToday ? "text-foreground" : "text-muted-foreground/50"}`} />
+              <span className={`font-mono text-[9px] font-medium ${hasRain ? "text-cyan-400" : isToday ? "text-foreground" : "text-muted-foreground/60"}`}>
+                {d.tempMax}°
+              </span>
+            </div>
+          );
+        })}
       </div>
     );
   }

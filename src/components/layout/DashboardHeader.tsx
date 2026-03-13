@@ -3,7 +3,7 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { brasiliaTime } from "@/lib/brasilia";
 import { WeatherWidget } from "@/components/WeatherWidget";
 import { DailyNudge } from "@/components/DailyNudge";
-import { AdaptiveGreeting } from "./AdaptiveGreeting";
+
 import { Wallet, Settings, CalendarDays } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -34,9 +34,8 @@ export function DashboardHeader({ isCrisis, hasEnergy, dayScore, alertLevel, hid
 
   return (
     <header className="mb-5">
-      <div className="flex items-center justify-between mb-3">
+      <div className="flex items-center justify-between mb-1">
         <div className="flex items-center gap-3">
-          {/* Styled date block */}
           <div className="flex items-baseline gap-1.5">
             <span className="font-mono text-2xl font-bold text-foreground leading-none">{dayNum}</span>
             <div className="flex flex-col leading-none">
@@ -59,11 +58,10 @@ export function DashboardHeader({ isCrisis, hasEnergy, dayScore, alertLevel, hid
           ))}
         </div>
       </div>
-      {hasEnergy && (
-        <div className="mb-1">
-          <AdaptiveGreeting dayScore={dayScore} alertLevel={alertLevel} />
-        </div>
-      )}
+
+      {/* Inline 7-day forecast strip */}
+      {!isCrisis && <WeatherWidget inline />}
+
       <DailyNudge />
     </header>
   );
