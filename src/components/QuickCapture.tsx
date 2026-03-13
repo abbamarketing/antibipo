@@ -132,7 +132,7 @@ export function QuickCapture({ open, onClose, onActionComplete }: QuickCapturePr
 
   if (!open) return null;
 
-  const executeAction = async (result: ActionResult) => {
+  const executeAction = async (result: ActionResult): Promise<string | null> => {
     const { tipo, dados } = result;
     const today = brasiliaISO();
 
