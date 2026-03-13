@@ -32,7 +32,8 @@ export type ActivityAction =
   | "subtarefa_concluida"
   | "tarefa_estruturada_criada"
   | "tarefa_quick_criada"
-  | "tarefa_excluida";
+  | "tarefa_excluida"
+  | "monday_actions";
 
 // Consolidate every 200 logs, keeping the last 100 for AI context
 const CONSOLIDATION_THRESHOLD = 200;
