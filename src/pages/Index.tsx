@@ -334,7 +334,7 @@ const Index = () => {
 
               {/* ── Responsive Dashboard Grid ── */}
               {isMobile ? (
-                /* Mobile: priority content first — tasks then context */
+                /* Mobile: priority content first */
                 <div className="space-y-5">
                   {/* Med alert — urgent, always first on mobile */}
                   {pending.length > 0 && (
@@ -351,19 +351,11 @@ const Index = () => {
                   {/* Mood — important for tracking */}
                   <MoodCheckIn onMoodUpdated={(val) => setLastMoodValue(val)} />
 
-                  {/* Quick Overview — one task per module */}
-                  <QuickOverview />
-
-                  {/* Main content: tasks */}
+                  {/* Main content */}
                   <MainContent />
 
-                  {/* Secondary context widgets — below the fold */}
-                  {!isCrisis && (
-                    <GlassCard className="p-4">
-                      <WeeklyCorrelationChart />
-                    </GlassCard>
-                  )}
-                  {!isCrisis && (
+                  {/* Custom trackers — only on module tabs */}
+                  {activeNav !== "inicio" && !isCrisis && (
                     <CustomTrackers modulo={activeNav === "metas" ? "saude" : activeNav} />
                   )}
                 </div>
