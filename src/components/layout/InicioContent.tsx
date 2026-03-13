@@ -23,11 +23,7 @@ export function InicioContent({ isCrisis, showMondayReview, showFridayReport, on
 
       <QuickOverview />
 
-      {!isCrisis && (
-        <GlassCard className="p-4">
-          <WeeklyCorrelationChart />
-        </GlassCard>
-      )}
+      {!isCrisis && <WeeklyCorrelationChart />}
     </div>
   );
 }
