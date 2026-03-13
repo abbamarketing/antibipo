@@ -5,16 +5,26 @@ import { useCallback, useState, useEffect } from "react";
 import type { Database } from "@/integrations/supabase/types";
 import { brasiliaISO, brasiliaTime } from "@/lib/brasilia";
 
-// Helper hook to get the current authenticated user ID
+// Shared user ID via React Query — prevents per-component useState cascading re-renders
 function useUserId(): string | null {
-  const [uid, setUid] = useState<string | null>(null);
+  const qc = useQueryClient();
+
+  const { data: uid = null } = useQuery({
+    queryKey: ["auth_user_id"],
+    queryFn: async () => {
+      const { data } = await supabase.auth.getUser();
+      return data.user?.id ?? null;
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+
   useEffect(() => {
-    supabase.auth.getUser().then(({ data }) => setUid(data.user?.id ?? null));
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUid(session?.user?.id ?? null);
+      qc.setQueryData(["auth_user_id"], session?.user?.id ?? null);
     });
     return () => subscription.unsubscribe();
-  }, []);
+  }, [qc]);
+
   return uid;
 }
 
@@ -57,7 +67,7 @@ export function useFlowStore() {
       if (error) throw error;
       return data;
     },
-    staleTime: 0,
+    staleTime: 30 * 1000, // 30s — prevents constant refetching that causes flickering
   });
 
   // Derive current energy: valid if session < 4h old
@@ -79,6 +89,7 @@ export function useFlowStore() {
       if (error) throw error;
       return data;
     },
+    staleTime: 30 * 1000,
   });
 
   const { data: medicamentos = [] } = useQuery({
@@ -88,6 +99,7 @@ export function useFlowStore() {
       if (error) throw error;
       return data;
     },
+    staleTime: 60 * 1000,
   });
 
   const { data: registrosMed = [] } = useQuery({
@@ -97,6 +109,7 @@ export function useFlowStore() {
       if (error) throw error;
       return data;
     },
+    staleTime: 30 * 1000,
   });
 
   const { data: registrosHumor = [] } = useQuery({
@@ -106,6 +119,7 @@ export function useFlowStore() {
       if (error) throw error;
       return data;
     },
+    staleTime: 60 * 1000,
   });
 
   const { data: registrosSono = [] } = useQuery({
@@ -115,6 +129,7 @@ export function useFlowStore() {
       if (error) throw error;
       return data;
     },
+    staleTime: 60 * 1000,
   });
 
   const { data: clientes = [] } = useQuery({
@@ -124,6 +139,7 @@ export function useFlowStore() {
       if (error) throw error;
       return data;
     },
+    staleTime: 60 * 1000,
   });
 
   const makeTempId = (prefix: string) => `tmp_${prefix}_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
