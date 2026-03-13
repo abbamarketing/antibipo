@@ -425,9 +425,9 @@ export function useFlowStore() {
 
   const addTask = useCallback(
     (task: Omit<Database["public"]["Tables"]["tasks"]["Insert"], "id" | "criado_em">) => {
-      addTaskMut.mutate(task);
+      addTaskMut.mutate({ ...task, user_id: userId! });
     },
-    [addTaskMut]
+    [addTaskMut, userId]
   );
 
   const completeTask = useCallback(
