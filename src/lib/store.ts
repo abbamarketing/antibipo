@@ -288,8 +288,9 @@ export function useFlowStore() {
 
   const moodMut = useMutation({
     mutationFn: async ({ valor, notas }: { valor: number; notas?: string }) => {
+      const { data: { user } } = await supabase.auth.getUser();
       const { error } = await supabase.from("registros_humor").upsert(
-        { data: today(), valor, notas },
+        { data: today(), valor, notas, user_id: user!.id },
         { onConflict: "data" }
       );
       if (error) throw error;
