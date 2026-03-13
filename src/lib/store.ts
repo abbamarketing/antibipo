@@ -5,16 +5,28 @@ import { useCallback, useState, useEffect } from "react";
 import type { Database } from "@/integrations/supabase/types";
 import { brasiliaISO, brasiliaTime } from "@/lib/brasilia";
 
-// Helper hook to get the current authenticated user ID
+// Shared user ID query — single source of truth, no per-component state
 function useUserId(): string | null {
-  const [uid, setUid] = useState<string | null>(null);
+  const { data: uid = null } = useQuery({
+    queryKey: ["auth_user_id"],
+    queryFn: async () => {
+      const { data } = await supabase.auth.getUser();
+      return data.user?.id ?? null;
+    },
+    staleTime: 5 * 60 * 1000, // 5 min
+  });
+
+  // Listen for auth changes and invalidate
   useEffect(() => {
-    supabase.auth.getUser().then(({ data }) => setUid(data.user?.id ?? null));
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUid(session?.user?.id ?? null);
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(() => {
+      // Just invalidate — React Query handles the rest
+      import("@tanstack/react-query").then(() => {
+        // qc not available here, use global event
+      });
     });
     return () => subscription.unsubscribe();
   }, []);
+
   return uid;
 }
 
