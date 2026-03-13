@@ -1,5 +1,5 @@
-import { useState, useMemo, useCallback } from "react";
-import { useFlowStore, type Task, type EnergyState } from "@/lib/store";
+import { useState, useMemo, useCallback, useEffect, useRef } from "react";
+import { useFlowStore, type EnergyState } from "@/lib/store";
 import { useDayContext } from "@/hooks/use-day-context";
 import { useCasaStore } from "@/lib/casa-store";
 import { useTrackerStore } from "@/lib/tracker-store";
@@ -7,77 +7,20 @@ import { isRecorrenteDue, type RecorrenteConfig, type ChecklistConfig } from "@/
 import { logActivity } from "@/lib/activity-log";
 import { brasiliaTimeString, brasiliaISO } from "@/lib/brasilia";
 import {
-  CheckCircle2, Clock, Briefcase, Home, Heart, ChevronDown, ChevronRight,
-  Sparkles, Timer, Play, Pause, RotateCcw, X, ArrowRight, Send, Check,
-  Repeat, Calendar, UserCheck, Trash2, Eye, FileText, MoreVertical,
+  CheckCircle2, ChevronDown, ChevronRight,
+  Sparkles, Timer, Play, Pause, RotateCcw, X,
 } from "lucide-react";
-import { useEffect, useRef } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
-import { Textarea } from "@/components/ui/textarea";
-import { Button } from "@/components/ui/button";
+import { KanbanCard } from "@/components/kanban/KanbanCard";
+import { TaskDetailDialog } from "@/components/kanban/TaskDetailDialog";
 import {
-  DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+  type UnifiedTask, STATUS_COLUMNS, MODULE_COLORS, MODULE_LABELS, MODULE_ICONS,
+} from "@/components/kanban/kanban-types";
 
 interface UnifiedKanbanProps {
   energy: EnergyState;
   lastMoodValue?: number;
   preferredModule?: "trabalho" | "casa" | "saude" | null;
 }
-
-interface UnifiedTask {
-  id: string;
-  titulo: string;
-  modulo: "trabalho" | "casa" | "saude";
-  tipo: "task" | "casa" | "tracker";
-  status: string;
-  urgencia: number;
-  done: boolean;
-  sourceData?: any;
-  tempo_min?: number;
-  taskType?: string;
-  dono?: string;
-  clienteName?: string;
-  data_limite?: string | null;
-  recorrente?: boolean;
-  frequencia_recorrencia?: string | null;
-  depende_de?: string | null;
-  notas?: string | null;
-  subtasks?: Task[];
-}
-
-const STATUS_COLUMNS = [
-  { key: "hoje", label: "HOJE", dot: "bg-primary" },
-  { key: "em_andamento", label: "EM ANDAMENTO", dot: "bg-amber-400" },
-  { key: "aguardando", label: "AGUARDANDO", dot: "bg-blue-400" },
-  { key: "backlog", label: "BACKLOG", dot: "bg-muted-foreground/30" },
-];
-
-const MODULE_COLORS: Record<string, string> = {
-  trabalho: "bg-blue-500/15 text-blue-700 dark:text-blue-300",
-  casa: "bg-emerald-500/15 text-emerald-700 dark:text-emerald-300",
-  saude: "bg-rose-500/15 text-rose-700 dark:text-rose-300",
-};
-
-const MODULE_LABELS: Record<string, string> = {
-  trabalho: "Trabalho",
-  casa: "Casa",
-  saude: "Saúde",
-};
-
-const MODULE_ICONS: Record<string, typeof Briefcase> = {
-  trabalho: Briefcase,
-  casa: Home,
-  saude: Heart,
-};
-
-const TYPE_LABELS: Record<string, string> = {
-  estrategico: "Estratégico",
-  operacional: "Operacional",
-  delegavel: "Delegável",
-  administrativo: "Admin",
-  domestico: "Doméstico",
-};
 
 export function UnifiedKanban({ energy, lastMoodValue, preferredModule = null }: UnifiedKanbanProps) {
   const { state, completeTask, updateTask, deleteTask } = useFlowStore();
