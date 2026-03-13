@@ -312,7 +312,7 @@ export function QuickCapture({ open, onClose, onActionComplete }: QuickCapturePr
             user_id: user.id,
             titulo: dados.meta_titulo || input,
             prazo: dados.meta_prazo || "6_meses",
-            data_alvo: alvo.toISOString().split("T")[0],
+            data_alvo: alvoStr,
           });
           logActivity("captura_rapida", { tipo: "meta", titulo: dados.meta_titulo, prazo: dados.meta_prazo });
           break;
