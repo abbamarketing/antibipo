@@ -136,7 +136,7 @@ export function DayScore() {
         ) : (
           /* ── Desktop: horizontal layout ── */
           <div className="flex items-center gap-4">
-            <CircularGauge score={ctx.dayScore} alertLevel={ctx.alertLevel} />
+            <CircularGauge score={ctx.dayScore} alertLevel={ctx.alertLevel} moodLabel={ctx.moodLabel} />
 
             <div className="flex-1 grid grid-cols-2 gap-2">
               <ModuleIndicator
