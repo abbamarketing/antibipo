@@ -200,6 +200,8 @@ const Index = () => {
       {!isCrisis && (
         <CustomTrackers modulo={activeNav === "metas" ? "saude" : activeNav} />
       )}
+
+      <QuickOverview />
     </div>
   );
 
