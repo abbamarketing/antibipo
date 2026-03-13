@@ -322,6 +322,8 @@ export function useFlowStore() {
 
   const sleepMut = useMutation({
     mutationFn: async ({ type, qualidade }: { type: "dormir" | "acordar"; qualidade?: 1 | 2 | 3 }) => {
+      const { data: { user } } = await supabase.auth.getUser();
+      const uid = user!.id;
       const todayStr = today();
       const { data: existing } = await supabase.from("registros_sono").select("*").eq("data", todayStr).maybeSingle();
 
@@ -329,7 +331,7 @@ export function useFlowStore() {
         if (existing) {
           await supabase.from("registros_sono").update({ horario_dormir: brasiliaTime().toISOString() }).eq("id", existing.id);
         } else {
-          await supabase.from("registros_sono").insert({ data: todayStr, horario_dormir: brasiliaTime().toISOString() });
+          await supabase.from("registros_sono").insert({ data: todayStr, horario_dormir: brasiliaTime().toISOString(), user_id: uid });
         }
       } else {
         const now = brasiliaTime();
@@ -347,6 +349,7 @@ export function useFlowStore() {
             data: todayStr,
             horario_acordar: now.toISOString(),
             qualidade,
+            user_id: uid,
           });
         }
       }
