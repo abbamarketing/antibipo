@@ -59,7 +59,11 @@ async function reverseGeocode(lat: number, lon: number): Promise<string> {
   }
 }
 
-export function WeatherWidget() {
+interface WeatherWidgetProps {
+  compact?: boolean;
+}
+
+export function WeatherWidget({ compact = false }: WeatherWidgetProps) {
   const [expanded, setExpanded] = useState(() => {
     const saved = localStorage.getItem("ab_weather_expanded");
     return saved !== null ? saved === "true" : true;
