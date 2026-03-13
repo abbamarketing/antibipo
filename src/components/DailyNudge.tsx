@@ -55,14 +55,14 @@ function VoiceCapture() {
   const [listening, setListening] = useState(false);
   const [transcript, setTranscript] = useState("");
   const [saving, setSaving] = useState(false);
-  const recognitionRef = useRef<SpeechRecognition | null>(null);
+  const recognitionRef = useRef<any>(null);
 
   const isSupported = typeof window !== "undefined" && ("SpeechRecognition" in window || "webkitSpeechRecognition" in window);
 
   const startListening = useCallback(() => {
     if (!isSupported) return;
-    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-    const recognition = new SpeechRecognition();
+    const SpeechRecognitionCtor = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    const recognition = new SpeechRecognitionCtor();
     recognition.lang = "pt-BR";
     recognition.continuous = false;
     recognition.interimResults = true;
