@@ -121,9 +121,9 @@ export function DocFuncionalidades() {
         <p>O sistema avalia seu estado de energia automaticamente com base no DayScore e humor registrado.</p>
         <div className="space-y-1.5 mt-2">
           {[
-            { icon: "⚡", name: "Foco Total", desc: "Tarefas estratégicas e de alto impacto. Concentração máxima. Todos os módulos visíveis." },
-            { icon: "☀️", name: "Modo Leve", desc: "Tarefas operacionais e administrativas. Ritmo moderado." },
-            { icon: "🔋", name: "Só o Básico", desc: "Apenas tarefas simples. Metas e widgets extras são ocultados. Modo protegido ativo." },
+            { icon: "Zap", name: "Foco Total", desc: "Tarefas estratégicas e de alto impacto. Concentração máxima. Todos os módulos visíveis." },
+            { icon: "Sun", name: "Modo Leve", desc: "Tarefas operacionais e administrativas. Ritmo moderado." },
+            { icon: "Battery", name: "Só o Básico", desc: "Apenas tarefas simples. Metas e widgets extras são ocultados. Modo protegido ativo." },
           ].map(e => (
             <div key={e.name} className="bg-secondary/50 rounded-md p-2">
               <p className="font-mono text-[10px] font-bold text-foreground">{e.icon} {e.name}</p>
