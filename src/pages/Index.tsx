@@ -27,6 +27,7 @@ import { MoodCheckIn } from "@/components/MoodCheckIn";
 import { ModuleDashboard } from "@/components/ModuleDashboard";
 import { DayScore } from "@/components/DayScore";
 import { WeeklyCorrelationChart } from "@/components/WeeklyCorrelationChart";
+import { QuickOverview } from "@/components/QuickOverview";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Plus, Zap, Sun, Battery, Wallet, Settings, CalendarDays, Activity, Target } from "lucide-react";
 import { useNavigate } from "react-router-dom";
@@ -199,6 +200,8 @@ const Index = () => {
       {!isCrisis && (
         <CustomTrackers modulo={activeNav === "metas" ? "saude" : activeNav} />
       )}
+
+      <QuickOverview />
     </div>
   );
 
@@ -342,7 +345,10 @@ const Index = () => {
                   {/* Mood — important for tracking */}
                   <MoodCheckIn onMoodUpdated={(val) => setLastMoodValue(val)} />
 
-                  {/* Main content: tasks (the primary reason user opens the app) */}
+                  {/* Quick Overview — one task per module */}
+                  <QuickOverview />
+
+                  {/* Main content: tasks */}
                   <MainContent />
 
                   {/* Secondary context widgets — below the fold */}
