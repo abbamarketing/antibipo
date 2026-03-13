@@ -30,7 +30,7 @@ import { DayScore } from "@/components/DayScore";
 import { WeeklyCorrelationChart } from "@/components/WeeklyCorrelationChart";
 import { QuickOverview } from "@/components/QuickOverview";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { Plus, Zap, Sun, Battery, Wallet, Settings, CalendarDays, Activity, Target } from "lucide-react";
+import { Zap, Sun, Battery, Wallet, Settings, CalendarDays, Activity } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 /** Reusable glass-card wrapper – 24px radius + heavy blur */
