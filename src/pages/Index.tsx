@@ -233,7 +233,7 @@ const Index = () => {
                     {isVeryLow && (
                       <div className="rounded-2xl bg-[hsl(210,20%,95%)] border border-border/30 p-4 text-center mb-4 animate-fade-in">
                         <p className="font-body text-sm text-muted-foreground leading-relaxed">
-                          🫂 Modo protegido ativo. Mostrando apenas o essencial.
+                          Modo protegido ativo. Mostrando apenas o essencial.
                         </p>
                       </div>
                     )}

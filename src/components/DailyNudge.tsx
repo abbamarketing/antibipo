@@ -41,7 +41,7 @@ function useContextAlerts(): string[] {
   if (recentScores && recentScores.length >= 3) {
     const [newest, mid, oldest] = recentScores;
     if (newest > mid && mid > oldest) {
-      alerts.push("📈 DayScore subindo há 3 dias — mantenha a rotina estável, evite novos projetos hoje.");
+      alerts.push("DayScore subindo há 3 dias — mantenha a rotina estável, evite novos projetos hoje.");
     }
   }
 

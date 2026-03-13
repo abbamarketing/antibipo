@@ -198,7 +198,7 @@ export function DocFuncionalidades() {
 
       {/* ── Calendário ── */}
       <DocCard icon={Calendar} title="Calendário">
-        <p>Acesse pelo ícone de calendário (📅) no cabeçalho.</p>
+        <p>Acesse pelo ícone de calendário no cabeçalho.</p>
         <p className="mt-1"><strong>Eventos:</strong> Crie reuniões com título, data, horário, local e participantes.</p>
         <p><strong>Lembretes:</strong> Configure lembretes em minutos antes do evento.</p>
         <p><strong>Eventos do Dia:</strong> Na tela inicial, os próximos eventos do dia aparecem automaticamente.</p>

@@ -102,7 +102,7 @@ export function QuickOverview() {
       label: "Trabalho",
       icon: Briefcase,
       task: topTaskByModule.trabalho,
-      path: "/",
+      path: "/?mod=trabalho",
       color: "bg-blue-500/10 text-blue-600 dark:text-blue-400",
     },
     {
@@ -110,7 +110,7 @@ export function QuickOverview() {
       label: "Casa",
       icon: Home,
       task: topTaskByModule.casa,
-      path: "/",
+      path: "/?mod=casa",
       color: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400",
     },
     {
@@ -118,7 +118,7 @@ export function QuickOverview() {
       label: "Saúde",
       icon: Heart,
       task: topTaskByModule.saude,
-      path: "/",
+      path: "/?mod=saude",
       color: "bg-rose-500/10 text-rose-600 dark:text-rose-400",
     },
     {
@@ -126,7 +126,7 @@ export function QuickOverview() {
       label: "Metas",
       icon: Target,
       task: topMeta ? `${topMeta.titulo} (${topMeta.progresso}%)` : null,
-      path: "/",
+      path: "/?mod=metas",
       color: "bg-purple-500/10 text-purple-600 dark:text-purple-400",
     },
     {
