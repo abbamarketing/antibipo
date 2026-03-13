@@ -218,7 +218,7 @@ const Index = () => {
       {isOptimal && (
         <button
           onClick={() => { setActiveNav("trabalho"); setModulo("trabalho"); }}
-          className="w-full flex items-center justify-center gap-2 py-3 rounded-3xl bg-green-500/10 text-green-700 dark:text-green-400 font-mono text-xs tracking-wider hover:bg-green-500/15 active:scale-[0.98] transition-all duration-200 animate-fade-in"
+          className="w-full flex items-center justify-center gap-2 py-3 rounded-3xl bg-primary/10 text-primary font-mono text-xs tracking-wider hover:bg-primary/15 active:scale-[0.98] transition-all duration-200 animate-fade-in"
         >
           <Target className="w-4 h-4" />
           TAREFAS ESTRATÉGICAS — DIA FORTE
