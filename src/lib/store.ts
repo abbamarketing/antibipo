@@ -67,7 +67,7 @@ export function useFlowStore() {
       if (error) throw error;
       return data;
     },
-    staleTime: 0,
+    staleTime: 30 * 1000, // 30s — prevents constant refetching that causes flickering
   });
 
   // Derive current energy: valid if session < 4h old
