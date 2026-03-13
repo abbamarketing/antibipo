@@ -1,29 +1,60 @@
 // FLOW v2 — Supabase-backed store with React Query
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { useCallback, useState, useEffect } from "react";
+import { useCallback, useState, useEffect, useRef } from "react";
 import type { Database } from "@/integrations/supabase/types";
 import { brasiliaISO, brasiliaTime } from "@/lib/brasilia";
 
-// Shared user ID via React Query — prevents per-component useState cascading re-renders
+// ── Singleton auth listener: prevents duplicate subscriptions across components ──
+let _authListenerInitialized = false;
+let _cachedUserId: string | null = null;
+
+function initAuthListener(qc: ReturnType<typeof useQueryClient>) {
+  if (_authListenerInitialized) return;
+  _authListenerInitialized = true;
+
+  supabase.auth.getUser().then(({ data }) => {
+    _cachedUserId = data.user?.id ?? null;
+    qc.setQueryData(["auth_user_id"], _cachedUserId);
+  });
+
+  supabase.auth.onAuthStateChange((_event, session) => {
+    const newId = session?.user?.id ?? null;
+    if (newId !== _cachedUserId) {
+      _cachedUserId = newId;
+      qc.setQueryData(["auth_user_id"], newId);
+      // Invalidate all user-scoped queries on auth change
+      if (newId) {
+        qc.invalidateQueries({ queryKey: ["tasks"] });
+        qc.invalidateQueries({ queryKey: ["current_energy"] });
+        qc.invalidateQueries({ queryKey: ["medicamentos"] });
+        qc.invalidateQueries({ queryKey: ["registros_medicamento"] });
+        qc.invalidateQueries({ queryKey: ["registros_humor"] });
+        qc.invalidateQueries({ queryKey: ["registros_sono"] });
+        qc.invalidateQueries({ queryKey: ["clientes"] });
+      }
+    }
+  });
+}
+
 function useUserId(): string | null {
   const qc = useQueryClient();
+
+  // Initialize singleton listener on first mount
+  useEffect(() => { initAuthListener(qc); }, [qc]);
 
   const { data: uid = null } = useQuery({
     queryKey: ["auth_user_id"],
     queryFn: async () => {
+      if (_cachedUserId) return _cachedUserId;
       const { data } = await supabase.auth.getUser();
-      return data.user?.id ?? null;
+      _cachedUserId = data.user?.id ?? null;
+      return _cachedUserId;
     },
-    staleTime: 5 * 60 * 1000,
+    staleTime: Infinity, // Never refetch — updated only via singleton listener
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
   });
-
-  useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      qc.setQueryData(["auth_user_id"], session?.user?.id ?? null);
-    });
-    return () => subscription.unsubscribe();
-  }, [qc]);
 
   return uid;
 }
