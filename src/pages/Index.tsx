@@ -343,7 +343,10 @@ const Index = () => {
                   {/* Mood — important for tracking */}
                   <MoodCheckIn onMoodUpdated={(val) => setLastMoodValue(val)} />
 
-                  {/* Main content: tasks (the primary reason user opens the app) */}
+                  {/* Quick Overview — one task per module */}
+                  <QuickOverview />
+
+                  {/* Main content: tasks */}
                   <MainContent />
 
                   {/* Secondary context widgets — below the fold */}
