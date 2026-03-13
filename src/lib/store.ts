@@ -453,9 +453,9 @@ export function useFlowStore() {
 
   const addMedicamento = useCallback(
     (med: Omit<Database["public"]["Tables"]["medicamentos"]["Insert"], "id">) => {
-      addMedMut.mutate(med);
+      addMedMut.mutate({ ...med, user_id: userId! });
     },
-    [addMedMut]
+    [addMedMut, userId]
   );
 
   const registrarMedicamento = useCallback(
