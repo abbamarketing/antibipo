@@ -262,7 +262,7 @@ export function UnifiedKanban({ energy, lastMoodValue, preferredModule = null }:
   };
 
   const pomodoroTask = pomodoroTaskId ? allItems.find((t) => t.id === pomodoroTaskId) : null;
-  const moodMessage = getMoodMessage(lastMoodValue, todayTasks.length);
+  const moodMessage = getMoodMessage(lastMoodValue, todayTasks.length, energy);
   const visibleColumns = energy === "basico"
     ? STATUS_COLUMNS.filter((c) => c.key === "hoje")
     : energy === "modo_leve" ? STATUS_COLUMNS.filter((c) => c.key === "hoje" || c.key === "em_andamento") : STATUS_COLUMNS;
