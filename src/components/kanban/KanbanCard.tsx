@@ -177,7 +177,7 @@ export function KanbanCard({
 
       {/* Actions */}
       <div className="flex flex-wrap items-center gap-1.5 mt-2.5">
-        <button onClick={onComplete} className="flex items-center gap-1 px-2.5 py-1 rounded-md bg-primary text-primary-foreground font-mono text-[10px] hover:opacity-90 transition-opacity">
+        <button onClick={handleComplete} className="flex items-center gap-1 px-2.5 py-1 rounded-md bg-primary text-primary-foreground font-mono text-[10px] hover:opacity-90 transition-opacity">
           <Check className="w-3 h-3" /> Feito
         </button>
         {item.tipo === "task" && (
