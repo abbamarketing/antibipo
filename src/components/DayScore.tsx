@@ -25,9 +25,10 @@ const MOOD_ICONS: Record<DayMood, { icon: typeof Meh; color: string }> = {
   muito_bom: { icon: Laugh, color: "text-green-500" },
 };
 
-function CircularGauge({ score, alertLevel, size = 120 }: { score: number; alertLevel: DayAlert; size?: number }) {
+function CircularGauge({ score, alertLevel, moodLabel, size = 120 }: { score: number; alertLevel: DayAlert; moodLabel: DayMood; size?: number }) {
   const style = ALERT_STYLES[alertLevel];
-  const AlertIcon = style.icon;
+  const moodCfg = MOOD_ICONS[moodLabel];
+  const MoodIcon = moodCfg.icon;
   const strokeWidth = 8;
   const radius = (size - strokeWidth) / 2;
   const circumference = 2 * Math.PI * radius;
@@ -58,10 +59,7 @@ function CircularGauge({ score, alertLevel, size = 120 }: { score: number; alert
       </svg>
       <div className="absolute inset-0 flex flex-col items-center justify-center">
         <span className={`font-mono text-3xl font-bold ${style.text}`}>{score}</span>
-        <div className="flex items-center gap-1 mt-0.5">
-          <AlertIcon className={`w-3.5 h-3.5 ${style.text}`} />
-          <span className={`text-[10px] font-mono font-semibold tracking-wider ${style.text}`}>{style.label}</span>
-        </div>
+        <MoodIcon className={`w-5 h-5 mt-1 ${moodCfg.color}`} />
       </div>
     </div>
   );
