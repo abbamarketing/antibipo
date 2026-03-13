@@ -87,44 +87,45 @@ export function DayScore() {
         onClick={() => setExpanded(!expanded)}
         className="w-full rounded-xl p-4 text-left transition-all duration-200 hover:bg-secondary/20 active:scale-[0.99]"
       >
-        <div className="space-y-4">
-          <div className="flex items-center justify-center gap-6">
-            <CircularGauge score={ctx.dayScore} alertLevel={ctx.alertLevel} moodLabel={ctx.moodLabel} size={100} />
-            <div className="flex flex-col items-center gap-1">
-              <CheckCircle2 className={`w-5 h-5 ${ctx.tasksCompletedToday > 0 ? "text-primary" : "text-muted-foreground/30"}`} />
-              <span className="text-lg font-mono font-bold">{ctx.tasksCompletedToday}</span>
-              <span className="text-[10px] font-mono text-muted-foreground/60">feitas</span>
+        <div className="space-y-3">
+          {/* Gauge centered with score inside, tasks count as badge */}
+          <div className="flex flex-col items-center gap-1">
+            <div className="relative">
+              <CircularGauge score={ctx.dayScore} alertLevel={ctx.alertLevel} moodLabel={ctx.moodLabel} size={96} />
+              {/* Tasks badge overlaid at bottom-right of gauge */}
+              <div className="absolute -bottom-1 -right-1 flex items-center gap-1 bg-secondary/60 backdrop-blur-sm rounded-full px-2 py-0.5">
+                <CheckCircle2 className={`w-3 h-3 ${ctx.tasksCompletedToday > 0 ? "text-primary" : "text-muted-foreground/40"}`} />
+                <span className="text-[11px] font-mono font-bold">{ctx.tasksCompletedToday}</span>
+              </div>
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-2">
-            <ModuleIndicator
-              icon={<MoodIcon className={`w-4 h-4 ${moodCfg.color}`} />}
+          {/* 4 compact indicators in a row */}
+          <div className="grid grid-cols-4 gap-1.5">
+            <CompactIndicator
+              icon={<MoodIcon className={`w-3.5 h-3.5 ${moodCfg.color}`} />}
               label="Humor"
               value={ctx.moodLabel === "neutro" ? "—" : ctx.moodLabel.replace("_", " ")}
             />
-            <ModuleIndicator
-              icon={<Pill className={`w-4 h-4 ${ctx.medsAdherence >= 100 ? "text-green-500" : ctx.medsAdherence > 0 ? "text-amber-500" : "text-muted-foreground"}`} />}
-              label="Remédios"
+            <CompactIndicator
+              icon={<Pill className={`w-3.5 h-3.5 ${ctx.medsAdherence >= 100 ? "text-green-500" : ctx.medsAdherence > 0 ? "text-amber-500" : "text-muted-foreground"}`} />}
+              label="Meds"
               value={`${ctx.medsTaken}/${ctx.medsTotal}`}
             />
-            <ModuleIndicator
-              icon={<Moon className={`w-4 h-4 ${ctx.sleepQuality === 3 ? "text-green-500" : ctx.sleepQuality === 2 ? "text-amber-500" : ctx.sleepQuality === 1 ? "text-destructive" : "text-muted-foreground/30"}`} />}
+            <CompactIndicator
+              icon={<Moon className={`w-3.5 h-3.5 ${ctx.sleepQuality === 3 ? "text-green-500" : ctx.sleepQuality === 2 ? "text-amber-500" : ctx.sleepQuality === 1 ? "text-destructive" : "text-muted-foreground/30"}`} />}
               label="Sono"
               value={ctx.sleepHours ? `${ctx.sleepHours.toFixed(0)}h` : "—"}
             />
-            <ModuleIndicator
-              icon={<Dumbbell className={`w-4 h-4 ${ctx.exerciseDone ? "text-green-500" : "text-muted-foreground/30"}`} />}
-              label="Exercício"
+            <CompactIndicator
+              icon={<Dumbbell className={`w-3.5 h-3.5 ${ctx.exerciseDone ? "text-green-500" : "text-muted-foreground/30"}`} />}
+              label="Exerc."
               value={ctx.exerciseDone ? `${ctx.exerciseMinutes}m` : "—"}
             />
           </div>
 
-          <div className="flex items-center justify-center">
-            {expanded
-              ? <ChevronDown className="w-4 h-4 text-muted-foreground/40" />
-              : <ChevronRight className="w-4 h-4 text-muted-foreground/40" />
-            }
+          <div className="flex items-center justify-center pt-0">
+            <ChevronDown className={`w-4 h-4 text-muted-foreground/40 transition-transform duration-200 ${expanded ? "rotate-0" : "-rotate-90"}`} />
           </div>
         </div>
       </button>
