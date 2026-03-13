@@ -252,7 +252,7 @@ export function useFlowStore() {
         id: makeTempId("medreg"),
         data: todayStr,
         horario_previsto,
-        horario_tomado: new Date().toISOString(),
+        horario_tomado: brasiliaTime().toISOString(),
         medicamento_id,
         tomado: true,
       };
