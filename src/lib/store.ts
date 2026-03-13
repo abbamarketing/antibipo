@@ -406,7 +406,7 @@ export function useFlowStore() {
 
   const completeTask = useCallback(
     (id: string) => {
-      updateTaskMut.mutate({ id, changes: { status: "feito", feito_em: new Date().toISOString() } });
+      updateTaskMut.mutate({ id, changes: { status: "feito", feito_em: brasiliaTime().toISOString() } });
     },
     [updateTaskMut]
   );
