@@ -34,7 +34,7 @@ export function KanbanCard({
   const completedSubs = item.subtasks?.filter((s) => s.status === "feito").length || 0;
 
   const urgencyBorder =
-    item.urgencia === 3 ? "border-l-red-400" : item.urgencia === 2 ? "border-l-amber-400" : "border-l-transparent";
+    item.urgencia === 3 ? "border-l-destructive" : item.urgencia === 2 ? "border-l-amber-400" : "border-l-transparent";
 
   const handleComplete = useCallback(() => {
     if (cardRef.current) {
@@ -54,7 +54,7 @@ export function KanbanCard({
   return (
     <div
       ref={cardRef}
-      className={`bg-card rounded-xl border-l-[3px] ${urgencyBorder} shadow-sm p-3 transition-all duration-200 hover:shadow-md hover:-translate-y-0.5 ${
+      className={`bg-card rounded-2xl border-l-[3px] ${urgencyBorder} shadow-sm p-4 transition-all duration-200 hover:shadow-md hover:-translate-y-0.5 ${
         fading ? "animate-fade-out opacity-0 scale-95 transition-all duration-300" : ""
       }`}
     >
@@ -64,39 +64,39 @@ export function KanbanCard({
           <p className="text-sm font-medium leading-snug">{item.titulo}</p>
 
           {/* Meta row */}
-          <div className="flex flex-wrap items-center gap-1.5 mt-1.5">
-            <span className={`inline-flex items-center gap-1 text-[9px] font-mono px-1.5 py-0.5 rounded-md ${MODULE_COLORS[item.modulo]}`}>
-              <Icon className="w-2.5 h-2.5" />
+          <div className="flex flex-wrap items-center gap-1.5 mt-2">
+            <span className={`inline-flex items-center gap-1 text-[10px] font-mono px-2 py-1 rounded-lg ${MODULE_COLORS[item.modulo]}`}>
+              <Icon className="w-3 h-3" />
               {MODULE_LABELS[item.modulo]}
             </span>
             {item.taskType && (
-              <span className="text-[9px] font-mono text-muted-foreground/70">
+              <span className="text-[10px] font-mono text-muted-foreground/70 px-1.5 py-0.5">
                 {TYPE_LABELS[item.taskType] || item.taskType}
               </span>
             )}
             {item.tempo_min && (
-              <span className="flex items-center gap-0.5 text-[9px] text-muted-foreground/70">
-                <Clock className="w-2.5 h-2.5" />{item.tempo_min}min
+              <span className="flex items-center gap-0.5 text-[10px] text-muted-foreground/70">
+                <Clock className="w-3 h-3" />{item.tempo_min}min
               </span>
             )}
             {item.dono && item.dono !== "eu" && (
-              <span className="text-[9px] font-mono text-primary">
+              <span className="text-[10px] font-mono text-primary px-1.5 py-0.5">
                 {item.dono === "socio_medico" ? "Sócio" : "Editor"}
               </span>
             )}
           </div>
 
           {/* Badges */}
-          <div className="flex flex-wrap items-center gap-1 mt-1">
+          <div className="flex flex-wrap items-center gap-1.5 mt-1.5">
             {item.recorrente && (
-              <span className="inline-flex items-center gap-0.5 text-[9px] font-mono text-blue-600 bg-blue-500/10 px-1 py-0.5 rounded-md">
-                <Repeat className="w-2.5 h-2.5" />
+              <span className="inline-flex items-center gap-1 text-[10px] font-mono text-blue-600 bg-blue-500/10 px-2 py-1 rounded-lg">
+                <Repeat className="w-3 h-3" />
                 {item.frequencia_recorrencia || "Recorrente"}
               </span>
             )}
             {item.depende_de && (
-              <span className="inline-flex items-center gap-0.5 text-[9px] font-mono text-amber-600 bg-amber-500/10 px-1 py-0.5 rounded-md">
-                <UserCheck className="w-2.5 h-2.5" />
+              <span className="inline-flex items-center gap-1 text-[10px] font-mono text-amber-600 bg-amber-500/10 px-2 py-1 rounded-lg">
+                <UserCheck className="w-3 h-3" />
                 {item.depende_de}
               </span>
             )}
@@ -117,8 +117,8 @@ export function KanbanCard({
                 ? "text-accent-foreground bg-accent/10"
                 : "text-muted-foreground/70 bg-secondary/30";
               return (
-                <span className={`inline-flex items-center gap-0.5 text-[9px] font-mono px-1 py-0.5 rounded-md ${colorClass}`}>
-                  <Calendar className="w-2.5 h-2.5" />
+                <span className={`inline-flex items-center gap-1 text-[10px] font-mono px-2 py-1 rounded-lg ${colorClass}`}>
+                  <Calendar className="w-3 h-3" />
                   {label}
                 </span>
               );
@@ -126,31 +126,31 @@ export function KanbanCard({
           </div>
 
           {item.notas && (
-            <p className="text-[11px] text-muted-foreground/60 mt-1 font-body leading-relaxed line-clamp-2">{item.notas}</p>
+            <p className="text-xs text-muted-foreground/60 mt-2 font-body leading-relaxed line-clamp-2">{item.notas}</p>
           )}
         </div>
       </div>
 
       {/* Subtasks */}
       {hasSubs && (
-        <div className="mt-2">
-          <button onClick={() => setShowSubs(!showSubs)} className="flex items-center gap-1 text-[10px] font-mono text-muted-foreground/60 hover:text-foreground transition-colors">
-            {showSubs ? <ChevronDown className="w-3 h-3" /> : <ChevronRight className="w-3 h-3" />}
+        <div className="mt-3">
+          <button onClick={() => setShowSubs(!showSubs)} className="flex items-center gap-1 text-[11px] font-mono text-muted-foreground/60 hover:text-foreground transition-colors py-1">
+            {showSubs ? <ChevronDown className="w-3.5 h-3.5" /> : <ChevronRight className="w-3.5 h-3.5" />}
             SUBTAREFAS {completedSubs}/{item.subtasks!.length}
           </button>
           {showSubs && (
-            <div className="mt-1.5 pl-3 space-y-1 border-l border-border/30">
+            <div className="mt-2 pl-3 space-y-2 border-l border-border/30">
               {item.subtasks!.map((sub) => (
-                <div key={sub.id} className="flex items-center gap-2">
+                <div key={sub.id} className="flex items-center gap-2.5">
                   <button
                     onClick={() => sub.status !== "feito" && onCompleteSubtask(sub.id)}
-                    className={`w-3.5 h-3.5 rounded border flex items-center justify-center transition-all duration-200 ${
+                    className={`w-5 h-5 rounded-md border flex items-center justify-center transition-all duration-200 shrink-0 ${
                       sub.status === "feito" ? "bg-primary border-primary scale-110" : "border-muted-foreground/30 hover:border-primary hover:scale-110"
                     }`}
                   >
-                    {sub.status === "feito" && <Check className="w-2.5 h-2.5 text-primary-foreground" />}
+                    {sub.status === "feito" && <Check className="w-3 h-3 text-primary-foreground" />}
                   </button>
-                  <span className={`text-xs font-body ${sub.status === "feito" ? "line-through text-muted-foreground/40" : ""}`}>
+                  <span className={`text-sm font-body ${sub.status === "feito" ? "line-through text-muted-foreground/40" : ""}`}>
                     {sub.titulo}
                   </span>
                 </div>
@@ -160,49 +160,49 @@ export function KanbanCard({
         </div>
       )}
 
-      {/* Actions */}
-      <div className="flex flex-wrap items-center gap-1.5 mt-3">
+      {/* Actions — larger touch targets */}
+      <div className="flex flex-wrap items-center gap-2 mt-4">
         <button
           onClick={handleComplete}
-          className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-primary text-primary-foreground font-mono text-[10px] hover:opacity-90 active:scale-95 transition-all duration-150"
+          className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-primary text-primary-foreground font-mono text-[11px] hover:opacity-90 active:scale-95 transition-all duration-150 min-h-[44px]"
         >
-          <Check className="w-3 h-3" /> Feito
+          <Check className="w-4 h-4" /> Feito
         </button>
         {item.tipo === "task" && (
           <>
-            <button onClick={onPush} className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-secondary/50 text-secondary-foreground font-mono text-[10px] hover:bg-secondary/80 active:scale-95 transition-all duration-150">
-              <ArrowRight className="w-3 h-3" /> Adiar
+            <button onClick={onPush} className="flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl bg-secondary/60 text-secondary-foreground font-mono text-[11px] hover:bg-secondary/80 active:scale-95 transition-all duration-150 min-h-[44px]">
+              <ArrowRight className="w-4 h-4" /> Adiar
             </button>
             {(item.taskType === "delegavel" || (item.dono && item.dono !== "eu")) && (
-              <button onClick={onDelegate} className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-secondary/50 text-secondary-foreground font-mono text-[10px] hover:bg-secondary/80 active:scale-95 transition-all duration-150">
-                <Send className="w-3 h-3" /> Delegar
+              <button onClick={onDelegate} className="flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl bg-secondary/60 text-secondary-foreground font-mono text-[11px] hover:bg-secondary/80 active:scale-95 transition-all duration-150 min-h-[44px]">
+                <Send className="w-4 h-4" /> Delegar
               </button>
             )}
           </>
         )}
         {showPomodoro && (
-          <button onClick={onStartPomodoro} className="flex items-center gap-1 px-2 py-1 text-[10px] font-mono text-muted-foreground/60 hover:text-primary active:scale-95 transition-all duration-150">
-            <Timer className="w-3 h-3" /> Pomodoro
+          <button onClick={onStartPomodoro} className="flex items-center gap-1.5 px-3 py-2.5 text-[11px] font-mono text-muted-foreground/60 hover:text-primary active:scale-95 transition-all duration-150 min-h-[44px]">
+            <Timer className="w-4 h-4" /> Pomodoro
           </button>
         )}
 
         {/* Context menu */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <button className="ml-auto p-1 rounded-lg text-muted-foreground/40 hover:text-foreground hover:bg-secondary/40 transition-all duration-150">
-              <MoreVertical className="w-3.5 h-3.5" />
+            <button className="ml-auto p-2.5 rounded-xl text-muted-foreground/40 hover:text-foreground hover:bg-secondary/40 transition-all duration-150 min-w-[44px] min-h-[44px] flex items-center justify-center">
+              <MoreVertical className="w-4 h-4" />
             </button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="min-w-[140px]">
-            <DropdownMenuItem onClick={onOpen} className="text-xs gap-2">
-              <Eye className="w-3.5 h-3.5" /> Abrir detalhes
+          <DropdownMenuContent align="end" className="min-w-[160px]">
+            <DropdownMenuItem onClick={onOpen} className="text-sm gap-2 py-2.5">
+              <Eye className="w-4 h-4" /> Abrir detalhes
             </DropdownMenuItem>
             {item.tipo === "task" && (
               <>
                 <DropdownMenuSeparator />
                 {STATUS_COLUMNS.filter((c) => c.key !== item.status).map((col) => (
-                  <DropdownMenuItem key={col.key} onClick={() => onMoveStatus(col.key)} className="text-xs gap-2">
-                    <div className={`w-2 h-2 rounded-full ${col.dot}`} /> {col.label}
+                  <DropdownMenuItem key={col.key} onClick={() => onMoveStatus(col.key)} className="text-sm gap-2 py-2.5">
+                    <div className={`w-2.5 h-2.5 rounded-full ${col.dot}`} /> {col.label}
                   </DropdownMenuItem>
                 ))}
               </>
@@ -210,8 +210,8 @@ export function KanbanCard({
             {item.tipo === "task" && (
               <>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={onDelete} className="text-xs gap-2 text-destructive focus:text-destructive">
-                  <Trash2 className="w-3.5 h-3.5" /> Excluir
+                <DropdownMenuItem onClick={onDelete} className="text-sm gap-2 py-2.5 text-destructive focus:text-destructive">
+                  <Trash2 className="w-4 h-4" /> Excluir
                 </DropdownMenuItem>
               </>
             )}
