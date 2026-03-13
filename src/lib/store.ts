@@ -333,7 +333,7 @@ export function useFlowStore() {
     onMutate: async ({ type, qualidade }) => {
       await qc.cancelQueries({ queryKey: ["registros_sono"] });
       const previousSono = qc.getQueryData<RegistroSono[]>(["registros_sono"]) || [];
-      const nowIso = new Date().toISOString();
+      const nowIso = brasiliaTime().toISOString();
       const todayStr = today();
 
       qc.setQueryData<RegistroSono[]>(["registros_sono"], (current = []) => {
