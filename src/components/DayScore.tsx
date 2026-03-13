@@ -93,7 +93,7 @@ export function DayScore() {
           <div className="space-y-4">
             {/* Row 1: Gauge centered + tasks done */}
             <div className="flex items-center justify-center gap-6">
-              <CircularGauge score={ctx.dayScore} alertLevel={ctx.alertLevel} size={100} />
+              <CircularGauge score={ctx.dayScore} alertLevel={ctx.alertLevel} moodLabel={ctx.moodLabel} size={100} />
               <div className="flex flex-col items-center gap-1">
                 <CheckCircle2 className={`w-5 h-5 ${ctx.tasksCompletedToday > 0 ? "text-primary" : "text-muted-foreground/30"}`} />
                 <span className="text-lg font-mono font-bold">{ctx.tasksCompletedToday}</span>
