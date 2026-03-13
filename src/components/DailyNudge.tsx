@@ -176,12 +176,7 @@ export function DailyNudge() {
   const hasNudge = !!data?.message;
 
   if (!hasAlerts && !hasNudge) {
-    return (
-      <div className="flex items-center justify-between">
-        <div />
-        <VoiceCapture />
-      </div>
-    );
+    return <VoiceCapture />;
   }
 
   return (
