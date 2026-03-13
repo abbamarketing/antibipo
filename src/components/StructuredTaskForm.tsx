@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { logActivity } from "@/lib/activity-log";
-import { brasiliaTimeString } from "@/lib/brasilia";
+import { brasiliaTimeString, brasiliaTime } from "@/lib/brasilia";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { cn } from "@/lib/utils";
