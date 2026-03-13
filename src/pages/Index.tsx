@@ -220,6 +220,11 @@ const Index = () => {
                   <DayScore />
                 </div>
 
+                {/* Weekly Correlation Chart */}
+                <div className="mb-4">
+                  <WeeklyCorrelationChart />
+                </div>
+
                 {/* Unified Daily Tasks - always visible */}
                   <UnifiedKanban energy={current_energy!} lastMoodValue={lastMoodValue} preferredModule={activeNav === "metas" ? null : activeNav} />
 
