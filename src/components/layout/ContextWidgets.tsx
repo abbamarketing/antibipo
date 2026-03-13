@@ -10,13 +10,14 @@ import type { NavModulo } from "@/components/ModuleNav";
 
 interface ContextWidgetsProps {
   isCrisis: boolean;
+  isLowState?: boolean;
   activeNav: NavModulo;
   pending: { medicamento: { id: string; nome: string; dose: string }; horario: string }[];
   onTakeMed: (medId: string, horario: string) => void;
   onMoodUpdated: (val: number) => void;
 }
 
-export function ContextWidgets({ isCrisis, activeNav, pending, onTakeMed, onMoodUpdated }: ContextWidgetsProps) {
+export function ContextWidgets({ isCrisis, isLowState = false, activeNav, pending, onTakeMed, onMoodUpdated }: ContextWidgetsProps) {
   const isMobile = useIsMobile();
 
   return (
@@ -25,7 +26,7 @@ export function ContextWidgets({ isCrisis, activeNav, pending, onTakeMed, onMood
         <DayScore />
       </GlassCard>
 
-      {!isCrisis && !isMobile && (
+      {!isCrisis && !isLowState && !isMobile && (
         <GlassCard>
           <WeatherWidget />
         </GlassCard>
@@ -34,18 +35,18 @@ export function ContextWidgets({ isCrisis, activeNav, pending, onTakeMed, onMood
       <MoodCheckIn onMoodUpdated={onMoodUpdated} />
 
       {pending.length > 0 && (
-        <GlassCard className={`p-1 ${isCrisis ? "ring-2 ring-destructive/30" : ""}`}>
+        <GlassCard className={`p-1 ${isCrisis || isLowState ? "ring-2 ring-destructive/30" : ""}`}>
           <MedAlert pendingMeds={pending} onTake={onTakeMed} />
         </GlassCard>
       )}
 
-      {!isCrisis && activeNav !== "inicio" && (
+      {!isCrisis && !isLowState && activeNav !== "inicio" && (
         <GlassCard className="p-4">
           <WeeklyCorrelationChart />
         </GlassCard>
       )}
 
-      {!isCrisis && activeNav !== "inicio" && (
+      {!isCrisis && !isLowState && activeNav !== "inicio" && (
         <CustomTrackers modulo={activeNav === "metas" ? "saude" : activeNav} />
       )}
     </div>

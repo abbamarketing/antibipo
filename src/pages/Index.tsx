@@ -53,6 +53,17 @@ const Index = () => {
   const showEnergySelector = !current_energy;
   const isCrisis = dayCtx.alertLevel === "crise";
 
+  // ── Visão Adaptativa: determina se modo reduzido está ativo ──
+  const isLowState = current_energy === "basico" || (dayCtx.moodValue !== null && dayCtx.moodValue <= 0);
+  const isVeryLow = current_energy === "basico" && dayCtx.moodValue !== null && dayCtx.moodValue <= -1;
+
+  // Force nav back to "inicio" if user is in low state and on a hidden tab
+  useEffect(() => {
+    if (isLowState && (activeNav === "metas")) {
+      setActiveNav("inicio");
+    }
+  }, [isLowState, activeNav]);
+
   // ── Handlers ──
   const handleSetEnergy = (energy: typeof current_energy) => { if (energy) setEnergy(energy); };
 
@@ -113,21 +124,39 @@ const Index = () => {
     logActivity("medicamento_adicionado", { nome: med.nome, hora: brasiliaTimeString() });
   };
 
+  // ── Adaptative SpeedDial: hide financial & calendar actions in low state ──
+  const handleSpeedDial = (action: SpeedDialAction) => {
+    switch (action) {
+      case "tarefa": setCaptureOpen(true); break;
+      case "entrada": case "saida": navigate("/financeiro"); break;
+      case "evento": navigate("/calendario"); break;
+    }
+  };
+
   // ── Main content switch ──
   const MainContent = () =>
     activeNav === "inicio" ? (
-      <InicioContent isCrisis={isCrisis} showMondayReview={showMondayReview} showFridayReport={showFridayReport} onDismissMonday={() => setShowMondayReview(false)} onDismissFriday={() => setShowFridayReport(false)} />
+      <InicioContent isCrisis={isCrisis || isVeryLow} showMondayReview={showMondayReview && !isLowState} showFridayReport={showFridayReport && !isLowState} onDismissMonday={() => setShowMondayReview(false)} onDismissFriday={() => setShowFridayReport(false)} />
     ) : (
-      <ModuleContent activeNav={activeNav} energy={current_energy!} lastMoodValue={lastMoodValue} isCrisis={isCrisis} onComplete={handleCompleteTask} onDelegate={handleDelegate} onPush={handlePush} onTakeMed={handleTakeMed} onMood={handleMood} onSleep={handleSleep} onAddMed={handleAddMed} />
+      <ModuleContent activeNav={activeNav} energy={current_energy!} lastMoodValue={lastMoodValue} isCrisis={isCrisis || isVeryLow} onComplete={handleCompleteTask} onDelegate={handleDelegate} onPush={handlePush} onTakeMed={handleTakeMed} onMood={handleMood} onSleep={handleSleep} onAddMed={handleAddMed} />
     );
+
+  // ── Background class based on energy state for visual feedback ──
+  const bgClass = isVeryLow
+    ? "min-h-screen bg-gradient-to-br from-[hsl(210,20%,92%)] via-background to-[hsl(210,15%,88%)]"
+    : isLowState
+    ? "min-h-screen bg-gradient-to-br from-background via-[hsl(210,10%,93%)] to-secondary/30"
+    : current_energy === "foco_total"
+    ? "min-h-screen bg-gradient-to-br from-background via-background to-[hsl(22,20%,92%)]"
+    : "min-h-screen bg-gradient-to-br from-background via-background to-secondary/30";
 
   return (
     <DayGate>
-      <div className="min-h-screen bg-gradient-to-br from-background via-background to-secondary/30">
+      <div className={bgClass}>
         <NotificationManager medicamentos={state.medicamentos} isMedTaken={isMedTakenToday} hasEnergy={!!current_energy} />
 
         <div className={`max-w-7xl mx-auto px-4 py-6 ${isMobile ? "pb-32" : "pb-6"}`}>
-          <DashboardHeader isCrisis={isCrisis} hasEnergy={!!current_energy} dayScore={dayCtx.dayScore} alertLevel={dayCtx.alertLevel} />
+          <DashboardHeader isCrisis={isCrisis} hasEnergy={!!current_energy} dayScore={dayCtx.dayScore} alertLevel={dayCtx.alertLevel} hiddenNavItems={isLowState ? ["financeiro", "calendario"] : []} />
 
           {showEnergySelector ? (
             <EnergyStateSelector current={current_energy} onSelect={handleSetEnergy} />
@@ -140,8 +169,8 @@ const Index = () => {
                   const EIcon = cfg.icon;
                   return (
                     <>
-                      <EIcon className="w-4 h-4 text-primary" />
-                      <span className="font-mono text-xs tracking-wider text-primary">{cfg.label}</span>
+                      <EIcon className={`w-4 h-4 ${isLowState ? "text-muted-foreground" : "text-primary"}`} />
+                      <span className={`font-mono text-xs tracking-wider ${isLowState ? "text-muted-foreground" : "text-primary"}`}>{cfg.label}</span>
                     </>
                   );
                 })()}
@@ -156,54 +185,75 @@ const Index = () => {
 
               {isMobile ? (
                 <div className="space-y-5">
+                  {/* Med alert — always visible, priority in low state */}
                   {pending.length > 0 && (
-                    <GlassCard className={`p-1 ${isCrisis ? "ring-2 ring-destructive/30" : ""}`}>
+                    <GlassCard className={`p-1 ${isCrisis || isLowState ? "ring-2 ring-destructive/30" : ""}`}>
                       <MedAlert pendingMeds={pending} onTake={handleTakeMed} />
                     </GlassCard>
                   )}
+
+                  {/* DayScore — always visible */}
                   <GlassCard className="p-3"><DayScore /></GlassCard>
+
+                  {/* Mood — always visible */}
                   <MoodCheckIn onMoodUpdated={(val) => setLastMoodValue(val)} />
+
+                  {/* Low state message */}
+                  {isVeryLow && (
+                    <div className="rounded-2xl bg-[hsl(210,20%,95%)] border border-border/30 p-4 text-center animate-fade-in">
+                      <p className="font-body text-sm text-muted-foreground leading-relaxed">
+                        🫂 Modo protegido ativo. Mostrando apenas o essencial.
+                      </p>
+                    </div>
+                  )}
+
+                  {/* Main content */}
                   <MainContent />
-                  {activeNav !== "inicio" && !isCrisis && (
+
+                  {/* Custom trackers — hidden in low state */}
+                  {activeNav !== "inicio" && !isCrisis && !isLowState && (
                     <CustomTrackers modulo={activeNav === "metas" ? "saude" : activeNav} />
                   )}
                 </div>
               ) : (
                 <div className="grid grid-cols-12 gap-5">
                   <aside className="col-span-3 space-y-4 sticky top-6 self-start max-h-[calc(100vh-4rem)] overflow-y-auto scrollbar-thin">
-                    <ContextWidgets isCrisis={isCrisis} activeNav={activeNav} pending={pending} onTakeMed={handleTakeMed} onMoodUpdated={(val) => setLastMoodValue(val)} />
+                    <ContextWidgets isCrisis={isCrisis} isLowState={isLowState} activeNav={activeNav} pending={pending} onTakeMed={handleTakeMed} onMoodUpdated={(val) => setLastMoodValue(val)} />
                   </aside>
-                  <main className="col-span-9"><MainContent /></main>
+                  <main className="col-span-9">
+                    {isVeryLow && (
+                      <div className="rounded-2xl bg-[hsl(210,20%,95%)] border border-border/30 p-4 text-center mb-4 animate-fade-in">
+                        <p className="font-body text-sm text-muted-foreground leading-relaxed">
+                          🫂 Modo protegido ativo. Mostrando apenas o essencial.
+                        </p>
+                      </div>
+                    )}
+                    <MainContent />
+                  </main>
                 </div>
               )}
             </div>
           )}
         </div>
 
+        {/* Module Nav — hide Metas tab in low state */}
         {current_energy && !isCrisis && (
           isMobile ? (
             <div className="fixed bottom-0 inset-x-0 z-40 bg-card/90 backdrop-blur-xl border-t border-border/30 safe-area-bottom">
-              <ModuleNav current={activeNav} onSelect={handleModulo} />
+              <ModuleNav current={activeNav} onSelect={handleModulo} hiddenModules={isLowState ? ["metas"] : []} />
             </div>
           ) : (
             <div className="max-w-7xl mx-auto px-4 pb-4">
               <GlassCard className="p-1.5">
-                <ModuleNav current={activeNav} onSelect={handleModulo} />
+                <ModuleNav current={activeNav} onSelect={handleModulo} hiddenModules={isLowState ? ["metas"] : []} />
               </GlassCard>
             </div>
           )
         )}
 
+        {/* SpeedDial — reduce options in low state */}
         {current_energy && (
-          <SpeedDialFAB
-            onAction={(action: SpeedDialAction) => {
-              switch (action) {
-                case "tarefa": setCaptureOpen(true); break;
-                case "entrada": case "saida": navigate("/financeiro"); break;
-                case "evento": navigate("/calendario"); break;
-              }
-            }}
-          />
+          <SpeedDialFAB onAction={handleSpeedDial} reducedMode={isLowState} />
         )}
 
         <StructuredTaskForm open={captureOpen} onClose={() => setCaptureOpen(false)} onCreated={() => {}} />

@@ -11,18 +11,21 @@ interface DashboardHeaderProps {
   hasEnergy: boolean;
   dayScore: number;
   alertLevel: string;
+  hiddenNavItems?: string[];
 }
 
-const NAV_ITEMS = [
-  { icon: Wallet, path: "/financeiro", title: "Financeiro" },
-  { icon: CalendarDays, path: "/calendario", title: "Calendário" },
-  { icon: Activity, path: "/log", title: "Log" },
-  { icon: Settings, path: "/config", title: "Configurações" },
+const ALL_NAV_ITEMS = [
+  { icon: Wallet, path: "/financeiro", title: "Financeiro", key: "financeiro" },
+  { icon: CalendarDays, path: "/calendario", title: "Calendário", key: "calendario" },
+  { icon: Activity, path: "/log", title: "Log", key: "log" },
+  { icon: Settings, path: "/config", title: "Configurações", key: "config" },
 ] as const;
 
-export function DashboardHeader({ isCrisis, hasEnergy, dayScore, alertLevel }: DashboardHeaderProps) {
+export function DashboardHeader({ isCrisis, hasEnergy, dayScore, alertLevel, hiddenNavItems = [] }: DashboardHeaderProps) {
   const navigate = useNavigate();
   const isMobile = useIsMobile();
+
+  const visibleNavItems = ALL_NAV_ITEMS.filter((item) => !hiddenNavItems.includes(item.key));
 
   return (
     <header className="mb-5">
@@ -34,7 +37,7 @@ export function DashboardHeader({ isCrisis, hasEnergy, dayScore, alertLevel }: D
           {isMobile && !isCrisis && <WeatherWidget compact />}
         </div>
         <div className="flex items-center gap-1">
-          {NAV_ITEMS.map(({ icon: Icon, path, title }) => (
+          {visibleNavItems.map(({ icon: Icon, path, title }) => (
             <button
               key={path}
               onClick={() => navigate(path)}
