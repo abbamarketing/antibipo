@@ -8,6 +8,7 @@ import {
   Angry, Frown, Meh, Smile, Laugh,
 } from "lucide-react";
 import { useState } from "react";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 const ALERT_STYLES: Record<DayAlert, { bg: string; text: string; icon: typeof AlertTriangle; label: string; gaugeColor: string }> = {
   crise: { bg: "bg-destructive/10", text: "text-destructive", icon: AlertCircle, label: "CRISE", gaugeColor: "hsl(var(--destructive))" },
@@ -24,10 +25,9 @@ const MOOD_ICONS: Record<DayMood, { icon: typeof Meh; color: string }> = {
   muito_bom: { icon: Laugh, color: "text-green-500" },
 };
 
-function CircularGauge({ score, alertLevel }: { score: number; alertLevel: DayAlert }) {
+function CircularGauge({ score, alertLevel, size = 120 }: { score: number; alertLevel: DayAlert; size?: number }) {
   const style = ALERT_STYLES[alertLevel];
   const AlertIcon = style.icon;
-  const size = 120;
   const strokeWidth = 8;
   const radius = (size - strokeWidth) / 2;
   const circumference = 2 * Math.PI * radius;
@@ -38,40 +38,29 @@ function CircularGauge({ score, alertLevel }: { score: number; alertLevel: DayAl
 
   return (
     <div className="relative flex items-center justify-center" style={{ width: size, height: size }}>
-      <svg width={size} height={size} className="transform">
-        {/* Background track */}
+      <svg width={size} height={size}>
         <circle
-          cx={size / 2}
-          cy={size / 2}
-          r={radius}
-          fill="none"
-          stroke="hsl(var(--border) / 0.4)"
-          strokeWidth={strokeWidth}
-          strokeLinecap="round"
+          cx={size / 2} cy={size / 2} r={radius}
+          fill="none" stroke="hsl(var(--border) / 0.4)"
+          strokeWidth={strokeWidth} strokeLinecap="round"
           strokeDasharray={`${arcLength} ${circumference}`}
           transform={`rotate(${rotation} ${size / 2} ${size / 2})`}
         />
-        {/* Progress arc */}
         <circle
-          cx={size / 2}
-          cy={size / 2}
-          r={radius}
-          fill="none"
-          stroke={style.gaugeColor}
-          strokeWidth={strokeWidth}
-          strokeLinecap="round"
+          cx={size / 2} cy={size / 2} r={radius}
+          fill="none" stroke={style.gaugeColor}
+          strokeWidth={strokeWidth} strokeLinecap="round"
           strokeDasharray={`${arcLength} ${circumference}`}
           strokeDashoffset={dashOffset}
           transform={`rotate(${rotation} ${size / 2} ${size / 2})`}
           className="transition-all duration-700 ease-out"
         />
       </svg>
-      {/* Center content */}
       <div className="absolute inset-0 flex flex-col items-center justify-center">
-        <span className={`font-mono text-2xl font-bold ${style.text}`}>{score}</span>
-        <div className={`flex items-center gap-1 mt-0.5`}>
-          <AlertIcon className={`w-3 h-3 ${style.text}`} />
-          <span className={`text-[8px] font-mono font-semibold tracking-wider ${style.text}`}>{style.label}</span>
+        <span className={`font-mono text-3xl font-bold ${style.text}`}>{score}</span>
+        <div className="flex items-center gap-1 mt-0.5">
+          <AlertIcon className={`w-3.5 h-3.5 ${style.text}`} />
+          <span className={`text-[10px] font-mono font-semibold tracking-wider ${style.text}`}>{style.label}</span>
         </div>
       </div>
     </div>
@@ -80,6 +69,7 @@ function CircularGauge({ score, alertLevel }: { score: number; alertLevel: DayAl
 
 export function DayScore() {
   const ctx = useDayContext();
+  const isMobile = useIsMobile();
   const [expanded, setExpanded] = useState(false);
   const alertStyle = ALERT_STYLES[ctx.alertLevel];
   const moodCfg = MOOD_ICONS[ctx.moodLabel];
@@ -100,48 +90,89 @@ export function DayScore() {
         onClick={() => setExpanded(!expanded)}
         className="w-full rounded-xl p-4 text-left transition-all duration-200 hover:bg-secondary/20 active:scale-[0.99]"
       >
-        <div className="flex items-center gap-4">
-          {/* Circular gauge */}
-          <CircularGauge score={ctx.dayScore} alertLevel={ctx.alertLevel} />
-
-          {/* Module indicators */}
-          <div className="flex-1 grid grid-cols-2 gap-2">
-            {/* Mood */}
-            <ModuleIndicator
-              icon={<MoodIcon className={`w-4 h-4 ${moodCfg.color}`} />}
-              label="Humor"
-              value={ctx.moodLabel === "neutro" ? "—" : ctx.moodLabel.replace("_", " ")}
-            />
-            {/* Meds */}
-            <ModuleIndicator
-              icon={<Pill className={`w-4 h-4 ${ctx.medsAdherence >= 100 ? "text-green-500" : ctx.medsAdherence > 0 ? "text-amber-500" : "text-muted-foreground"}`} />}
-              label="Remédios"
-              value={`${ctx.medsTaken}/${ctx.medsTotal}`}
-            />
-            {/* Sleep */}
-            <ModuleIndicator
-              icon={<Moon className={`w-4 h-4 ${ctx.sleepQuality === 3 ? "text-green-500" : ctx.sleepQuality === 2 ? "text-amber-500" : ctx.sleepQuality === 1 ? "text-destructive" : "text-muted-foreground/30"}`} />}
-              label="Sono"
-              value={ctx.sleepHours ? `${ctx.sleepHours.toFixed(0)}h` : "—"}
-            />
-            {/* Exercise */}
-            <ModuleIndicator
-              icon={<Dumbbell className={`w-4 h-4 ${ctx.exerciseDone ? "text-green-500" : "text-muted-foreground/30"}`} />}
-              label="Exercício"
-              value={ctx.exerciseDone ? `${ctx.exerciseMinutes}m` : "—"}
-            />
-          </div>
-
-          <div className="flex flex-col items-center gap-2">
-            {/* Tasks */}
-            <div className="flex flex-col items-center">
-              <CheckCircle2 className={`w-4 h-4 ${ctx.tasksCompletedToday > 0 ? "text-primary" : "text-muted-foreground/30"}`} />
-              <span className="text-xs font-mono font-bold mt-0.5">{ctx.tasksCompletedToday}</span>
-              <span className="text-[7px] font-mono text-muted-foreground/60">feitas</span>
+        {isMobile ? (
+          /* ── Mobile: stacked layout ── */
+          <div className="space-y-4">
+            {/* Row 1: Gauge centered + tasks done */}
+            <div className="flex items-center justify-center gap-6">
+              <CircularGauge score={ctx.dayScore} alertLevel={ctx.alertLevel} size={100} />
+              <div className="flex flex-col items-center gap-1">
+                <CheckCircle2 className={`w-5 h-5 ${ctx.tasksCompletedToday > 0 ? "text-primary" : "text-muted-foreground/30"}`} />
+                <span className="text-lg font-mono font-bold">{ctx.tasksCompletedToday}</span>
+                <span className="text-[10px] font-mono text-muted-foreground/60">feitas</span>
+              </div>
             </div>
-            {expanded ? <ChevronDown className="w-4 h-4 text-muted-foreground/40" /> : <ChevronRight className="w-4 h-4 text-muted-foreground/40" />}
+
+            {/* Row 2: Module indicators — 2x2 grid */}
+            <div className="grid grid-cols-2 gap-2">
+              <ModuleIndicator
+                icon={<MoodIcon className={`w-4 h-4 ${moodCfg.color}`} />}
+                label="Humor"
+                value={ctx.moodLabel === "neutro" ? "—" : ctx.moodLabel.replace("_", " ")}
+              />
+              <ModuleIndicator
+                icon={<Pill className={`w-4 h-4 ${ctx.medsAdherence >= 100 ? "text-green-500" : ctx.medsAdherence > 0 ? "text-amber-500" : "text-muted-foreground"}`} />}
+                label="Remédios"
+                value={`${ctx.medsTaken}/${ctx.medsTotal}`}
+              />
+              <ModuleIndicator
+                icon={<Moon className={`w-4 h-4 ${ctx.sleepQuality === 3 ? "text-green-500" : ctx.sleepQuality === 2 ? "text-amber-500" : ctx.sleepQuality === 1 ? "text-destructive" : "text-muted-foreground/30"}`} />}
+                label="Sono"
+                value={ctx.sleepHours ? `${ctx.sleepHours.toFixed(0)}h` : "—"}
+              />
+              <ModuleIndicator
+                icon={<Dumbbell className={`w-4 h-4 ${ctx.exerciseDone ? "text-green-500" : "text-muted-foreground/30"}`} />}
+                label="Exercício"
+                value={ctx.exerciseDone ? `${ctx.exerciseMinutes}m` : "—"}
+              />
+            </div>
+
+            {/* Expand hint */}
+            <div className="flex items-center justify-center">
+              {expanded
+                ? <ChevronDown className="w-4 h-4 text-muted-foreground/40" />
+                : <ChevronRight className="w-4 h-4 text-muted-foreground/40" />
+              }
+            </div>
           </div>
-        </div>
+        ) : (
+          /* ── Desktop: horizontal layout ── */
+          <div className="flex items-center gap-4">
+            <CircularGauge score={ctx.dayScore} alertLevel={ctx.alertLevel} />
+
+            <div className="flex-1 grid grid-cols-2 gap-2">
+              <ModuleIndicator
+                icon={<MoodIcon className={`w-4 h-4 ${moodCfg.color}`} />}
+                label="Humor"
+                value={ctx.moodLabel === "neutro" ? "—" : ctx.moodLabel.replace("_", " ")}
+              />
+              <ModuleIndicator
+                icon={<Pill className={`w-4 h-4 ${ctx.medsAdherence >= 100 ? "text-green-500" : ctx.medsAdherence > 0 ? "text-amber-500" : "text-muted-foreground"}`} />}
+                label="Remédios"
+                value={`${ctx.medsTaken}/${ctx.medsTotal}`}
+              />
+              <ModuleIndicator
+                icon={<Moon className={`w-4 h-4 ${ctx.sleepQuality === 3 ? "text-green-500" : ctx.sleepQuality === 2 ? "text-amber-500" : ctx.sleepQuality === 1 ? "text-destructive" : "text-muted-foreground/30"}`} />}
+                label="Sono"
+                value={ctx.sleepHours ? `${ctx.sleepHours.toFixed(0)}h` : "—"}
+              />
+              <ModuleIndicator
+                icon={<Dumbbell className={`w-4 h-4 ${ctx.exerciseDone ? "text-green-500" : "text-muted-foreground/30"}`} />}
+                label="Exercício"
+                value={ctx.exerciseDone ? `${ctx.exerciseMinutes}m` : "—"}
+              />
+            </div>
+
+            <div className="flex flex-col items-center gap-2">
+              <div className="flex flex-col items-center">
+                <CheckCircle2 className={`w-4 h-4 ${ctx.tasksCompletedToday > 0 ? "text-primary" : "text-muted-foreground/30"}`} />
+                <span className="text-xs font-mono font-bold mt-0.5">{ctx.tasksCompletedToday}</span>
+                <span className="text-[10px] font-mono text-muted-foreground/60">feitas</span>
+              </div>
+              {expanded ? <ChevronDown className="w-4 h-4 text-muted-foreground/40" /> : <ChevronRight className="w-4 h-4 text-muted-foreground/40" />}
+            </div>
+          </div>
+        )}
       </button>
 
       {/* Expanded details */}
@@ -149,7 +180,7 @@ export function DayScore() {
         <div className="space-y-2 pl-1 animate-fade-in">
           {ctx.suggestedActions.length > 0 && (
             <div className="space-y-1">
-              <span className="text-[9px] font-mono text-muted-foreground/60 uppercase tracking-widest">Sugestões</span>
+              <span className="text-[10px] font-mono text-muted-foreground/60 uppercase tracking-widest">Sugestões</span>
               {ctx.suggestedActions.map((s, i) => (
                 <div key={i} className="flex items-start gap-2 bg-secondary/30 rounded-lg px-3 py-2">
                   <Activity className="w-3 h-3 text-primary mt-0.5 shrink-0" />
@@ -172,11 +203,11 @@ export function DayScore() {
 
 function ModuleIndicator({ icon, label, value }: { icon: React.ReactNode; label: string; value: string }) {
   return (
-    <div className="flex items-center gap-2 bg-secondary/30 rounded-lg px-2 py-1.5">
+    <div className="flex items-center gap-2.5 bg-secondary/30 rounded-lg px-3 py-2.5 min-h-[44px]">
       {icon}
       <div className="min-w-0">
-        <p className="text-[8px] font-mono text-muted-foreground/60 uppercase leading-none">{label}</p>
-        <p className="text-[11px] font-mono font-medium truncate capitalize">{value}</p>
+        <p className="text-[10px] font-mono text-muted-foreground/60 uppercase leading-none">{label}</p>
+        <p className="text-xs font-mono font-medium truncate capitalize mt-0.5">{value}</p>
       </div>
     </div>
   );
@@ -184,9 +215,9 @@ function ModuleIndicator({ icon, label, value }: { icon: React.ReactNode; label:
 
 function MiniStat({ label, value, alert = false }: { label: string; value: number; alert?: boolean }) {
   return (
-    <div className="bg-secondary/20 rounded-lg p-2 text-center">
+    <div className="bg-secondary/20 rounded-lg p-2.5 text-center">
       <p className={`font-mono text-sm font-bold ${alert ? "text-destructive" : "text-foreground"}`}>{value}</p>
-      <p className="text-[8px] font-mono text-muted-foreground/60 uppercase">{label}</p>
+      <p className="text-[10px] font-mono text-muted-foreground/60 uppercase">{label}</p>
     </div>
   );
 }
