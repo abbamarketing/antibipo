@@ -5,27 +5,25 @@ import { useCallback, useState, useEffect } from "react";
 import type { Database } from "@/integrations/supabase/types";
 import { brasiliaISO, brasiliaTime } from "@/lib/brasilia";
 
-// Shared user ID query — single source of truth, no per-component state
+// Shared user ID via React Query — prevents per-component useState cascading re-renders
 function useUserId(): string | null {
+  const qc = useQueryClient();
+
   const { data: uid = null } = useQuery({
     queryKey: ["auth_user_id"],
     queryFn: async () => {
       const { data } = await supabase.auth.getUser();
       return data.user?.id ?? null;
     },
-    staleTime: 5 * 60 * 1000, // 5 min
+    staleTime: 5 * 60 * 1000,
   });
 
-  // Listen for auth changes and invalidate
   useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(() => {
-      // Just invalidate — React Query handles the rest
-      import("@tanstack/react-query").then(() => {
-        // qc not available here, use global event
-      });
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      qc.setQueryData(["auth_user_id"], session?.user?.id ?? null);
     });
     return () => subscription.unsubscribe();
-  }, []);
+  }, [qc]);
 
   return uid;
 }
