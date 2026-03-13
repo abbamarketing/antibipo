@@ -279,17 +279,19 @@ export function UnifiedKanban({ energy, lastMoodValue, preferredModule = null }:
       <div className={`space-y-4 animate-fade-in ${calmClass}`}>
         {/* Header */}
         <div>
-          <h2 className="font-mono text-lg font-bold tracking-tight flex items-center gap-2">
-            <Sparkles className="w-4 h-4 text-primary" /> Meu Dia
+          <h2 className={`font-mono text-lg font-bold tracking-tight flex items-center gap-2 ${isLowState ? "text-muted-foreground" : ""}`}>
+            <Sparkles className={`w-4 h-4 ${isLowState ? "text-muted-foreground/60" : "text-primary"}`} /> Meu Dia
           </h2>
           <p className="text-sm text-muted-foreground font-body mt-0.5">{moodMessage}</p>
-          <div className="flex items-center gap-3 mt-2">
-            <span className="text-[11px] font-mono text-muted-foreground">{todayTasks.length} hoje</span>
-            <span className="text-muted-foreground/30">·</span>
-            <span className="text-[11px] font-mono text-muted-foreground">{filtered.length} total</span>
-            <span className="text-muted-foreground/30">·</span>
-            <span className="text-[11px] font-mono text-muted-foreground">{completedToday.length} feitas</span>
-          </div>
+          {!isLowState && (
+            <div className="flex items-center gap-3 mt-2">
+              <span className="text-[11px] font-mono text-muted-foreground">{todayTasks.length} hoje</span>
+              <span className="text-muted-foreground/30">·</span>
+              <span className="text-[11px] font-mono text-muted-foreground">{filtered.length} total</span>
+              <span className="text-muted-foreground/30">·</span>
+              <span className="text-[11px] font-mono text-muted-foreground">{completedToday.length} feitas</span>
+            </div>
+          )}
         </div>
 
         {/* Module filter — 44px min touch targets */}
