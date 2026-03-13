@@ -275,7 +275,7 @@ export function QuickCapture({ open, onClose, onActionComplete }: QuickCapturePr
             peso_kg: dados.peso_kg,
             data: today,
           });
-          await supabase.from("profiles").update({ peso_kg: dados.peso_kg, updated_at: new Date().toISOString() } as any).eq("user_id", user.id);
+          await supabase.from("profiles").update({ peso_kg: dados.peso_kg, updated_at: new Date(brasiliaISO() + "T12:00:00").toISOString() } as any).eq("user_id", user.id);
           logActivity("captura_rapida", { tipo: "peso", peso_kg: dados.peso_kg });
           break;
         }
