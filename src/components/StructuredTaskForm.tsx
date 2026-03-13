@@ -207,10 +207,13 @@ export function StructuredTaskForm({ open, onClose, onCreated }: StructuredTaskF
     if (!newClientName.trim() || savingClient) return;
     setSavingClient(true);
     try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("Not authenticated");
       const { data, error } = await supabase.from("clientes").insert({
         nome: newClientName.trim(),
         tipo: "pj",
         status: "ativo",
+        user_id: user.id,
       }).select("id, nome").single();
       if (error) throw error;
       if (data) {
