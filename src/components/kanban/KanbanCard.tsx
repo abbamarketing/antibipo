@@ -35,6 +35,8 @@ export function KanbanCard({
   onDelete,
 }: KanbanCardProps) {
   const [showSubs, setShowSubs] = useState(false);
+  const [fading, setFading] = useState(false);
+  const cardRef = useRef<HTMLDivElement>(null);
   const Icon = MODULE_ICONS[item.modulo];
   const hasSubs = item.subtasks && item.subtasks.length > 0;
   const completedSubs = item.subtasks?.filter((s) => s.status === "feito").length || 0;
@@ -42,8 +44,35 @@ export function KanbanCard({
   const urgencyBorder =
     item.urgencia === 3 ? "border-l-red-400" : item.urgencia === 2 ? "border-l-amber-400" : "border-l-transparent";
 
+  const handleComplete = useCallback(() => {
+    // Fire confetti from button position
+    if (cardRef.current) {
+      const rect = cardRef.current.getBoundingClientRect();
+      const x = (rect.left + rect.width / 2) / window.innerWidth;
+      const y = (rect.top + rect.height / 2) / window.innerHeight;
+      confetti({
+        particleCount: 40,
+        spread: 50,
+        origin: { x, y },
+        colors: ["#B06133", "#D4956B", "#8B4513", "#F5DEB3"],
+        gravity: 1.2,
+        scalar: 0.8,
+        ticks: 80,
+        disableForReducedMotion: true,
+      });
+    }
+    // Fade out then complete
+    setFading(true);
+    setTimeout(() => onComplete(), 350);
+  }, [onComplete]);
+
   return (
-    <div className={`bg-card rounded-lg border p-3 border-l-[3px] ${urgencyBorder} transition-all hover:border-primary/20`}>
+    <div
+      ref={cardRef}
+      className={`bg-card rounded-lg border p-3 border-l-[3px] ${urgencyBorder} transition-all hover:border-primary/20 ${
+        fading ? "animate-fade-out opacity-0 scale-95 transition-all duration-300" : ""
+      }`}
+    >
       {/* Title row */}
       <div className="flex items-start gap-2">
         <div className="flex-1 min-w-0 cursor-pointer" onClick={onOpen}>
