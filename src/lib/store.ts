@@ -304,6 +304,7 @@ export function useFlowStore() {
         data: todayStr,
         valor,
         notas: notas ?? null,
+        user_id: userId ?? "",
       };
       qc.setQueryData<RegistroHumor[]>(["registros_humor"], [
         optimisticHumor,
