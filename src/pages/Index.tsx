@@ -1,110 +1,60 @@
 import { useEffect, useState } from "react";
-import { supabase } from "@/integrations/supabase/client";
 import { useFlowStore } from "@/lib/store";
 import { useDayContext } from "@/hooks/use-day-context";
 import { startTimeThemeWatcher } from "@/lib/time-theme";
-import { brasiliaTimeString, brasiliaDateString, brasiliaTime } from "@/lib/brasilia";
+import { brasiliaTimeString, brasiliaTime } from "@/lib/brasilia";
 import { logActivity } from "@/lib/activity-log";
 import { EnergyStateSelector } from "@/components/EnergyStateSelector";
-import { MedAlert } from "@/components/MedAlert";
 import { ModuleNav, type NavModulo } from "@/components/ModuleNav";
-import { WorkModule } from "@/components/WorkModule";
-import { HomeModule } from "@/components/HomeModule";
-import { HealthModule } from "@/components/HealthModule";
-import { MetasModule } from "@/components/MetasModule";
-import { StructuredTaskForm } from "@/components/StructuredTaskForm";
 import { SpeedDialFAB, type SpeedDialAction } from "@/components/SpeedDialFAB";
-import { CustomTrackers } from "@/components/CustomTrackers";
-import { WeatherWidget } from "@/components/WeatherWidget";
+import { StructuredTaskForm } from "@/components/StructuredTaskForm";
 import { NotificationManager } from "@/components/NotificationManager";
-import { ModuleOnboardingGuard } from "@/components/ModuleOnboardingGuard";
-import { MondayGoalsReview } from "@/components/MondayGoalsReview";
-import { FridayWeeklyReport } from "@/components/FridayWeeklyReport";
-import { TodayEvents } from "@/components/TodayEvents";
-import { DailyNudge } from "@/components/DailyNudge";
-import { UnifiedKanban } from "@/components/UnifiedKanban";
 import { DayGate } from "@/components/DayGate";
 import { MoodCheckIn } from "@/components/MoodCheckIn";
-import { ModuleDashboard } from "@/components/ModuleDashboard";
 import { DayScore } from "@/components/DayScore";
-import { WeeklyCorrelationChart } from "@/components/WeeklyCorrelationChart";
-import { QuickOverview } from "@/components/QuickOverview";
+import { MedAlert } from "@/components/MedAlert";
+import { CustomTrackers } from "@/components/CustomTrackers";
+import { GlassCard } from "@/components/layout/GlassCard";
+import { DashboardHeader } from "@/components/layout/DashboardHeader";
+import { ContextWidgets } from "@/components/layout/ContextWidgets";
+import { InicioContent } from "@/components/layout/InicioContent";
+import { ModuleContent } from "@/components/layout/ModuleContent";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { Zap, Sun, Battery, Wallet, Settings, CalendarDays, Activity } from "lucide-react";
+import { Zap, Sun, Battery } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
-/** Reusable glass-card wrapper – 24px radius + heavy blur */
-function GlassCard({ children, className = "" }: { children: React.ReactNode; className?: string }) {
-  return (
-    <div className={`rounded-3xl bg-card/40 backdrop-blur-xl shadow-sm border border-border/20 ${className}`}>
-      {children}
-    </div>
-  );
-}
-
-/** Adaptive micro-copy based on dayScore */
-function AdaptiveGreeting({ dayScore, alertLevel }: { dayScore: number; alertLevel: string }) {
-  let message: string;
-  if (dayScore >= 75) {
-    message = "Você está voando hoje! Aproveite o momentum.";
-  } else if (dayScore >= 50) {
-    message = "Dia estável. Mantenha o ritmo, sem pressa.";
-  } else if (dayScore >= 30) {
-    message = "Um passo de cada vez hoje. Tudo bem ir devagar.";
-  } else {
-    message = "Dia de cuidar de si. Só o essencial, sem cobranças.";
-  }
-
-  return (
-    <p className="font-body text-xs text-foreground/70 leading-relaxed">
-      {message}
-    </p>
-  );
-}
+const energyConfig: Record<string, { icon: typeof Zap; label: string }> = {
+  foco_total: { icon: Zap, label: "FOCO TOTAL" },
+  modo_leve: { icon: Sun, label: "MODO LEVE" },
+  basico: { icon: Battery, label: "SO O BASICO" },
+};
 
 const Index = () => {
   const {
     state, setEnergy, setModulo, addTask, completeTask, updateTask,
     addMedicamento, registrarMedicamento, registrarHumor, registrarSono,
-    isMedTakenToday, pendingMeds, getFilteredTasks, todayHumor,
+    isMedTakenToday, pendingMeds, todayHumor,
   } = useFlowStore();
 
   const dayCtx = useDayContext();
   const navigate = useNavigate();
   const isMobile = useIsMobile();
   const [captureOpen, setCaptureOpen] = useState(false);
-
   const [activeNav, setActiveNav] = useState<NavModulo>("inicio");
   const [showMondayReview, setShowMondayReview] = useState(false);
   const [showFridayReport, setShowFridayReport] = useState(false);
   const [lastMoodValue, setLastMoodValue] = useState<number | undefined>(todayHumor?.valor);
 
-  useEffect(() => {
-    const cleanup = startTimeThemeWatcher();
-    return () => { cleanup(); };
-  }, []);
-
-  useEffect(() => {
-    if (todayHumor?.valor !== undefined) setLastMoodValue(todayHumor.valor);
-  }, [todayHumor]);
+  useEffect(() => startTimeThemeWatcher(), []);
+  useEffect(() => { if (todayHumor?.valor !== undefined) setLastMoodValue(todayHumor.valor); }, [todayHumor]);
 
   const pending = pendingMeds();
   const { current_energy, current_modulo } = state;
   const showEnergySelector = !current_energy;
-
   const isCrisis = dayCtx.alertLevel === "crise";
-  const isOptimal = dayCtx.alertLevel === "otimo";
 
-  const energyConfig: Record<string, { icon: typeof Zap; label: string }> = {
-    foco_total: { icon: Zap, label: "FOCO TOTAL" },
-    modo_leve: { icon: Sun, label: "MODO LEVE" },
-    basico: { icon: Battery, label: "SO O BASICO" },
-  };
-
-  const handleSetEnergy = (energy: typeof current_energy) => {
-    if (!energy) return;
-    setEnergy(energy);
-  };
+  // ── Handlers ──
+  const handleSetEnergy = (energy: typeof current_energy) => { if (energy) setEnergy(energy); };
 
   const handleCompleteTask = (id: string) => {
     const task = state.tasks.find((t) => t.id === id);
@@ -139,20 +89,12 @@ const Index = () => {
   const handleSleep = (type: "dormir" | "acordar", qualidade?: 1 | 2 | 3) => {
     registrarSono(type, qualidade);
     logActivity(type === "dormir" ? "sono_dormir" : "sono_acordar", { qualidade, hora: brasiliaTimeString() });
-
     if (type === "acordar") {
       const hoje = brasiliaTime();
       const dia = hoje.getDay();
       const sessionKey = `ab_review_${hoje.toISOString().split("T")[0]}`;
-
-      if (dia === 1 && !sessionStorage.getItem(`${sessionKey}_monday`)) {
-        sessionStorage.setItem(`${sessionKey}_monday`, "1");
-        setShowMondayReview(true);
-      }
-      if (dia === 5 && !sessionStorage.getItem(`${sessionKey}_friday`)) {
-        sessionStorage.setItem(`${sessionKey}_friday`, "1");
-        setShowFridayReport(true);
-      }
+      if (dia === 1 && !sessionStorage.getItem(`${sessionKey}_monday`)) { sessionStorage.setItem(`${sessionKey}_monday`, "1"); setShowMondayReview(true); }
+      if (dia === 5 && !sessionStorage.getItem(`${sessionKey}_friday`)) { sessionStorage.setItem(`${sessionKey}_friday`, "1"); setShowFridayReport(true); }
     }
   };
 
@@ -171,140 +113,21 @@ const Index = () => {
     logActivity("medicamento_adicionado", { nome: med.nome, hora: brasiliaTimeString() });
   };
 
-  /* ── Context widgets (DayScore, Weather, Mood, Meds) ── */
-  const ContextWidgets = () => (
-    <div className="space-y-4">
-      <GlassCard className="p-4">
-        <DayScore />
-      </GlassCard>
-
-      {!isCrisis && !isMobile && (
-        <GlassCard>
-          <WeatherWidget />
-        </GlassCard>
-      )}
-
-      <MoodCheckIn onMoodUpdated={(val) => setLastMoodValue(val)} />
-
-      {pending.length > 0 && (
-        <GlassCard className={`p-1 ${isCrisis ? "ring-2 ring-destructive/30" : ""}`}>
-          <MedAlert pendingMeds={pending} onTake={handleTakeMed} />
-        </GlassCard>
-      )}
-
-      {!isCrisis && activeNav !== "inicio" && (
-        <GlassCard className="p-4">
-          <WeeklyCorrelationChart />
-        </GlassCard>
-      )}
-
-      {!isCrisis && activeNav !== "inicio" && (
-        <CustomTrackers modulo={activeNav === "metas" ? "saude" : activeNav} />
-      )}
-    </div>
-  );
-
-  /* ── Início (overview) content ── */
-  const InicioContent = () => (
-    <div className="space-y-4 animate-fade-in">
-      {!isCrisis && <TodayEvents />}
-
-      {showMondayReview && <MondayGoalsReview onDismiss={() => setShowMondayReview(false)} />}
-      {showFridayReport && <FridayWeeklyReport onDismiss={() => setShowFridayReport(false)} />}
-
-      <QuickOverview />
-
-      {!isCrisis && (
-        <GlassCard className="p-4">
-          <WeeklyCorrelationChart />
-        </GlassCard>
-      )}
-    </div>
-  );
-
-  /* ── Module content (kanban + specific modules) ── */
-  const ModuleContent = () => {
-    const kanbanModule = activeNav === "metas" ? null : (activeNav as "trabalho" | "casa" | "saude");
-    return (
-      <div className="space-y-4">
-        <UnifiedKanban energy={current_energy!} lastMoodValue={lastMoodValue} preferredModule={kanbanModule} />
-
-        {!isCrisis && (
-          <div className="animate-fade-in">
-            {activeNav === "trabalho" && (
-              <ModuleOnboardingGuard modulo="trabalho">
-                <WorkModule energy={current_energy!} tasks={getFilteredTasks("trabalho", current_energy!)} allTasks={state.tasks} onComplete={handleCompleteTask} onDelegate={handleDelegate} onPush={handlePush} />
-              </ModuleOnboardingGuard>
-            )}
-            {activeNav === "casa" && (
-              <ModuleOnboardingGuard modulo="casa">
-                <HomeModule energy={current_energy!} />
-              </ModuleOnboardingGuard>
-            )}
-            {activeNav === "saude" && (
-              <ModuleOnboardingGuard modulo="saude">
-                <HealthModule energy={current_energy!} medicamentos={state.medicamentos} registros_humor={state.registros_humor} registros_sono={state.registros_sono} onTakeMed={handleTakeMed} isMedTaken={isMedTakenToday} onMood={handleMood} onSleep={handleSleep} onAddMed={handleAddMed} todayHumor={todayHumor} />
-              </ModuleOnboardingGuard>
-            )}
-            {activeNav === "metas" && <MetasModule />}
-          </div>
-        )}
-      </div>
+  // ── Main content switch ──
+  const MainContent = () =>
+    activeNav === "inicio" ? (
+      <InicioContent isCrisis={isCrisis} showMondayReview={showMondayReview} showFridayReport={showFridayReport} onDismissMonday={() => setShowMondayReview(false)} onDismissFriday={() => setShowFridayReport(false)} />
+    ) : (
+      <ModuleContent activeNav={activeNav} energy={current_energy!} lastMoodValue={lastMoodValue} isCrisis={isCrisis} onComplete={handleCompleteTask} onDelegate={handleDelegate} onPush={handlePush} onTakeMed={handleTakeMed} onMood={handleMood} onSleep={handleSleep} onAddMed={handleAddMed} />
     );
-  };
-
-  const MainContent = () => (
-    activeNav === "inicio" ? <InicioContent /> : <ModuleContent />
-  );
 
   return (
     <DayGate>
       <div className="min-h-screen bg-gradient-to-br from-background via-background to-secondary/30">
-        <NotificationManager
-          medicamentos={state.medicamentos}
-          isMedTaken={isMedTakenToday}
-          hasEnergy={!!current_energy}
-        />
+        <NotificationManager medicamentos={state.medicamentos} isMedTaken={isMedTakenToday} hasEnergy={!!current_energy} />
 
-        {/* pb-24 on mobile for fixed bottom nav + FAB clearance */}
         <div className={`max-w-7xl mx-auto px-4 py-6 ${isMobile ? "pb-32" : "pb-6"}`}>
-          {/* Header */}
-          <header className="mb-5">
-            <div className="flex items-center justify-between mb-3">
-              <div className="flex items-center gap-2">
-                <p className="text-[11px] text-muted-foreground font-mono tracking-widest">
-                  {brasiliaDateString()}
-                </p>
-                {/* Compact weather icon in header on mobile */}
-                {isMobile && !isCrisis && (
-                  <WeatherWidget compact />
-                )}
-              </div>
-              <div className="flex items-center gap-1">
-                {[
-                  { icon: Wallet, path: "/financeiro", title: "Financeiro" },
-                  { icon: CalendarDays, path: "/calendario", title: "Calendário" },
-                  { icon: Activity, path: "/log", title: "Log" },
-                  { icon: Settings, path: "/config", title: "Configurações" },
-                ].map(({ icon: Icon, path, title }) => (
-                  <button
-                    key={path}
-                    onClick={() => navigate(path)}
-                    title={title}
-                    className="p-2.5 rounded-xl text-muted-foreground hover:text-foreground hover:bg-secondary/60 active:scale-95 transition-all duration-150"
-                  >
-                    <Icon className="w-5 h-5" />
-                  </button>
-                ))}
-              </div>
-            </div>
-            {current_energy && (
-              <div className="mb-1">
-                <AdaptiveGreeting dayScore={dayCtx.dayScore} alertLevel={dayCtx.alertLevel} />
-              </div>
-            )}
-            <DailyNudge />
-          </header>
+          <DashboardHeader isCrisis={isCrisis} hasEnergy={!!current_energy} dayScore={dayCtx.dayScore} alertLevel={dayCtx.alertLevel} />
 
           {showEnergySelector ? (
             <EnergyStateSelector current={current_energy} onSelect={handleSetEnergy} />
@@ -331,49 +154,32 @@ const Index = () => {
                 </button>
               </div>
 
-              {/* ── Responsive Dashboard Grid ── */}
               {isMobile ? (
-                /* Mobile: priority content first */
                 <div className="space-y-5">
-                  {/* Med alert — urgent, always first on mobile */}
                   {pending.length > 0 && (
                     <GlassCard className={`p-1 ${isCrisis ? "ring-2 ring-destructive/30" : ""}`}>
                       <MedAlert pendingMeds={pending} onTake={handleTakeMed} />
                     </GlassCard>
                   )}
-
-                  {/* Compact DayScore on mobile */}
-                  <GlassCard className="p-3">
-                    <DayScore />
-                  </GlassCard>
-
-                  {/* Mood — important for tracking */}
+                  <GlassCard className="p-3"><DayScore /></GlassCard>
                   <MoodCheckIn onMoodUpdated={(val) => setLastMoodValue(val)} />
-
-                  {/* Main content */}
                   <MainContent />
-
-                  {/* Custom trackers — only on module tabs */}
                   {activeNav !== "inicio" && !isCrisis && (
                     <CustomTrackers modulo={activeNav === "metas" ? "saude" : activeNav} />
                   )}
                 </div>
               ) : (
-                /* Desktop: 12-col grid — sidebar 3 cols, main 9 cols */
                 <div className="grid grid-cols-12 gap-5">
                   <aside className="col-span-3 space-y-4 sticky top-6 self-start max-h-[calc(100vh-4rem)] overflow-y-auto scrollbar-thin">
-                    <ContextWidgets />
+                    <ContextWidgets isCrisis={isCrisis} activeNav={activeNav} pending={pending} onTakeMed={handleTakeMed} onMoodUpdated={(val) => setLastMoodValue(val)} />
                   </aside>
-                  <main className="col-span-9">
-                    <MainContent />
-                  </main>
+                  <main className="col-span-9"><MainContent /></main>
                 </div>
               )}
             </div>
           )}
         </div>
 
-        {/* Module Nav — mobile: fixed bottom bar; desktop: inline */}
         {current_energy && !isCrisis && (
           isMobile ? (
             <div className="fixed bottom-0 inset-x-0 z-40 bg-card/90 backdrop-blur-xl border-t border-border/30 safe-area-bottom">
@@ -388,21 +194,13 @@ const Index = () => {
           )
         )}
 
-        {/* Speed Dial FAB */}
         {current_energy && (
           <SpeedDialFAB
             onAction={(action: SpeedDialAction) => {
               switch (action) {
-                case "tarefa":
-                  setCaptureOpen(true);
-                  break;
-                case "entrada":
-                case "saida":
-                  navigate("/financeiro");
-                  break;
-                case "evento":
-                  navigate("/calendario");
-                  break;
+                case "tarefa": setCaptureOpen(true); break;
+                case "entrada": case "saida": navigate("/financeiro"); break;
+                case "evento": navigate("/calendario"); break;
               }
             }}
           />
