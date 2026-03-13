@@ -169,39 +169,33 @@ const Index = () => {
     logActivity("medicamento_adicionado", { nome: med.nome, hora: brasiliaTimeString() });
   };
 
-  /* ── Sidebar widgets (health/context) ── */
-  const SidebarWidgets = () => (
+  /* ── Context widgets (DayScore, Weather, Mood, Meds) ── */
+  const ContextWidgets = () => (
     <div className="space-y-4">
-      {/* Day score — always visible */}
       <GlassCard className="p-4">
         <DayScore />
       </GlassCard>
 
-      {/* Weather — hidden in crisis mode */}
-      {!isCrisis && (
+      {!isCrisis && !isMobile && (
         <GlassCard>
-          <WeatherWidget compact={isMobile} />
+          <WeatherWidget />
         </GlassCard>
       )}
 
-      {/* Mood Check-In */}
       <MoodCheckIn onMoodUpdated={(val) => setLastMoodValue(val)} />
 
-      {/* Med Alert */}
       {pending.length > 0 && (
         <GlassCard className={`p-1 ${isCrisis ? "ring-2 ring-destructive/30" : ""}`}>
           <MedAlert pendingMeds={pending} onTake={handleTakeMed} />
         </GlassCard>
       )}
 
-      {/* Weekly Correlation Chart — hidden in crisis */}
       {!isCrisis && (
         <GlassCard className="p-4">
           <WeeklyCorrelationChart />
         </GlassCard>
       )}
 
-      {/* Trackers — hidden in crisis */}
       {!isCrisis && (
         <CustomTrackers modulo={activeNav === "metas" ? "saude" : activeNav} />
       )}
@@ -211,10 +205,8 @@ const Index = () => {
   /* ── Main content (kanban + modules) ── */
   const MainContent = () => (
     <div className="space-y-4">
-      {/* Today's events — hidden in crisis */}
       {!isCrisis && <TodayEvents />}
 
-      {/* Strategic tasks CTA — shown only in optimal days */}
       {isOptimal && (
         <button
           onClick={() => { setActiveNav("trabalho"); setModulo("trabalho"); }}
@@ -230,10 +222,8 @@ const Index = () => {
 
       {!showMondayReview && !showFridayReport && (
         <>
-          {/* Unified Daily Tasks */}
           <UnifiedKanban energy={current_energy!} lastMoodValue={lastMoodValue} preferredModule={activeNav === "metas" ? null : activeNav} />
 
-          {/* Module content — hidden in crisis */}
           {!isCrisis && (
             <div className="animate-fade-in">
               {activeNav === "trabalho" && (
@@ -268,18 +258,21 @@ const Index = () => {
           hasEnergy={!!current_energy}
         />
 
-        <div className="max-w-7xl mx-auto px-4 py-6 pb-28 lg:pb-6">
+        {/* pb-24 on mobile for fixed bottom nav + FAB clearance */}
+        <div className={`max-w-7xl mx-auto px-4 py-6 ${isMobile ? "pb-32" : "pb-6"}`}>
           {/* Header */}
           <header className="mb-5">
             <div className="flex items-center justify-between mb-3">
-              <p className="text-[10px] text-muted-foreground font-mono tracking-widest">
-                {brasiliaDateString()}
-              </p>
-              <div className="flex items-center gap-0.5">
-                {/* Compact weather in header on mobile */}
+              <div className="flex items-center gap-2">
+                <p className="text-[11px] text-muted-foreground font-mono tracking-widest">
+                  {brasiliaDateString()}
+                </p>
+                {/* Compact weather icon in header on mobile */}
                 {isMobile && !isCrisis && (
                   <WeatherWidget compact />
                 )}
+              </div>
+              <div className="flex items-center gap-1">
                 {[
                   { icon: Wallet, path: "/financeiro", title: "Financeiro" },
                   { icon: CalendarDays, path: "/calendario", title: "Calendário" },
@@ -290,9 +283,9 @@ const Index = () => {
                     key={path}
                     onClick={() => navigate(path)}
                     title={title}
-                    className="p-2 rounded-xl text-muted-foreground hover:text-foreground hover:bg-secondary/60 active:scale-95 transition-all duration-150"
+                    className="p-2.5 rounded-xl text-muted-foreground hover:text-foreground hover:bg-secondary/60 active:scale-95 transition-all duration-150"
                   >
-                    <Icon className="w-4 h-4" />
+                    <Icon className="w-5 h-5" />
                   </button>
                 ))}
               </div>
@@ -316,15 +309,15 @@ const Index = () => {
                   const EIcon = cfg.icon;
                   return (
                     <>
-                      <EIcon className="w-3.5 h-3.5 text-primary" />
-                      <span className="font-mono text-[11px] tracking-wider text-primary">{cfg.label}</span>
+                      <EIcon className="w-4 h-4 text-primary" />
+                      <span className="font-mono text-xs tracking-wider text-primary">{cfg.label}</span>
                     </>
                   );
                 })()}
                 <span className="text-muted-foreground/30">·</span>
                 <button
                   onClick={() => handleSetEnergy(current_energy === "foco_total" ? "modo_leve" : current_energy === "modo_leve" ? "basico" : "foco_total")}
-                  className="font-mono text-[10px] text-muted-foreground hover:text-foreground active:scale-95 transition-all duration-150"
+                  className="font-mono text-[11px] text-muted-foreground hover:text-foreground active:scale-95 transition-all duration-150 py-1 px-2"
                 >
                   mudar
                 </button>
@@ -332,16 +325,41 @@ const Index = () => {
 
               {/* ── Responsive Dashboard Grid ── */}
               {isMobile ? (
-                /* Mobile: single column */
-                <div className="space-y-4">
-                  <SidebarWidgets />
+                /* Mobile: priority content first — tasks then context */
+                <div className="space-y-5">
+                  {/* Med alert — urgent, always first on mobile */}
+                  {pending.length > 0 && (
+                    <GlassCard className={`p-1 ${isCrisis ? "ring-2 ring-destructive/30" : ""}`}>
+                      <MedAlert pendingMeds={pending} onTake={handleTakeMed} />
+                    </GlassCard>
+                  )}
+
+                  {/* Compact DayScore on mobile */}
+                  <GlassCard className="p-3">
+                    <DayScore />
+                  </GlassCard>
+
+                  {/* Mood — important for tracking */}
+                  <MoodCheckIn onMoodUpdated={(val) => setLastMoodValue(val)} />
+
+                  {/* Main content: tasks (the primary reason user opens the app) */}
                   <MainContent />
+
+                  {/* Secondary context widgets — below the fold */}
+                  {!isCrisis && (
+                    <GlassCard className="p-4">
+                      <WeeklyCorrelationChart />
+                    </GlassCard>
+                  )}
+                  {!isCrisis && (
+                    <CustomTrackers modulo={activeNav === "metas" ? "saude" : activeNav} />
+                  )}
                 </div>
               ) : (
                 /* Desktop: 12-col grid — sidebar 3 cols, main 9 cols */
                 <div className="grid grid-cols-12 gap-5">
                   <aside className="col-span-3 space-y-4 sticky top-6 self-start max-h-[calc(100vh-4rem)] overflow-y-auto scrollbar-thin">
-                    <SidebarWidgets />
+                    <ContextWidgets />
                   </aside>
                   <main className="col-span-9">
                     <MainContent />
@@ -352,10 +370,10 @@ const Index = () => {
           )}
         </div>
 
-        {/* Module Nav — desktop: inline above grid, mobile: fixed bottom bar */}
+        {/* Module Nav — mobile: fixed bottom bar; desktop: inline */}
         {current_energy && !isCrisis && (
           isMobile ? (
-            <div className="fixed bottom-0 inset-x-0 z-40 bg-card/80 backdrop-blur-xl border-t border-border/30 safe-area-bottom">
+            <div className="fixed bottom-0 inset-x-0 z-40 bg-card/90 backdrop-blur-xl border-t border-border/30 safe-area-bottom">
               <ModuleNav current={activeNav} onSelect={handleModulo} />
             </div>
           ) : (
@@ -367,11 +385,11 @@ const Index = () => {
           )
         )}
 
-        {/* FAB */}
+        {/* FAB — positioned above bottom nav on mobile */}
         {current_energy && (
           <button
             onClick={() => setCaptureOpen(true)}
-            className={`fixed ${isMobile ? "bottom-20" : "bottom-6"} right-6 w-14 h-14 rounded-full bg-primary text-primary-foreground shadow-lg flex items-center justify-center hover:opacity-90 active:scale-90 transition-all duration-200 z-40`}
+            className={`fixed ${isMobile ? "bottom-[4.5rem]" : "bottom-6"} right-5 w-14 h-14 rounded-full bg-primary text-primary-foreground shadow-lg shadow-primary/20 flex items-center justify-center hover:opacity-90 active:scale-90 transition-all duration-200 z-50`}
           >
             <Plus className="w-6 h-6" />
           </button>
