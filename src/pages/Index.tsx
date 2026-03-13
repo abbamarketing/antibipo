@@ -403,9 +403,6 @@ const Index = () => {
                 case "evento":
                   navigate("/calendario");
                   break;
-                case "meta":
-                  setActiveNav("metas");
-                  break;
               }
             }}
           />
