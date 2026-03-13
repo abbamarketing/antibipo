@@ -139,6 +139,7 @@ export function useFlowStore() {
       if (error) throw error;
       return data;
     },
+    staleTime: 60 * 1000,
   });
 
   const makeTempId = (prefix: string) => `tmp_${prefix}_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
