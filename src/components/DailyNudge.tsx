@@ -15,7 +15,7 @@ function useContextAlerts(): string[] {
 
   // Sleep alert: less than 6 hours
   if (dayCtx.sleepHours !== null && dayCtx.sleepHours < 6) {
-    alerts.push("💤 Sono curto (< 6h) — reduza o ritmo hoje.");
+    alerts.push("Sono curto (< 6h) — reduza o ritmo hoje.");
   }
 
   // DayScore trending up — fetch last 3 days from activity log
