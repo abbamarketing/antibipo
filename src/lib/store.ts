@@ -216,7 +216,7 @@ export function useFlowStore() {
       const previousMeds = qc.getQueryData<Medicamento[]>(["medicamentos"]) || [];
       const optimisticMed: Medicamento = {
         id: makeTempId("med"),
-        criado_em: new Date().toISOString(),
+        criado_em: brasiliaTime().toISOString(),
         dose: med.dose ?? "",
         estoque: med.estoque ?? 0,
         horarios: med.horarios ?? [],
