@@ -81,6 +81,66 @@ export function detectModuleFromKeywords(text: string): "trabalho" | "casa" | "s
   return null;
 }
 
+// ─── Quick Bar parsing ──────────────────────────────────────
+const TAG_MODULE_MAP: Record<string, "trabalho" | "casa" | "saude"> = {
+  "@trabalho": "trabalho", "@work": "trabalho", "@trab": "trabalho",
+  "@casa": "casa", "@home": "casa", "@lar": "casa",
+  "@saude": "saude", "@saúde": "saude", "@health": "saude", "@med": "saude",
+};
+
+const TAG_URGENCIA_MAP: Record<string, number> = {
+  "!alta": 3, "!urgente": 3, "!high": 3,
+  "!media": 2, "!média": 2, "!med": 2,
+  "!baixa": 1, "!low": 1,
+};
+
+export interface QuickBarResult {
+  titulo: string;
+  modulo: "trabalho" | "casa" | "saude" | null;
+  urgencia: number | null;
+}
+
+export function parseQuickBar(input: string): QuickBarResult {
+  let text = input.trim();
+  let modulo: "trabalho" | "casa" | "saude" | null = null;
+  let urgencia: number | null = null;
+
+  // Extract @module tags
+  for (const [tag, mod] of Object.entries(TAG_MODULE_MAP)) {
+    const regex = new RegExp(tag.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi');
+    if (regex.test(text)) {
+      modulo = mod;
+      text = text.replace(regex, '').trim();
+      break;
+    }
+  }
+
+  // Extract !urgency tags
+  for (const [tag, urg] of Object.entries(TAG_URGENCIA_MAP)) {
+    const regex = new RegExp(tag.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi');
+    if (regex.test(text)) {
+      urgencia = urg;
+      text = text.replace(regex, '').trim();
+      break;
+    }
+  }
+
+  // Fallback: detect module from keywords if no explicit tag
+  if (!modulo) {
+    modulo = detectModuleFromKeywords(text);
+  }
+
+  // Default urgency to 2 (média) if module was detected but no urgency specified
+  if (modulo && urgencia === null) {
+    urgencia = 2;
+  }
+
+  // Clean up extra spaces
+  text = text.replace(/\s+/g, ' ').trim();
+
+  return { titulo: text, modulo, urgencia };
+}
+
 export function getSubtaskOptions(template: TemplateId | null): string[] {
   switch (template) {
     case "acao_cliente":
