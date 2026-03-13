@@ -1,10 +1,12 @@
 import { useNavigate } from "react-router-dom";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { brasiliaDateString } from "@/lib/brasilia";
+import { brasiliaTime } from "@/lib/brasilia";
 import { WeatherWidget } from "@/components/WeatherWidget";
 import { DailyNudge } from "@/components/DailyNudge";
 import { AdaptiveGreeting } from "./AdaptiveGreeting";
-import { Wallet, Settings, CalendarDays, Activity } from "lucide-react";
+import { Wallet, Settings, CalendarDays } from "lucide-react";
+import { format } from "date-fns";
+import { ptBR } from "date-fns/locale";
 
 interface DashboardHeaderProps {
   isCrisis: boolean;
@@ -17,23 +19,31 @@ interface DashboardHeaderProps {
 const ALL_NAV_ITEMS = [
   { icon: Wallet, path: "/financeiro", title: "Financeiro", key: "financeiro" },
   { icon: CalendarDays, path: "/calendario", title: "Calendário", key: "calendario" },
-  { icon: Activity, path: "/log", title: "Log", key: "log" },
   { icon: Settings, path: "/config", title: "Configurações", key: "config" },
 ] as const;
 
 export function DashboardHeader({ isCrisis, hasEnergy, dayScore, alertLevel, hiddenNavItems = [] }: DashboardHeaderProps) {
   const navigate = useNavigate();
   const isMobile = useIsMobile();
+  const now = brasiliaTime();
+  const dayNum = format(now, "d");
+  const dayName = format(now, "EEE", { locale: ptBR });
+  const monthYear = format(now, "MMM yyyy", { locale: ptBR });
 
   const visibleNavItems = ALL_NAV_ITEMS.filter((item) => !hiddenNavItems.includes(item.key));
 
   return (
     <header className="mb-5">
       <div className="flex items-center justify-between mb-3">
-        <div className="flex items-center gap-2">
-          <p className="text-[11px] text-muted-foreground font-mono tracking-widest">
-            {brasiliaDateString()}
-          </p>
+        <div className="flex items-center gap-3">
+          {/* Styled date block */}
+          <div className="flex items-baseline gap-1.5">
+            <span className="font-mono text-2xl font-bold text-foreground leading-none">{dayNum}</span>
+            <div className="flex flex-col leading-none">
+              <span className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground">{dayName}</span>
+              <span className="font-mono text-[10px] text-muted-foreground/60">{monthYear}</span>
+            </div>
+          </div>
           {isMobile && !isCrisis && <WeatherWidget compact />}
         </div>
         <div className="flex items-center gap-1">

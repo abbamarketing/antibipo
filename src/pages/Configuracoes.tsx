@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useProfileStore } from "@/lib/profile-store";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, RotateCcw, LogOut, Bell, User, Shield, ScrollText, BookOpen, Key, Eye, EyeOff } from "lucide-react";
+import { ArrowLeft, RotateCcw, LogOut, Bell, User, Shield, ScrollText, BookOpen, Key, Eye, EyeOff, Activity } from "lucide-react";
 
 function AIKeySettings() {
   const [apiKey, setApiKey] = useState("");
@@ -300,6 +300,20 @@ export default function Configuracoes() {
 
         {/* AI API Key */}
         <AIKeySettings />
+
+        {/* Activity Log */}
+        <section className="mb-4">
+          <button
+            onClick={() => navigate("/log")}
+            className="w-full flex items-center gap-3 p-4 bg-card rounded-lg border hover:bg-secondary/50 transition-colors"
+          >
+            <Activity className="w-4 h-4 text-primary" />
+            <div className="text-left">
+              <p className="font-mono text-xs font-medium">Log de Atividade</p>
+              <p className="font-mono text-[10px] text-muted-foreground">Histórico completo de ações e eventos</p>
+            </div>
+          </button>
+        </section>
 
         {/* Documentation */}
         <section className="mb-4">
