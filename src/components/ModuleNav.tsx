@@ -5,6 +5,7 @@ export type NavModulo = "inicio" | "trabalho" | "casa" | "saude" | "metas";
 interface ModuleNavProps {
   current: NavModulo;
   onSelect: (m: NavModulo) => void;
+  hiddenModules?: NavModulo[];
 }
 
 const modules: { key: NavModulo; label: string; icon: typeof Briefcase }[] = [
@@ -15,10 +16,12 @@ const modules: { key: NavModulo; label: string; icon: typeof Briefcase }[] = [
   { key: "metas", label: "METAS", icon: Target },
 ];
 
-export function ModuleNav({ current, onSelect }: ModuleNavProps) {
+export function ModuleNav({ current, onSelect, hiddenModules = [] }: ModuleNavProps) {
+  const visibleModules = modules.filter((m) => !hiddenModules.includes(m.key));
+
   return (
     <nav className="flex gap-1 rounded-xl p-1">
-      {modules.map((m) => {
+      {visibleModules.map((m) => {
         const Icon = m.icon;
         const isActive = current === m.key;
         return (
@@ -28,15 +31,15 @@ export function ModuleNav({ current, onSelect }: ModuleNavProps) {
             className={`
               flex-1 flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-2
               py-3 sm:py-2.5 px-2 sm:px-3 rounded-lg font-mono text-[10px] sm:text-xs font-medium tracking-wider
-              transition-all duration-200 ease-out min-h-[48px]
+              transition-all duration-200 min-h-[44px]
               ${isActive
-                ? "bg-card text-foreground shadow-md scale-[1.02]"
-                : "text-muted-foreground hover:text-foreground hover:bg-card/50 active:scale-95"
+                ? "bg-primary text-primary-foreground shadow-sm"
+                : "text-muted-foreground hover:text-foreground hover:bg-secondary/60 active:scale-95"
               }
             `}
           >
-            <Icon className={`w-5 h-5 sm:w-3.5 sm:h-3.5 transition-colors duration-200 ${isActive ? "text-primary" : ""}`} />
-            <span className="leading-none">{m.label}</span>
+            <Icon className="w-4 h-4" />
+            <span className="hidden sm:inline">{m.label}</span>
           </button>
         );
       })}

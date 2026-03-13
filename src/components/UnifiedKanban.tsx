@@ -21,7 +21,10 @@ interface UnifiedKanbanProps {
   preferredModule?: "trabalho" | "casa" | "saude" | null;
 }
 
-function getMoodMessage(mood?: number, todayCount?: number): string {
+function getMoodMessage(mood?: number, todayCount?: number, energy?: string): string {
+  if (energy === "basico" && (mood === undefined || mood === null || mood <= 0)) {
+    return "Só uma tarefa por vez. Sem pressa. 🫂";
+  }
   if (mood === undefined || mood === null) return "Todas as suas tarefas em um só lugar.";
   if (mood <= -2) return "Vai com calma hoje. Só o essencial.";
   if (mood === -1) return "Dia mais leve — uma coisa de cada vez.";
@@ -259,7 +262,7 @@ export function UnifiedKanban({ energy, lastMoodValue, preferredModule = null }:
   };
 
   const pomodoroTask = pomodoroTaskId ? allItems.find((t) => t.id === pomodoroTaskId) : null;
-  const moodMessage = getMoodMessage(lastMoodValue, todayTasks.length);
+  const moodMessage = getMoodMessage(lastMoodValue, todayTasks.length, energy);
   const visibleColumns = energy === "basico"
     ? STATUS_COLUMNS.filter((c) => c.key === "hoje")
     : energy === "modo_leve" ? STATUS_COLUMNS.filter((c) => c.key === "hoje" || c.key === "em_andamento") : STATUS_COLUMNS;
@@ -267,36 +270,44 @@ export function UnifiedKanban({ energy, lastMoodValue, preferredModule = null }:
   // The focused task for the "hoje" column
   const focusedTask = todayTasks[focusIndex] || null;
 
+  // Determine visual tone
+  const isLowState = energy === "basico" || (lastMoodValue !== undefined && lastMoodValue !== null && lastMoodValue <= 0);
+  const calmClass = isLowState ? "opacity-90" : "";
+
   return (
     <>
-      <div className="space-y-4 animate-fade-in">
+      <div className={`space-y-4 animate-fade-in ${calmClass}`}>
         {/* Header */}
         <div>
-          <h2 className="font-mono text-lg font-bold tracking-tight flex items-center gap-2">
-            <Sparkles className="w-4 h-4 text-primary" /> Meu Dia
+          <h2 className={`font-mono text-lg font-bold tracking-tight flex items-center gap-2 ${isLowState ? "text-muted-foreground" : ""}`}>
+            <Sparkles className={`w-4 h-4 ${isLowState ? "text-muted-foreground/60" : "text-primary"}`} /> Meu Dia
           </h2>
           <p className="text-sm text-muted-foreground font-body mt-0.5">{moodMessage}</p>
-          <div className="flex items-center gap-3 mt-2">
-            <span className="text-[11px] font-mono text-muted-foreground">{todayTasks.length} hoje</span>
-            <span className="text-muted-foreground/30">·</span>
-            <span className="text-[11px] font-mono text-muted-foreground">{filtered.length} total</span>
-            <span className="text-muted-foreground/30">·</span>
-            <span className="text-[11px] font-mono text-muted-foreground">{completedToday.length} feitas</span>
-          </div>
+          {!isLowState && (
+            <div className="flex items-center gap-3 mt-2">
+              <span className="text-[11px] font-mono text-muted-foreground">{todayTasks.length} hoje</span>
+              <span className="text-muted-foreground/30">·</span>
+              <span className="text-[11px] font-mono text-muted-foreground">{filtered.length} total</span>
+              <span className="text-muted-foreground/30">·</span>
+              <span className="text-[11px] font-mono text-muted-foreground">{completedToday.length} feitas</span>
+            </div>
+          )}
         </div>
 
-        {/* Module filter — 44px min touch targets */}
-        <div className="flex gap-2">
-          <button onClick={() => setFilterModule(null)} className={`px-3 py-2 rounded-xl text-[11px] font-mono transition-all min-h-[40px] ${!filterModule ? "bg-primary text-primary-foreground" : "bg-secondary text-muted-foreground"}`}>TODOS</button>
-          {(["trabalho", "casa", "saude"] as const).map((m) => {
-            const Icon = MODULE_ICONS[m];
-            return (
-              <button key={m} onClick={() => setFilterModule(filterModule === m ? null : m)} className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-[11px] font-mono transition-all min-h-[40px] ${filterModule === m ? "bg-primary text-primary-foreground" : "bg-secondary text-muted-foreground"}`}>
-                <Icon className="w-3.5 h-3.5" />{MODULE_LABELS[m]}{moduleCounts[m] > 0 && <span className="opacity-60">({moduleCounts[m]})</span>}
-              </button>
-            );
-          })}
-        </div>
+        {/* Module filter — hidden in low state to reduce visual noise */}
+        {!isLowState && (
+          <div className="flex gap-2">
+            <button onClick={() => setFilterModule(null)} className={`px-3 py-2 rounded-xl text-[11px] font-mono transition-all min-h-[40px] ${!filterModule ? "bg-primary text-primary-foreground" : "bg-secondary text-muted-foreground"}`}>TODOS</button>
+            {(["trabalho", "casa", "saude"] as const).map((m) => {
+              const Icon = MODULE_ICONS[m];
+              return (
+                <button key={m} onClick={() => setFilterModule(filterModule === m ? null : m)} className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-[11px] font-mono transition-all min-h-[40px] ${filterModule === m ? "bg-primary text-primary-foreground" : "bg-secondary text-muted-foreground"}`}>
+                  <Icon className="w-3.5 h-3.5" />{MODULE_LABELS[m]}{moduleCounts[m] > 0 && <span className="opacity-60">({moduleCounts[m]})</span>}
+                </button>
+              );
+            })}
+          </div>
+        )}
 
         {/* Pomodoro */}
         {pomodoroTask && (
