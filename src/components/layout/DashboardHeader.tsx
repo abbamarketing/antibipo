@@ -26,7 +26,7 @@ export function DashboardHeader({ isCrisis, hasEnergy, dayScore, alertLevel, hid
   const navigate = useNavigate();
   const isMobile = useIsMobile();
   const now = brasiliaTime();
-  const formatted = format(now, "EEEE, d 'de' MMMM", { locale: ptBR });
+  const formatted = format(now, "EEEE, d", { locale: ptBR });
 
   const visibleNavItems = ALL_NAV_ITEMS.filter((item) => !hiddenNavItems.includes(item.key));
 
