@@ -446,6 +446,7 @@ export function QuickCapture({ open, onClose, onActionComplete }: QuickCapturePr
           break;
         }
       }
+      return null;
     } catch (err) {
       console.error("Action execution error:", err);
       throw err;
