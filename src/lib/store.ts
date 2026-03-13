@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useCallback, useState } from "react";
 import type { Database } from "@/integrations/supabase/types";
+import { brasiliaISO, brasiliaTime } from "@/lib/brasilia";
 
 // Re-export types from DB enums
 export type EnergyState = Database["public"]["Enums"]["energy_state"];
