@@ -124,6 +124,18 @@ export function WeatherWidget({ compact = false }: WeatherWidgetProps) {
     retry: 1,
   });
 
+  if (compact) {
+    if (isLoading) return <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />;
+    if (!weather) return null;
+    const CompactIcon = weatherIcon(weather.currentCode);
+    return (
+      <div className="flex items-center gap-1.5 px-2 py-1.5 rounded-xl text-muted-foreground" title={`${weather.currentTemp}° · ${weatherLabel(weather.currentCode)}`}>
+        <CompactIcon className="w-4 h-4" />
+        <span className="font-mono text-[10px] font-medium">{weather.currentTemp}°</span>
+      </div>
+    );
+  }
+
   if (isLoading) {
     return (
       <div className="flex items-center gap-2 text-muted-foreground p-3">
