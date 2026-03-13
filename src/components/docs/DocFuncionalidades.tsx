@@ -169,9 +169,9 @@ export function DocFuncionalidades() {
 
       {/* ── Financeiro ── */}
       <DocCard icon={DollarSign} title="Módulo Financeiro">
-        <p>Acesse pelo ícone de carteira (💼) no cabeçalho.</p>
+        <p>Acesse pelo ícone de carteira no cabeçalho.</p>
         <p className="mt-1"><strong>Lançamentos:</strong> Registre entradas e saídas. O saldo acumulado é calculado automaticamente.</p>
-        <p><strong>Tags:</strong> Categorize com emoji + cor para análise visual (ex: 🍕 Alimentação, 🏠 Moradia).</p>
+        <p><strong>Tags:</strong> Categorize com cor para análise visual (ex: Alimentação, Moradia).</p>
         <p><strong>Consolidação Mensal:</strong> Resumo automático com total de entradas, saídas e performance.</p>
         <p><strong>Carteira Digital:</strong> Armazene documentos e dados importantes.</p>
         <p><strong>Horizonte:</strong> Visão projetada do saldo futuro baseada nos padrões.</p>
