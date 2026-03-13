@@ -281,6 +281,7 @@ export type Database = {
           nome: string
           status: string
           tipo: string
+          user_id: string | null
           valor_mensal: number | null
         }
         Insert: {
@@ -291,6 +292,7 @@ export type Database = {
           nome: string
           status?: string
           tipo?: string
+          user_id?: string | null
           valor_mensal?: number | null
         }
         Update: {
@@ -301,6 +303,7 @@ export type Database = {
           nome?: string
           status?: string
           tipo?: string
+          user_id?: string | null
           valor_mensal?: number | null
         }
         Relationships: []
@@ -602,6 +605,7 @@ export type Database = {
           id: string
           instrucoes: string | null
           nome: string
+          user_id: string | null
         }
         Insert: {
           criado_em?: string
@@ -611,6 +615,7 @@ export type Database = {
           id?: string
           instrucoes?: string | null
           nome: string
+          user_id?: string | null
         }
         Update: {
           criado_em?: string
@@ -620,6 +625,7 @@ export type Database = {
           id?: string
           instrucoes?: string | null
           nome?: string
+          user_id?: string | null
         }
         Relationships: []
       }
@@ -805,18 +811,21 @@ export type Database = {
           data: string
           id: string
           notas: string | null
+          user_id: string | null
           valor: number
         }
         Insert: {
           data?: string
           id?: string
           notas?: string | null
+          user_id?: string | null
           valor: number
         }
         Update: {
           data?: string
           id?: string
           notas?: string | null
+          user_id?: string | null
           valor?: number
         }
         Relationships: []
@@ -864,6 +873,7 @@ export type Database = {
           id: string
           medicamento_id: string
           tomado: boolean
+          user_id: string | null
         }
         Insert: {
           data?: string
@@ -872,6 +882,7 @@ export type Database = {
           id?: string
           medicamento_id: string
           tomado?: boolean
+          user_id?: string | null
         }
         Update: {
           data?: string
@@ -880,6 +891,7 @@ export type Database = {
           id?: string
           medicamento_id?: string
           tomado?: boolean
+          user_id?: string | null
         }
         Relationships: [
           {
@@ -926,6 +938,7 @@ export type Database = {
           horario_dormir: string | null
           id: string
           qualidade: number | null
+          user_id: string | null
         }
         Insert: {
           data?: string
@@ -934,6 +947,7 @@ export type Database = {
           horario_dormir?: string | null
           id?: string
           qualidade?: number | null
+          user_id?: string | null
         }
         Update: {
           data?: string
@@ -942,6 +956,7 @@ export type Database = {
           horario_dormir?: string | null
           id?: string
           qualidade?: number | null
+          user_id?: string | null
         }
         Relationships: []
       }
@@ -1041,18 +1056,21 @@ export type Database = {
           estado: Database["public"]["Enums"]["energy_state"]
           hora_inicio: string
           id: string
+          user_id: string | null
         }
         Insert: {
           data?: string
           estado: Database["public"]["Enums"]["energy_state"]
           hora_inicio?: string
           id?: string
+          user_id?: string | null
         }
         Update: {
           data?: string
           estado?: Database["public"]["Enums"]["energy_state"]
           hora_inicio?: string
           id?: string
+          user_id?: string | null
         }
         Relationships: []
       }
@@ -1107,6 +1125,7 @@ export type Database = {
           tipo: Database["public"]["Enums"]["task_tipo"]
           titulo: string
           urgencia: number
+          user_id: string | null
         }
         Insert: {
           cliente_id?: string | null
@@ -1128,6 +1147,7 @@ export type Database = {
           tipo?: Database["public"]["Enums"]["task_tipo"]
           titulo: string
           urgencia?: number
+          user_id?: string | null
         }
         Update: {
           cliente_id?: string | null
@@ -1149,6 +1169,7 @@ export type Database = {
           tipo?: Database["public"]["Enums"]["task_tipo"]
           titulo?: string
           urgencia?: number
+          user_id?: string | null
         }
         Relationships: [
           {
