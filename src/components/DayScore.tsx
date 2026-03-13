@@ -57,9 +57,8 @@ function CircularGauge({ score, alertLevel, moodLabel, size = 120 }: { score: nu
           className="transition-all duration-700 ease-out"
         />
       </svg>
-      <div className="absolute inset-0 flex flex-col items-center justify-center">
+      <div className="absolute inset-0 flex items-center justify-center">
         <span className={`font-mono text-3xl font-bold ${style.text}`}>{score}</span>
-        <MoodIcon className={`w-5 h-5 mt-1 ${moodCfg.color}`} />
       </div>
     </div>
   );
