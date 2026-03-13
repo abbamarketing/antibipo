@@ -543,14 +543,13 @@ export function useFlowStore() {
   // Add task with AI classification
   const addTaskWithAI = useCallback(
     async (task: Omit<Database["public"]["Tables"]["tasks"]["Insert"], "id" | "criado_em">, dayContext?: { mood?: string; energy?: string; alertLevel?: string; dayScore?: number }) => {
-      const data = await addTaskMut.mutateAsync(task);
+      const data = await addTaskMut.mutateAsync({ ...task, user_id: userId! });
       if (data) {
-        // Classify in background, return adaptation note
         return classifyTask(data.id, data.titulo, dayContext);
       }
       return null;
     },
-    [addTaskMut, classifyTask]
+    [addTaskMut, classifyTask, userId]
   );
 
   return {
