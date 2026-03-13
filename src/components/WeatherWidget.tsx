@@ -59,7 +59,11 @@ async function reverseGeocode(lat: number, lon: number): Promise<string> {
   }
 }
 
-export function WeatherWidget() {
+interface WeatherWidgetProps {
+  compact?: boolean;
+}
+
+export function WeatherWidget({ compact = false }: WeatherWidgetProps) {
   const [expanded, setExpanded] = useState(() => {
     const saved = localStorage.getItem("ab_weather_expanded");
     return saved !== null ? saved === "true" : true;
@@ -119,6 +123,18 @@ export function WeatherWidget() {
     staleTime: 30 * 60 * 1000,
     retry: 1,
   });
+
+  if (compact) {
+    if (isLoading) return <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />;
+    if (!weather) return null;
+    const CompactIcon = weatherIcon(weather.currentCode);
+    return (
+      <div className="flex items-center gap-1.5 px-2 py-1.5 rounded-xl text-muted-foreground" title={`${weather.currentTemp}° · ${weatherLabel(weather.currentCode)}`}>
+        <CompactIcon className="w-4 h-4" />
+        <span className="font-mono text-[10px] font-medium">{weather.currentTemp}°</span>
+      </div>
+    );
+  }
 
   if (isLoading) {
     return (
