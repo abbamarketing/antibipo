@@ -22,7 +22,7 @@ export type RegistroHumor = Database["public"]["Tables"]["registros_humor"]["Row
 export type SessaoEnergia = Database["public"]["Tables"]["sessoes_energia"]["Row"];
 
 export function today(): string {
-  return new Date().toISOString().split("T")[0];
+  return brasiliaISO();
 }
 
 export function useFlowStore() {
