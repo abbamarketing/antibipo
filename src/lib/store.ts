@@ -159,6 +159,7 @@ export function useFlowStore() {
         tipo: task.tipo ?? "operacional",
         titulo: task.titulo,
         urgencia: task.urgencia ?? 2,
+        user_id: task.user_id ?? userId ?? "",
       };
 
       qc.setQueryData<Task[]>(["tasks"], [optimisticTask, ...previousTasks]);
