@@ -21,7 +21,7 @@ import { InicioContent } from "@/components/layout/InicioContent";
 import { ModuleContent } from "@/components/layout/ModuleContent";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Zap, Sun, Battery } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 
 const energyConfig: Record<string, { icon: typeof Zap; label: string }> = {
   foco_total: { icon: Zap, label: "FOCO TOTAL" },
