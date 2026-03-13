@@ -73,7 +73,7 @@ const Index = () => {
   const isMobile = useIsMobile();
   const [captureOpen, setCaptureOpen] = useState(false);
 
-  const [activeNav, setActiveNav] = useState<NavModulo>("trabalho");
+  const [activeNav, setActiveNav] = useState<NavModulo>("inicio");
   const [showMondayReview, setShowMondayReview] = useState(false);
   const [showFridayReport, setShowFridayReport] = useState(false);
   const [lastMoodValue, setLastMoodValue] = useState<number | undefined>(todayHumor?.valor);
