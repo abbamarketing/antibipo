@@ -101,6 +101,8 @@ export function useBemEstarStore() {
       if (error) throw error;
       return (data || []) as unknown as Refeicao[];
     },
+    staleTime: 5 * 60 * 1000,
+    refetchOnWindowFocus: false,
   });
 
   const { data: exerciciosHoje = [] } = useQuery<Exercicio[]>({
@@ -114,6 +116,8 @@ export function useBemEstarStore() {
       if (error) throw error;
       return (data || []) as unknown as Exercicio[];
     },
+    staleTime: 5 * 60 * 1000,
+    refetchOnWindowFocus: false,
   });
 
   const { data: exerciciosSemana = [] } = useQuery<Exercicio[]>({
@@ -129,6 +133,8 @@ export function useBemEstarStore() {
       if (error) throw error;
       return (data || []) as unknown as Exercicio[];
     },
+    staleTime: 5 * 60 * 1000,
+    refetchOnWindowFocus: false,
   });
 
   const { data: metas } = useQuery<BmMetas | null>({
@@ -143,6 +149,8 @@ export function useBemEstarStore() {
       if (error) throw error;
       return data as unknown as BmMetas | null;
     },
+    staleTime: 10 * 60 * 1000,
+    refetchOnWindowFocus: false,
   });
 
   const { data: analises = [] } = useQuery<AnaliseSemanal[]>({
@@ -156,6 +164,8 @@ export function useBemEstarStore() {
       if (error) throw error;
       return (data || []) as unknown as AnaliseSemanal[];
     },
+    staleTime: 10 * 60 * 1000,
+    refetchOnWindowFocus: false,
   });
 
   // === MUTATIONS ===

@@ -44,6 +44,8 @@ export function useCasaStore() {
       if (error) throw error;
       return (data || []) as unknown as TarefaCasa[];
     },
+    staleTime: 5 * 60 * 1000,
+    refetchOnWindowFocus: false,
   });
 
   const { data: registros = [] } = useQuery<RegistroLimpeza[]>({
@@ -57,6 +59,8 @@ export function useCasaStore() {
       if (error) throw error;
       return (data || []) as unknown as RegistroLimpeza[];
     },
+    staleTime: 5 * 60 * 1000,
+    refetchOnWindowFocus: false,
   });
 
   const { data: listaCompras = [] } = useQuery<ItemCompra[]>({
@@ -70,6 +74,8 @@ export function useCasaStore() {
       if (error) throw error;
       return (data || []) as unknown as ItemCompra[];
     },
+    staleTime: 5 * 60 * 1000,
+    refetchOnWindowFocus: false,
   });
 
   const completarTarefaMut = useMutation({
