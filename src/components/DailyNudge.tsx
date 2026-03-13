@@ -192,7 +192,7 @@ export function DailyNudge() {
           {alert.includes("DayScore") ? (
             <TrendingUp className="w-3.5 h-3.5 text-primary mt-0.5 shrink-0" />
           ) : (
-            <AlertTriangle className="w-3.5 h-3.5 text-amber-500 mt-0.5 shrink-0" />
+            <AlertTriangle className="w-3.5 h-3.5 text-primary mt-0.5 shrink-0" />
           )}
           <p className="font-mono text-[11px] leading-relaxed text-foreground/80">{alert}</p>
         </div>
