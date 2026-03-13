@@ -127,6 +127,15 @@ export function StructuredTaskForm({ open, onClose, onCreated }: StructuredTaskF
     });
   }, [open]);
 
+  // Smart defaults: set urgency based on current energy
+  useEffect(() => {
+    if (!open) return;
+    const energy = state.current_energy;
+    if (energy === "basico") setUrgencia(1);
+    else if (energy === "modo_leve") setUrgencia(1);
+    else setUrgencia(2);
+  }, [open, state.current_energy]);
+
   useEffect(() => {
     if (template === "domestico" as string) setModulo("casa");
     else if (template === "saude" as string) setModulo("saude");
