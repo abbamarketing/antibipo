@@ -513,9 +513,17 @@ export function StructuredTaskForm({ open, onClose, onCreated }: StructuredTaskF
 
                   {/* Urgência */}
                   <div>
-                    <label className="font-mono text-[10px] text-muted-foreground tracking-wider block mb-1.5">
-                      URGÊNCIA
-                    </label>
+                    <div className="flex items-center gap-2 mb-1.5">
+                      <label className="font-mono text-[10px] text-muted-foreground tracking-wider">
+                        URGÊNCIA
+                      </label>
+                      {state.current_energy && state.current_energy !== "foco_total" && (
+                        <span className="inline-flex items-center gap-1 text-[8px] font-mono text-primary/70">
+                          <Sparkles className="w-2.5 h-2.5" />
+                          ajustada pela energia
+                        </span>
+                      )}
+                    </div>
                     <div className="flex gap-2">
                       {URGENCIA_OPTIONS.map((opt) => {
                         const UIcon = opt.icon;
