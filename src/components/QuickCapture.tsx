@@ -305,8 +305,9 @@ export function QuickCapture({ open, onClose, onActionComplete }: QuickCapturePr
           if (!user) throw new Error("Nao autenticado");
           const prazoMap: Record<string, number> = { "1_mes": 30, "6_meses": 180, "1_ano": 365 };
           const days = prazoMap[dados.meta_prazo || "6_meses"] || 180;
-          const alvo = new Date();
+          const alvo = new Date(brasiliaISO() + "T12:00:00");
           alvo.setDate(alvo.getDate() + days);
+          const alvoStr = alvo.toISOString().split("T")[0];
           await supabase.from("metas_pessoais").insert({
             user_id: user.id,
             titulo: dados.meta_titulo || input,
