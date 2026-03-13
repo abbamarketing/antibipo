@@ -127,7 +127,7 @@ export function useFlowStore() {
 
       const optimisticTask: Task = {
         id: makeTempId("task"),
-        criado_em: new Date().toISOString(),
+        criado_em: brasiliaTime().toISOString(),
         cliente_id: task.cliente_id ?? null,
         data_limite: task.data_limite ?? null,
         depende_de: task.depende_de ?? null,
