@@ -156,6 +156,16 @@ export function DayScore() {
   );
 }
 
+function CompactIndicator({ icon, label, value }: { icon: React.ReactNode; label: string; value: string }) {
+  return (
+    <div className="flex flex-col items-center gap-1 bg-secondary/30 rounded-lg py-2 px-1 min-h-[44px]">
+      {icon}
+      <p className="text-[9px] font-mono text-muted-foreground/60 uppercase leading-none">{label}</p>
+      <p className="text-[11px] font-mono font-medium truncate capitalize">{value}</p>
+    </div>
+  );
+}
+
 function ModuleIndicator({ icon, label, value }: { icon: React.ReactNode; label: string; value: string }) {
   return (
     <div className="flex items-center gap-2.5 bg-secondary/30 rounded-lg px-3 py-2.5 min-h-[44px]">
