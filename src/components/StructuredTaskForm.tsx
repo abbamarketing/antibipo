@@ -231,7 +231,7 @@ export function StructuredTaskForm({ open, onClose, onCreated }: StructuredTaskF
 
         optimisticSubtasks = subs.map((sub, idx) => ({
           id: `tmp_sub_${Date.now()}_${idx}`,
-          criado_em: new Date().toISOString(),
+          criado_em: brasiliaTime().toISOString(),
           cliente_id: null,
           data_limite: null,
           depende_de: null,
