@@ -1,9 +1,22 @@
 // FLOW v2 — Supabase-backed store with React Query
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { useCallback, useState } from "react";
+import { useCallback, useState, useEffect } from "react";
 import type { Database } from "@/integrations/supabase/types";
 import { brasiliaISO, brasiliaTime } from "@/lib/brasilia";
+
+// Helper hook to get the current authenticated user ID
+function useUserId(): string | null {
+  const [uid, setUid] = useState<string | null>(null);
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data }) => setUid(data.user?.id ?? null));
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUid(session?.user?.id ?? null);
+    });
+    return () => subscription.unsubscribe();
+  }, []);
+  return uid;
+}
 
 // Re-export types from DB enums
 export type EnergyState = Database["public"]["Enums"]["energy_state"];
