@@ -5,7 +5,8 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-const SYSTEM_PROMPT = `Você é um classificador de tarefas para o sistema AntiBipolaridade. Recebe o título de uma tarefa e informações adicionais e retorna a classificação usando tool calling.
+function buildSystemPrompt(dayContext?: { mood?: string; energy?: string; alertLevel?: string; dayScore?: number }) {
+  const base = `Você é um classificador de tarefas para o sistema AntiBipolaridade. Recebe o título de uma tarefa e informações adicionais e retorna a classificação usando tool calling.
 
 Contexto do usuário:
 - Empreendedor, dono de agência de vídeo para clínicas médicas
@@ -38,12 +39,41 @@ Tempo estimado em minutos (padrão 30)
 Se a tarefa mencionar repetição ou recorrência, marque recorrente=true e defina a frequência.
 Se depender de outra pessoa para começar, identifique quem em depende_de.`;
 
+  // Adaptive rules based on user's current state
+  const adaptiveRules: string[] = [];
+
+  if (dayContext) {
+    adaptiveRules.push(`\n\n--- ESTADO ATUAL DO USUÁRIO ---`);
+    if (dayContext.mood) adaptiveRules.push(`Humor atual: ${dayContext.mood}`);
+    if (dayContext.energy) adaptiveRules.push(`Energia atual: ${dayContext.energy}`);
+    if (dayContext.alertLevel) adaptiveRules.push(`Nível de alerta: ${dayContext.alertLevel}`);
+    if (dayContext.dayScore !== undefined) adaptiveRules.push(`Score do dia: ${dayContext.dayScore}/100`);
+
+    const isLowMood = dayContext.mood === "muito_baixo" || dayContext.mood === "baixo";
+    const isLowEnergy = dayContext.energy === "basico";
+    const isCrisis = dayContext.alertLevel === "crise";
+
+    if (isLowMood || isLowEnergy || isCrisis) {
+      adaptiveRules.push(`\n⚠️ REGRAS DE ADAPTAÇÃO (humor baixo / energia baixa / crise):`);
+      adaptiveRules.push(`- REDUZA a urgência em 1 nível (ex: 3→2, 2→1). Nunca classifique como urgência 3 a menos que seja REALMENTE crítico.`);
+      adaptiveRules.push(`- AUMENTE o tempo estimado em 50% (ex: 30→45, 60→90). O usuário precisa de mais tempo.`);
+      adaptiveRules.push(`- Prefira estado_ideal "modo_leve" ou "basico" em vez de "foco_total".`);
+      adaptiveRules.push(`- Se a tarefa pode ser delegada, priorize delegavel.`);
+      adaptiveRules.push(`- No campo adaptation_note, SEMPRE explique a adaptação feita (ex: "Reduzi a urgência porque seu humor está baixo hoje").`);
+    } else if (dayContext.mood === "muito_bom" && dayContext.energy === "foco_total") {
+      adaptiveRules.push(`\n✅ Usuário em excelente estado. Classifique normalmente, pode usar urgência 3 e foco_total quando apropriado.`);
+    }
+  }
+
+  return base + adaptiveRules.join("\n");
+}
+
 const TOOLS = [
   {
     type: "function" as const,
     function: {
       name: "classify_task",
-      description: "Classifica uma tarefa com tipo, estado ideal, urgência, impacto, dono, tempo, recorrência e dependências.",
+      description: "Classifica uma tarefa com tipo, estado ideal, urgência, impacto, dono, tempo, recorrência, dependências e nota de adaptação.",
       parameters: {
         type: "object",
         properties: {
@@ -57,6 +87,7 @@ const TOOLS = [
           recorrente: { type: "boolean", description: "Whether this task repeats" },
           frequencia_recorrencia: { type: "string", description: "diario, semanal, quinzenal, mensal" },
           depende_de: { type: "string", description: "Person this task depends on" },
+          adaptation_note: { type: "string", description: "If classification was adapted due to user mood/energy, explain the adaptation briefly in Portuguese. Empty string if no adaptation." },
         },
       },
     },
@@ -67,10 +98,11 @@ serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
-    const { titulo, notas } = await req.json();
+    const { titulo, notas, dayContext } = await req.json();
     if (!titulo) throw new Error("titulo is required");
 
     const userContent = `Classifique esta tarefa: "${titulo}"${notas ? `\nNotas adicionais: ${notas}` : ""}`;
+    const systemPrompt = buildSystemPrompt(dayContext);
 
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) throw new Error("No AI provider available");
@@ -84,7 +116,7 @@ serve(async (req) => {
       body: JSON.stringify({
         model: "google/gemini-3-flash-preview",
         messages: [
-          { role: "system", content: SYSTEM_PROMPT },
+          { role: "system", content: systemPrompt },
           { role: "user", content: userContent },
         ],
         tools: TOOLS,
@@ -104,7 +136,11 @@ serve(async (req) => {
     if (!toolCall?.function?.arguments) throw new Error("No classification returned");
     const classification = JSON.parse(toolCall.function.arguments);
 
-    return new Response(JSON.stringify({ classification, ai_provider: "lovable_ai" }), {
+    // Extract adaptation_note before sending classification
+    const adaptation_note = classification.adaptation_note || null;
+    delete classification.adaptation_note;
+
+    return new Response(JSON.stringify({ classification, adaptation_note, ai_provider: "lovable_ai" }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (e) {
