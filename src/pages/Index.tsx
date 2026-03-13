@@ -27,13 +27,14 @@ import { MoodCheckIn } from "@/components/MoodCheckIn";
 import { ModuleDashboard } from "@/components/ModuleDashboard";
 import { DayScore } from "@/components/DayScore";
 import { WeeklyCorrelationChart } from "@/components/WeeklyCorrelationChart";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { Plus, Zap, Sun, Battery, Wallet, Settings, CalendarDays, Activity, Target } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
-/** Reusable glass-card wrapper */
+/** Reusable glass-card wrapper – 24px radius + heavy blur */
 function GlassCard({ children, className = "" }: { children: React.ReactNode; className?: string }) {
   return (
-    <div className={`rounded-xl bg-card/40 backdrop-blur-sm shadow-sm ${className}`}>
+    <div className={`rounded-3xl bg-card/40 backdrop-blur-xl shadow-sm border border-border/20 ${className}`}>
       {children}
     </div>
   );
@@ -68,8 +69,9 @@ const Index = () => {
 
   const dayCtx = useDayContext();
   const navigate = useNavigate();
+  const isMobile = useIsMobile();
   const [captureOpen, setCaptureOpen] = useState(false);
-  
+
   const [activeNav, setActiveNav] = useState<NavModulo>("trabalho");
   const [showMondayReview, setShowMondayReview] = useState(false);
   const [showFridayReport, setShowFridayReport] = useState(false);
@@ -88,7 +90,6 @@ const Index = () => {
   const { current_energy, current_modulo } = state;
   const showEnergySelector = !current_energy;
 
-  // Adaptive layout: crisis mode hides non-essentials
   const isCrisis = dayCtx.alertLevel === "crise";
   const isOptimal = dayCtx.alertLevel === "otimo";
 
@@ -136,12 +137,12 @@ const Index = () => {
   const handleSleep = (type: "dormir" | "acordar", qualidade?: 1 | 2 | 3) => {
     registrarSono(type, qualidade);
     logActivity(type === "dormir" ? "sono_dormir" : "sono_acordar", { qualidade, hora: brasiliaTimeString() });
-    
+
     if (type === "acordar") {
       const hoje = brasiliaTime();
       const dia = hoje.getDay();
       const sessionKey = `ab_review_${hoje.toISOString().split("T")[0]}`;
-      
+
       if (dia === 1 && !sessionStorage.getItem(`${sessionKey}_monday`)) {
         sessionStorage.setItem(`${sessionKey}_monday`, "1");
         setShowMondayReview(true);
@@ -168,181 +169,216 @@ const Index = () => {
     logActivity("medicamento_adicionado", { nome: med.nome, hora: brasiliaTimeString() });
   };
 
-  return (
-    <DayGate>
-    <div className="min-h-screen bg-background">
-      <NotificationManager
-        medicamentos={state.medicamentos}
-        isMedTaken={isMedTakenToday}
-        hasEnergy={!!current_energy}
-      />
+  /* ── Sidebar widgets (health/context) ── */
+  const SidebarWidgets = () => (
+    <div className="space-y-4">
+      {/* Day score — always visible */}
+      <GlassCard className="p-4">
+        <DayScore />
+      </GlassCard>
 
-      <div className="max-w-lg mx-auto px-4 py-6 pb-28 space-y-5">
-        {/* Header */}
-        <header>
-          <div className="flex items-center justify-between mb-3">
-            <p className="text-[10px] text-muted-foreground font-mono tracking-widest">
-              {brasiliaDateString()}
-            </p>
-            <div className="flex items-center gap-0.5">
-              {[
-                { icon: Wallet, path: "/financeiro", title: "Financeiro" },
-                { icon: CalendarDays, path: "/calendario", title: "Calendário" },
-                { icon: Activity, path: "/log", title: "Log" },
-                { icon: Settings, path: "/config", title: "Configurações" },
-              ].map(({ icon: Icon, path, title }) => (
-                <button
-                  key={path}
-                  onClick={() => navigate(path)}
-                  title={title}
-                  className="p-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-secondary/60 active:scale-95 transition-all duration-150"
-                >
-                  <Icon className="w-4 h-4" />
-                </button>
-              ))}
-            </div>
-          </div>
-          {/* Adaptive greeting + nudge */}
-          {current_energy && (
-            <div className="mb-1">
-              <AdaptiveGreeting dayScore={dayCtx.dayScore} alertLevel={dayCtx.alertLevel} />
-            </div>
-          )}
-          <DailyNudge />
-        </header>
+      {/* Weather — hidden in crisis mode */}
+      {!isCrisis && (
+        <GlassCard>
+          <WeatherWidget compact={isMobile} />
+        </GlassCard>
+      )}
 
-        {/* Weather — hidden in crisis mode */}
-        {!isCrisis && (
-          <GlassCard>
-            <WeatherWidget />
-          </GlassCard>
-        )}
+      {/* Mood Check-In */}
+      <MoodCheckIn onMoodUpdated={(val) => setLastMoodValue(val)} />
 
-        {/* Mood Check-In (every 3h) */}
-        <MoodCheckIn onMoodUpdated={(val) => setLastMoodValue(val)} />
+      {/* Med Alert */}
+      {pending.length > 0 && (
+        <GlassCard className={`p-1 ${isCrisis ? "ring-2 ring-destructive/30" : ""}`}>
+          <MedAlert pendingMeds={pending} onTake={handleTakeMed} />
+        </GlassCard>
+      )}
 
-        {/* Today's events — hidden in crisis mode */}
-        {!isCrisis && <TodayEvents />}
+      {/* Weekly Correlation Chart — hidden in crisis */}
+      {!isCrisis && (
+        <GlassCard className="p-4">
+          <WeeklyCorrelationChart />
+        </GlassCard>
+      )}
 
-        {/* Med Alert — always visible, priority in crisis */}
-        {pending.length > 0 && (
-          <GlassCard className={`p-1 ${isCrisis ? "ring-2 ring-destructive/30" : ""}`}>
-            <MedAlert pendingMeds={pending} onTake={handleTakeMed} />
-          </GlassCard>
-        )}
+      {/* Trackers — hidden in crisis */}
+      {!isCrisis && (
+        <CustomTrackers modulo={activeNav === "metas" ? "saude" : activeNav} />
+      )}
+    </div>
+  );
 
-        {showEnergySelector ? (
-          <EnergyStateSelector current={current_energy} onSelect={handleSetEnergy} />
-        ) : (
-          <div className="space-y-5">
-            {/* Energy indicator */}
-            <div className="flex items-center gap-2">
-              {current_energy && (() => {
-                const cfg = energyConfig[current_energy];
-                const EIcon = cfg.icon;
-                return (
-                  <>
-                    <EIcon className="w-3.5 h-3.5 text-primary" />
-                    <span className="font-mono text-[11px] tracking-wider text-primary">{cfg.label}</span>
-                  </>
-                );
-              })()}
-              <span className="text-muted-foreground/30">·</span>
-              <button
-                onClick={() => handleSetEnergy(current_energy === "foco_total" ? "modo_leve" : current_energy === "modo_leve" ? "basico" : "foco_total")}
-                className="font-mono text-[10px] text-muted-foreground hover:text-foreground active:scale-95 transition-all duration-150"
-              >
-                mudar
-              </button>
-            </div>
+  /* ── Main content (kanban + modules) ── */
+  const MainContent = () => (
+    <div className="space-y-4">
+      {/* Today's events — hidden in crisis */}
+      {!isCrisis && <TodayEvents />}
 
-            {showMondayReview && <MondayGoalsReview onDismiss={() => setShowMondayReview(false)} />}
-            {showFridayReport && <FridayWeeklyReport onDismiss={() => setShowFridayReport(false)} />}
-
-            {!showMondayReview && !showFridayReport && (
-              <div className="space-y-5">
-                {/* Day score — always visible */}
-                <GlassCard className="p-4">
-                  <DayScore />
-                </GlassCard>
-
-                {/* Strategic tasks CTA — shown only in optimal days */}
-                {isOptimal && (
-                  <button
-                    onClick={() => {
-                      setActiveNav("trabalho");
-                      setModulo("trabalho");
-                    }}
-                    className="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-green-500/10 text-green-700 dark:text-green-400 font-mono text-xs tracking-wider hover:bg-green-500/15 active:scale-[0.98] transition-all duration-200 animate-fade-in"
-                  >
-                    <Target className="w-4 h-4" />
-                    TAREFAS ESTRATÉGICAS — DIA FORTE
-                  </button>
-                )}
-
-                {/* Weekly Correlation Chart — hidden in crisis */}
-                {!isCrisis && (
-                  <GlassCard className="p-4">
-                    <WeeklyCorrelationChart />
-                  </GlassCard>
-                )}
-
-                {/* Unified Daily Tasks */}
-                <UnifiedKanban energy={current_energy!} lastMoodValue={lastMoodValue} preferredModule={activeNav === "metas" ? null : activeNav} />
-
-                {/* Trackers — hidden in crisis */}
-                {!isCrisis && (
-                  <div>
-                    <CustomTrackers modulo={activeNav === "metas" ? "saude" : activeNav} />
-                  </div>
-                )}
-
-                {/* Module Nav — hidden in crisis (focus on essentials) */}
-                {!isCrisis && (
-                  <GlassCard className="p-1.5">
-                    <ModuleNav current={activeNav} onSelect={handleModulo} />
-                  </GlassCard>
-                )}
-
-                {/* Module content with transition — hidden in crisis */}
-                {!isCrisis && (
-                  <div className="animate-fade-in">
-                    {activeNav === "trabalho" && (
-                      <ModuleOnboardingGuard modulo="trabalho">
-                        <WorkModule energy={current_energy!} tasks={getFilteredTasks("trabalho", current_energy!)} allTasks={state.tasks} onComplete={handleCompleteTask} onDelegate={handleDelegate} onPush={handlePush} />
-                      </ModuleOnboardingGuard>
-                    )}
-                    {activeNav === "casa" && (
-                      <ModuleOnboardingGuard modulo="casa">
-                        <HomeModule energy={current_energy!} />
-                      </ModuleOnboardingGuard>
-                    )}
-                    {activeNav === "saude" && (
-                      <ModuleOnboardingGuard modulo="saude">
-                        <HealthModule energy={current_energy!} medicamentos={state.medicamentos} registros_humor={state.registros_humor} registros_sono={state.registros_sono} onTakeMed={handleTakeMed} isMedTaken={isMedTakenToday} onMood={handleMood} onSleep={handleSleep} onAddMed={handleAddMed} todayHumor={todayHumor} />
-                      </ModuleOnboardingGuard>
-                    )}
-                    {activeNav === "metas" && <MetasModule />}
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
-        )}
-      </div>
-
-      {/* FAB */}
-      {current_energy && (
+      {/* Strategic tasks CTA — shown only in optimal days */}
+      {isOptimal && (
         <button
-          onClick={() => setCaptureOpen(true)}
-          className="fixed bottom-6 right-6 w-14 h-14 rounded-full bg-primary text-primary-foreground shadow-lg flex items-center justify-center hover:opacity-90 active:scale-90 transition-all duration-200 z-40"
+          onClick={() => { setActiveNav("trabalho"); setModulo("trabalho"); }}
+          className="w-full flex items-center justify-center gap-2 py-3 rounded-3xl bg-green-500/10 text-green-700 dark:text-green-400 font-mono text-xs tracking-wider hover:bg-green-500/15 active:scale-[0.98] transition-all duration-200 animate-fade-in"
         >
-          <Plus className="w-6 h-6" />
+          <Target className="w-4 h-4" />
+          TAREFAS ESTRATÉGICAS — DIA FORTE
         </button>
       )}
 
-      <StructuredTaskForm open={captureOpen} onClose={() => setCaptureOpen(false)} onCreated={() => {}} />
+      {showMondayReview && <MondayGoalsReview onDismiss={() => setShowMondayReview(false)} />}
+      {showFridayReport && <FridayWeeklyReport onDismiss={() => setShowFridayReport(false)} />}
+
+      {!showMondayReview && !showFridayReport && (
+        <>
+          {/* Unified Daily Tasks */}
+          <UnifiedKanban energy={current_energy!} lastMoodValue={lastMoodValue} preferredModule={activeNav === "metas" ? null : activeNav} />
+
+          {/* Module content — hidden in crisis */}
+          {!isCrisis && (
+            <div className="animate-fade-in">
+              {activeNav === "trabalho" && (
+                <ModuleOnboardingGuard modulo="trabalho">
+                  <WorkModule energy={current_energy!} tasks={getFilteredTasks("trabalho", current_energy!)} allTasks={state.tasks} onComplete={handleCompleteTask} onDelegate={handleDelegate} onPush={handlePush} />
+                </ModuleOnboardingGuard>
+              )}
+              {activeNav === "casa" && (
+                <ModuleOnboardingGuard modulo="casa">
+                  <HomeModule energy={current_energy!} />
+                </ModuleOnboardingGuard>
+              )}
+              {activeNav === "saude" && (
+                <ModuleOnboardingGuard modulo="saude">
+                  <HealthModule energy={current_energy!} medicamentos={state.medicamentos} registros_humor={state.registros_humor} registros_sono={state.registros_sono} onTakeMed={handleTakeMed} isMedTaken={isMedTakenToday} onMood={handleMood} onSleep={handleSleep} onAddMed={handleAddMed} todayHumor={todayHumor} />
+                </ModuleOnboardingGuard>
+              )}
+              {activeNav === "metas" && <MetasModule />}
+            </div>
+          )}
+        </>
+      )}
     </div>
+  );
+
+  return (
+    <DayGate>
+      <div className="min-h-screen bg-gradient-to-br from-background via-background to-secondary/30">
+        <NotificationManager
+          medicamentos={state.medicamentos}
+          isMedTaken={isMedTakenToday}
+          hasEnergy={!!current_energy}
+        />
+
+        <div className="max-w-7xl mx-auto px-4 py-6 pb-28 lg:pb-6">
+          {/* Header */}
+          <header className="mb-5">
+            <div className="flex items-center justify-between mb-3">
+              <p className="text-[10px] text-muted-foreground font-mono tracking-widest">
+                {brasiliaDateString()}
+              </p>
+              <div className="flex items-center gap-0.5">
+                {/* Compact weather in header on mobile */}
+                {isMobile && !isCrisis && (
+                  <WeatherWidget compact />
+                )}
+                {[
+                  { icon: Wallet, path: "/financeiro", title: "Financeiro" },
+                  { icon: CalendarDays, path: "/calendario", title: "Calendário" },
+                  { icon: Activity, path: "/log", title: "Log" },
+                  { icon: Settings, path: "/config", title: "Configurações" },
+                ].map(({ icon: Icon, path, title }) => (
+                  <button
+                    key={path}
+                    onClick={() => navigate(path)}
+                    title={title}
+                    className="p-2 rounded-xl text-muted-foreground hover:text-foreground hover:bg-secondary/60 active:scale-95 transition-all duration-150"
+                  >
+                    <Icon className="w-4 h-4" />
+                  </button>
+                ))}
+              </div>
+            </div>
+            {current_energy && (
+              <div className="mb-1">
+                <AdaptiveGreeting dayScore={dayCtx.dayScore} alertLevel={dayCtx.alertLevel} />
+              </div>
+            )}
+            <DailyNudge />
+          </header>
+
+          {showEnergySelector ? (
+            <EnergyStateSelector current={current_energy} onSelect={handleSetEnergy} />
+          ) : (
+            <div className="space-y-4">
+              {/* Energy indicator */}
+              <div className="flex items-center gap-2">
+                {current_energy && (() => {
+                  const cfg = energyConfig[current_energy];
+                  const EIcon = cfg.icon;
+                  return (
+                    <>
+                      <EIcon className="w-3.5 h-3.5 text-primary" />
+                      <span className="font-mono text-[11px] tracking-wider text-primary">{cfg.label}</span>
+                    </>
+                  );
+                })()}
+                <span className="text-muted-foreground/30">·</span>
+                <button
+                  onClick={() => handleSetEnergy(current_energy === "foco_total" ? "modo_leve" : current_energy === "modo_leve" ? "basico" : "foco_total")}
+                  className="font-mono text-[10px] text-muted-foreground hover:text-foreground active:scale-95 transition-all duration-150"
+                >
+                  mudar
+                </button>
+              </div>
+
+              {/* ── Responsive Dashboard Grid ── */}
+              {isMobile ? (
+                /* Mobile: single column */
+                <div className="space-y-4">
+                  <SidebarWidgets />
+                  <MainContent />
+                </div>
+              ) : (
+                /* Desktop: 12-col grid — sidebar 3 cols, main 9 cols */
+                <div className="grid grid-cols-12 gap-5">
+                  <aside className="col-span-3 space-y-4 sticky top-6 self-start max-h-[calc(100vh-4rem)] overflow-y-auto scrollbar-thin">
+                    <SidebarWidgets />
+                  </aside>
+                  <main className="col-span-9">
+                    <MainContent />
+                  </main>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+
+        {/* Module Nav — desktop: inline above grid, mobile: fixed bottom bar */}
+        {current_energy && !isCrisis && (
+          isMobile ? (
+            <div className="fixed bottom-0 inset-x-0 z-40 bg-card/80 backdrop-blur-xl border-t border-border/30 safe-area-bottom">
+              <ModuleNav current={activeNav} onSelect={handleModulo} />
+            </div>
+          ) : (
+            <div className="max-w-7xl mx-auto px-4 pb-4">
+              <GlassCard className="p-1.5">
+                <ModuleNav current={activeNav} onSelect={handleModulo} />
+              </GlassCard>
+            </div>
+          )
+        )}
+
+        {/* FAB */}
+        {current_energy && (
+          <button
+            onClick={() => setCaptureOpen(true)}
+            className={`fixed ${isMobile ? "bottom-20" : "bottom-6"} right-6 w-14 h-14 rounded-full bg-primary text-primary-foreground shadow-lg flex items-center justify-center hover:opacity-90 active:scale-90 transition-all duration-200 z-40`}
+          >
+            <Plus className="w-6 h-6" />
+          </button>
+        )}
+
+        <StructuredTaskForm open={captureOpen} onClose={() => setCaptureOpen(false)} onCreated={() => {}} />
+      </div>
     </DayGate>
   );
 };
