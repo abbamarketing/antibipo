@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { useFlowStore } from "@/lib/store";
 import { logActivity } from "@/lib/activity-log";
 import { brasiliaTimeString, brasiliaTime } from "@/lib/brasilia";
 import { format } from "date-fns";
@@ -11,7 +12,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import {
   X, Plus, CalendarIcon, Trash2, ChevronDown, Loader2, CheckCircle2,
   Repeat, UserPlus, Briefcase, Home, Heart, AlertTriangle,
-  Clock, Zap, FileText, Users, Wrench, Stethoscope,
+  Clock, Zap, FileText, Users, Wrench, Stethoscope, Sparkles,
 } from "lucide-react";
 import { toast } from "sonner";
 
