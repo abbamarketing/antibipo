@@ -154,6 +154,7 @@ export function StructuredTaskForm({ open, onClose, onCreated }: StructuredTaskF
     setFrequencia("semanal");
     setShowNewClient(false);
     setNewClientName("");
+    setSmartSuggested(false);
   };
 
   const handleClose = () => { reset(); onClose(); };
