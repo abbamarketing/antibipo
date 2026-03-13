@@ -406,7 +406,8 @@ export function useFlowStore() {
 
   const energyMut = useMutation({
     mutationFn: async (estado: EnergyState) => {
-      await supabase.from("sessoes_energia").insert({ estado, data: today() });
+      const { data: { user } } = await supabase.auth.getUser();
+      await supabase.from("sessoes_energia").insert({ estado, data: today(), user_id: user!.id });
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ["current_energy"] }),
   });
