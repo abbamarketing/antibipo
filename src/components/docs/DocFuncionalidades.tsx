@@ -38,7 +38,7 @@ export function DocFuncionalidades() {
 
         <div className="bg-destructive/10 rounded-md p-2.5 mt-2">
           <p className="font-mono text-[9px] text-destructive">
-            <strong>⚠️ Requisitos:</strong> Seu navegador precisa suportar a Web Speech API (Chrome, Edge, Safari). 
+            <strong>Requisitos:</strong> Seu navegador precisa suportar a Web Speech API (Chrome, Edge, Safari). 
             Ao usar pela primeira vez, o navegador pedirá permissão para acessar o microfone — conceda para que funcione.
           </p>
         </div>
