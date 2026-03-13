@@ -86,7 +86,23 @@ const RECURRENCE_OPTIONS = [
 
 type FieldValues = Record<string, string>;
 
+// ─── Keyword-based module detection ─────────────────────────
+const KEYWORD_MODULE_MAP: { keywords: string[]; module: "trabalho" | "casa" | "saude" }[] = [
+  { keywords: ["cliente", "deploy", "código", "api", "design", "meeting", "reunião", "projeto", "sprint", "dev", "review", "apresentação", "relatório", "email", "contrato"], module: "trabalho" },
+  { keywords: ["limpeza", "cozinha", "lavar", "aspirar", "organizar", "compras", "mercado", "louça", "roupa", "varrer", "lixo", "cama", "banheiro", "jardim"], module: "casa" },
+  { keywords: ["médico", "remédio", "exercício", "terapia", "exame", "consulta", "dentista", "academia", "caminhada", "fisio", "nutricionista", "sono", "medicamento", "saúde"], module: "saude" },
+];
+
+function detectModuleFromKeywords(text: string): "trabalho" | "casa" | "saude" | null {
+  const lower = text.toLowerCase();
+  for (const entry of KEYWORD_MODULE_MAP) {
+    if (entry.keywords.some((kw) => lower.includes(kw))) return entry.module;
+  }
+  return null;
+}
+
 export function StructuredTaskForm({ open, onClose, onCreated }: StructuredTaskFormProps) {
+  const { state } = useFlowStore();
   const [template, setTemplate] = useState<TemplateId | null>(null);
   const [fields, setFields] = useState<FieldValues>({});
   const [dataEntrega, setDataEntrega] = useState<Date | undefined>();
@@ -100,6 +116,7 @@ export function StructuredTaskForm({ open, onClose, onCreated }: StructuredTaskF
   const [showNewClient, setShowNewClient] = useState(false);
   const [newClientName, setNewClientName] = useState("");
   const [savingClient, setSavingClient] = useState(false);
+  const [smartSuggested, setSmartSuggested] = useState(false);
   const queryClient = useQueryClient();
 
   const [clientes, setClientes] = useState<{ id: string; nome: string }[]>([]);
