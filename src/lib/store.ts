@@ -158,7 +158,9 @@ export function useFlowStore() {
       if (error) throw error;
       return data;
     },
-    staleTime: 60 * 1000,
+    staleTime: 5 * 60 * 1000,
+    refetchOnWindowFocus: false,
+    enabled: !!userId,
   });
 
   const { data: registrosSono = [] } = useQuery({
@@ -168,7 +170,9 @@ export function useFlowStore() {
       if (error) throw error;
       return data;
     },
-    staleTime: 60 * 1000,
+    staleTime: 5 * 60 * 1000,
+    refetchOnWindowFocus: false,
+    enabled: !!userId,
   });
 
   const { data: clientes = [] } = useQuery({
@@ -178,7 +182,9 @@ export function useFlowStore() {
       if (error) throw error;
       return data;
     },
-    staleTime: 60 * 1000,
+    staleTime: 5 * 60 * 1000,
+    refetchOnWindowFocus: false,
+    enabled: !!userId,
   });
 
   const makeTempId = (prefix: string) => `tmp_${prefix}_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
