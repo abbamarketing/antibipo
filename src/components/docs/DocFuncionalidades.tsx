@@ -30,7 +30,7 @@ export function DocFuncionalidades() {
 
         <div className="bg-secondary/50 rounded-md p-2.5 mt-3">
           <p className="font-mono text-[9px] text-muted-foreground">
-            <strong>💡 Dicas:</strong> A captura funciona em português (pt-BR). Fale de forma clara e natural. 
+            <strong>Dicas:</strong> A captura funciona em português (pt-BR). Fale de forma clara e natural. 
             A tarefa será classificada automaticamente pela IA (módulo, urgência, tipo). 
             A urgência é ajustada conforme seu estado de energia: em "Básico", a urgência padrão é 1 (baixa).
           </p>
@@ -38,7 +38,7 @@ export function DocFuncionalidades() {
 
         <div className="bg-destructive/10 rounded-md p-2.5 mt-2">
           <p className="font-mono text-[9px] text-destructive">
-            <strong>⚠️ Requisitos:</strong> Seu navegador precisa suportar a Web Speech API (Chrome, Edge, Safari). 
+            <strong>Requisitos:</strong> Seu navegador precisa suportar a Web Speech API (Chrome, Edge, Safari). 
             Ao usar pela primeira vez, o navegador pedirá permissão para acessar o microfone — conceda para que funcione.
           </p>
         </div>
@@ -121,9 +121,9 @@ export function DocFuncionalidades() {
         <p>O sistema avalia seu estado de energia automaticamente com base no DayScore e humor registrado.</p>
         <div className="space-y-1.5 mt-2">
           {[
-            { icon: "⚡", name: "Foco Total", desc: "Tarefas estratégicas e de alto impacto. Concentração máxima. Todos os módulos visíveis." },
-            { icon: "☀️", name: "Modo Leve", desc: "Tarefas operacionais e administrativas. Ritmo moderado." },
-            { icon: "🔋", name: "Só o Básico", desc: "Apenas tarefas simples. Metas e widgets extras são ocultados. Modo protegido ativo." },
+            { icon: "Zap", name: "Foco Total", desc: "Tarefas estratégicas e de alto impacto. Concentração máxima. Todos os módulos visíveis." },
+            { icon: "Sun", name: "Modo Leve", desc: "Tarefas operacionais e administrativas. Ritmo moderado." },
+            { icon: "Battery", name: "Só o Básico", desc: "Apenas tarefas simples. Metas e widgets extras são ocultados. Modo protegido ativo." },
           ].map(e => (
             <div key={e.name} className="bg-secondary/50 rounded-md p-2">
               <p className="font-mono text-[10px] font-bold text-foreground">{e.icon} {e.name}</p>
@@ -139,7 +139,7 @@ export function DocFuncionalidades() {
         <p>Acesse pela aba "Saúde" na barra de navegação inferior.</p>
         {[
           { sub: "Medicamentos", desc: "Cadastre nome, dose e horários. O app envia alertas nos horários programados e rastreia se você tomou. Controle de estoque com aviso de reposição." },
-          { sub: "Check-in Emocional", desc: "Registre seu humor numa escala de 😡 (-2) a 😄 (+2). Afeta diretamente quantas tarefas aparecem e quais módulos ficam visíveis." },
+          { sub: "Check-in Emocional", desc: "Registre seu humor numa escala de -2 a +2. Afeta diretamente quantas tarefas aparecem e quais módulos ficam visíveis." },
           { sub: "Sono", desc: "Registre quando dormiu e acordou. A duração é calculada automaticamente. Se o sono for < 6h, o DailyNudge sugere reduzir o ritmo." },
           { sub: "Exercícios", desc: "Registre tipo (caminhada, corrida, academia), duração e intensidade (1-5). Avaliação pós-exercício para monitorar impacto no bem-estar." },
           { sub: "Refeições", desc: "Registre cada refeição com qualidade (1-5) e categorias. Refeições puladas são rastreadas." },
@@ -169,9 +169,9 @@ export function DocFuncionalidades() {
 
       {/* ── Financeiro ── */}
       <DocCard icon={DollarSign} title="Módulo Financeiro">
-        <p>Acesse pelo ícone de carteira (💼) no cabeçalho.</p>
+        <p>Acesse pelo ícone de carteira no cabeçalho.</p>
         <p className="mt-1"><strong>Lançamentos:</strong> Registre entradas e saídas. O saldo acumulado é calculado automaticamente.</p>
-        <p><strong>Tags:</strong> Categorize com emoji + cor para análise visual (ex: 🍕 Alimentação, 🏠 Moradia).</p>
+        <p><strong>Tags:</strong> Categorize com cor para análise visual (ex: Alimentação, Moradia).</p>
         <p><strong>Consolidação Mensal:</strong> Resumo automático com total de entradas, saídas e performance.</p>
         <p><strong>Carteira Digital:</strong> Armazene documentos e dados importantes.</p>
         <p><strong>Horizonte:</strong> Visão projetada do saldo futuro baseada nos padrões.</p>
@@ -198,7 +198,7 @@ export function DocFuncionalidades() {
 
       {/* ── Calendário ── */}
       <DocCard icon={Calendar} title="Calendário">
-        <p>Acesse pelo ícone de calendário (📅) no cabeçalho.</p>
+        <p>Acesse pelo ícone de calendário no cabeçalho.</p>
         <p className="mt-1"><strong>Eventos:</strong> Crie reuniões com título, data, horário, local e participantes.</p>
         <p><strong>Lembretes:</strong> Configure lembretes em minutos antes do evento.</p>
         <p><strong>Eventos do Dia:</strong> Na tela inicial, os próximos eventos do dia aparecem automaticamente.</p>

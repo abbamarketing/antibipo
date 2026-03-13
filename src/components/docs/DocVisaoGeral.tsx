@@ -86,10 +86,10 @@ export function DocVisaoGeral() {
         <p className="font-mono text-[10px] font-bold text-foreground mb-1">Navegadores Suportados</p>
         <div className="grid grid-cols-2 gap-1.5 mb-3">
           {[
-            { name: "Chrome 90+", push: "✅" },
-            { name: "Firefox 88+", push: "✅" },
-            { name: "Safari 15+", push: "✅ iOS 16.4+" },
-            { name: "Edge 90+", push: "✅" },
+            { name: "Chrome 90+", push: "Sim" },
+            { name: "Firefox 88+", push: "Sim" },
+            { name: "Safari 15+", push: "Sim (iOS 16.4+)" },
+            { name: "Edge 90+", push: "Sim" },
           ].map(b => (
             <div key={b.name} className="bg-secondary/50 rounded-md p-1.5 text-[10px]">
               <span className="font-medium">{b.name}</span> <span className="text-muted-foreground">Push: {b.push}</span>

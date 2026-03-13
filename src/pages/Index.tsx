@@ -21,7 +21,7 @@ import { InicioContent } from "@/components/layout/InicioContent";
 import { ModuleContent } from "@/components/layout/ModuleContent";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Zap, Sun, Battery } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 
 const energyConfig: Record<string, { icon: typeof Zap; label: string }> = {
   foco_total: { icon: Zap, label: "FOCO TOTAL" },
@@ -38,9 +38,23 @@ const Index = () => {
 
   const dayCtx = useDayContext();
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const isMobile = useIsMobile();
   const [captureOpen, setCaptureOpen] = useState(false);
-  const [activeNav, setActiveNav] = useState<NavModulo>("inicio");
+  const [activeNav, setActiveNav] = useState<NavModulo>(() => {
+    const mod = searchParams.get("mod");
+    if (mod && ["inicio", "trabalho", "casa", "saude", "metas"].includes(mod)) return mod as NavModulo;
+    return "inicio";
+  });
+
+  // Sync URL param to nav
+  useEffect(() => {
+    const mod = searchParams.get("mod");
+    if (mod && ["inicio", "trabalho", "casa", "saude", "metas"].includes(mod) && mod !== activeNav) {
+      setActiveNav(mod as NavModulo);
+      setSearchParams({}, { replace: true });
+    }
+  }, [searchParams]);
   const [showMondayReview, setShowMondayReview] = useState(false);
   const [showFridayReport, setShowFridayReport] = useState(false);
   const [lastMoodValue, setLastMoodValue] = useState<number | undefined>(todayHumor?.valor);
@@ -197,7 +211,7 @@ const Index = () => {
                   {isVeryLow && (
                     <div className="rounded-2xl bg-[hsl(210,20%,95%)] border border-border/30 p-4 text-center animate-fade-in">
                       <p className="font-body text-sm text-muted-foreground leading-relaxed">
-                        🫂 Modo protegido ativo. Mostrando apenas o essencial.
+                         Modo protegido ativo. Mostrando apenas o essencial.
                       </p>
                     </div>
                   )}
@@ -219,7 +233,7 @@ const Index = () => {
                     {isVeryLow && (
                       <div className="rounded-2xl bg-[hsl(210,20%,95%)] border border-border/30 p-4 text-center mb-4 animate-fade-in">
                         <p className="font-body text-sm text-muted-foreground leading-relaxed">
-                          🫂 Modo protegido ativo. Mostrando apenas o essencial.
+                          Modo protegido ativo. Mostrando apenas o essencial.
                         </p>
                       </div>
                     )}

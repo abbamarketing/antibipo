@@ -63,7 +63,7 @@ export function DocPops() {
       <DocCard icon={BookMarked} title="POP 8: Lançamentos Financeiros">
         <Step n={1} title="Acesse o módulo Financeiro" desc="Menu principal ou tab de contexto" />
         <Step n={2} title='Clique em "Novo Lançamento"' desc="Informe data, valor e descrição" />
-        <Step n={3} title="Adicione tags" desc="Ex: 🍕 Alimentação, 🏥 Saúde" />
+        <Step n={3} title="Adicione tags" desc="Ex: Alimentação, Saúde" />
         <Step n={4} title="Saldo automático" desc="Calculado a partir dos lançamentos" />
         <Step n={5} title="Consolidação mensal" desc="Resumo automático disponível" />
       </DocCard>

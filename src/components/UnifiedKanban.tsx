@@ -23,7 +23,7 @@ interface UnifiedKanbanProps {
 
 function getMoodMessage(mood?: number, todayCount?: number, energy?: string): string {
   if (energy === "basico" && (mood === undefined || mood === null || mood <= 0)) {
-    return "Só uma tarefa por vez. Sem pressa. 🫂";
+    return "Só uma tarefa por vez. Sem pressa.";
   }
   if (mood === undefined || mood === null) return "Todas as suas tarefas em um só lugar.";
   if (mood <= -2) return "Vai com calma hoje. Só o essencial.";
