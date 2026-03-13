@@ -13,6 +13,7 @@ import { HomeModule } from "@/components/HomeModule";
 import { HealthModule } from "@/components/HealthModule";
 import { MetasModule } from "@/components/MetasModule";
 import { StructuredTaskForm } from "@/components/StructuredTaskForm";
+import { SpeedDialFAB, type SpeedDialAction } from "@/components/SpeedDialFAB";
 import { CustomTrackers } from "@/components/CustomTrackers";
 import { WeatherWidget } from "@/components/WeatherWidget";
 import { NotificationManager } from "@/components/NotificationManager";
@@ -29,7 +30,7 @@ import { DayScore } from "@/components/DayScore";
 import { WeeklyCorrelationChart } from "@/components/WeeklyCorrelationChart";
 import { QuickOverview } from "@/components/QuickOverview";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { Plus, Zap, Sun, Battery, Wallet, Settings, CalendarDays, Activity, Target } from "lucide-react";
+import { Zap, Sun, Battery, Wallet, Settings, CalendarDays, Activity } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 /** Reusable glass-card wrapper – 24px radius + heavy blur */
@@ -387,14 +388,27 @@ const Index = () => {
           )
         )}
 
-        {/* FAB — positioned above bottom nav on mobile */}
+        {/* Speed Dial FAB */}
         {current_energy && (
-          <button
-            onClick={() => setCaptureOpen(true)}
-            className={`fixed ${isMobile ? "bottom-[4.5rem]" : "bottom-6"} right-5 w-14 h-14 rounded-full bg-primary text-primary-foreground shadow-lg shadow-primary/20 flex items-center justify-center hover:opacity-90 active:scale-90 transition-all duration-200 z-50`}
-          >
-            <Plus className="w-6 h-6" />
-          </button>
+          <SpeedDialFAB
+            onAction={(action: SpeedDialAction) => {
+              switch (action) {
+                case "tarefa":
+                  setCaptureOpen(true);
+                  break;
+                case "entrada":
+                case "saida":
+                  navigate("/financeiro");
+                  break;
+                case "evento":
+                  navigate("/calendario");
+                  break;
+                case "meta":
+                  setActiveNav("metas");
+                  break;
+              }
+            }}
+          />
         )}
 
         <StructuredTaskForm open={captureOpen} onClose={() => setCaptureOpen(false)} onCreated={() => {}} />
