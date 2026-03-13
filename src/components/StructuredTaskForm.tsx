@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { useFlowStore } from "@/lib/store";
 import { logActivity } from "@/lib/activity-log";
 import { brasiliaTimeString, brasiliaTime } from "@/lib/brasilia";
 import { format } from "date-fns";
@@ -11,7 +12,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import {
   X, Plus, CalendarIcon, Trash2, ChevronDown, Loader2, CheckCircle2,
   Repeat, UserPlus, Briefcase, Home, Heart, AlertTriangle,
-  Clock, Zap, FileText, Users, Wrench, Stethoscope,
+  Clock, Zap, FileText, Users, Wrench, Stethoscope, Sparkles,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -85,7 +86,23 @@ const RECURRENCE_OPTIONS = [
 
 type FieldValues = Record<string, string>;
 
+// ─── Keyword-based module detection ─────────────────────────
+const KEYWORD_MODULE_MAP: { keywords: string[]; module: "trabalho" | "casa" | "saude" }[] = [
+  { keywords: ["cliente", "deploy", "código", "api", "design", "meeting", "reunião", "projeto", "sprint", "dev", "review", "apresentação", "relatório", "email", "contrato"], module: "trabalho" },
+  { keywords: ["limpeza", "cozinha", "lavar", "aspirar", "organizar", "compras", "mercado", "louça", "roupa", "varrer", "lixo", "cama", "banheiro", "jardim"], module: "casa" },
+  { keywords: ["médico", "remédio", "exercício", "terapia", "exame", "consulta", "dentista", "academia", "caminhada", "fisio", "nutricionista", "sono", "medicamento", "saúde"], module: "saude" },
+];
+
+function detectModuleFromKeywords(text: string): "trabalho" | "casa" | "saude" | null {
+  const lower = text.toLowerCase();
+  for (const entry of KEYWORD_MODULE_MAP) {
+    if (entry.keywords.some((kw) => lower.includes(kw))) return entry.module;
+  }
+  return null;
+}
+
 export function StructuredTaskForm({ open, onClose, onCreated }: StructuredTaskFormProps) {
+  const { state } = useFlowStore();
   const [template, setTemplate] = useState<TemplateId | null>(null);
   const [fields, setFields] = useState<FieldValues>({});
   const [dataEntrega, setDataEntrega] = useState<Date | undefined>();
@@ -99,6 +116,7 @@ export function StructuredTaskForm({ open, onClose, onCreated }: StructuredTaskF
   const [showNewClient, setShowNewClient] = useState(false);
   const [newClientName, setNewClientName] = useState("");
   const [savingClient, setSavingClient] = useState(false);
+  const [smartSuggested, setSmartSuggested] = useState(false);
   const queryClient = useQueryClient();
 
   const [clientes, setClientes] = useState<{ id: string; nome: string }[]>([]);
@@ -108,6 +126,15 @@ export function StructuredTaskForm({ open, onClose, onCreated }: StructuredTaskF
       if (data) setClientes(data);
     });
   }, [open]);
+
+  // Smart defaults: set urgency based on current energy
+  useEffect(() => {
+    if (!open) return;
+    const energy = state.current_energy;
+    if (energy === "basico") setUrgencia(1);
+    else if (energy === "modo_leve") setUrgencia(1);
+    else setUrgencia(2);
+  }, [open, state.current_energy]);
 
   useEffect(() => {
     if (template === "domestico" as string) setModulo("casa");
@@ -127,6 +154,7 @@ export function StructuredTaskForm({ open, onClose, onCreated }: StructuredTaskF
     setFrequencia("semanal");
     setShowNewClient(false);
     setNewClientName("");
+    setSmartSuggested(false);
   };
 
   const handleClose = () => { reset(); onClose(); };
@@ -145,6 +173,18 @@ export function StructuredTaskForm({ open, onClose, onCreated }: StructuredTaskF
 
   const titulo = buildTitle();
   const isValid = template && titulo.length > 3;
+
+  // Smart module detection from keywords in built title
+  useEffect(() => {
+    if (!titulo || titulo.length < 4) return;
+    // Don't override if template already set the module
+    if (template === "domestico" || template === "saude") return;
+    const detected = detectModuleFromKeywords(titulo);
+    if (detected && detected !== modulo && !smartSuggested) {
+      setModulo(detected);
+      setSmartSuggested(true);
+    }
+  }, [titulo, template]);
 
   const SUBTASK_OPTIONS = useMemo(() => {
     switch (template) {
@@ -473,9 +513,17 @@ export function StructuredTaskForm({ open, onClose, onCreated }: StructuredTaskF
 
                   {/* Urgência */}
                   <div>
-                    <label className="font-mono text-[10px] text-muted-foreground tracking-wider block mb-1.5">
-                      URGÊNCIA
-                    </label>
+                    <div className="flex items-center gap-2 mb-1.5">
+                      <label className="font-mono text-[10px] text-muted-foreground tracking-wider">
+                        URGÊNCIA
+                      </label>
+                      {state.current_energy && state.current_energy !== "foco_total" && (
+                        <span className="inline-flex items-center gap-1 text-[8px] font-mono text-primary/70">
+                          <Sparkles className="w-2.5 h-2.5" />
+                          ajustada pela energia
+                        </span>
+                      )}
+                    </div>
                     <div className="flex gap-2">
                       {URGENCIA_OPTIONS.map((opt) => {
                         const UIcon = opt.icon;
