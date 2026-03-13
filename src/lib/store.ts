@@ -388,6 +388,7 @@ export function useFlowStore() {
           horario_acordar: type === "acordar" ? nowIso : null,
           horario_dormir: type === "dormir" ? nowIso : null,
           qualidade: type === "acordar" ? (qualidade ?? null) : null,
+          user_id: userId ?? "",
         };
 
         return [optimisticRegistro, ...current];
