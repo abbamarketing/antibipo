@@ -238,6 +238,8 @@ export function StructuredTaskForm({ open, onClose, onCreated }: StructuredTaskF
     setSaving(true);
 
     try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("Not authenticated");
       const { data: mainTask, error } = await supabase.from("tasks").insert({
         titulo,
         modulo: modulo as any,
@@ -252,6 +254,7 @@ export function StructuredTaskForm({ open, onClose, onCreated }: StructuredTaskF
         data_limite: dataEntrega ? format(dataEntrega, "yyyy-MM-dd") : null,
         recorrente,
         frequencia_recorrencia: recorrente ? frequencia : null,
+        user_id: user.id,
       } as any).select().single();
 
       if (error) throw error;
