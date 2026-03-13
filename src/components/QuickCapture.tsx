@@ -30,11 +30,13 @@ export function QuickCapture({ open, onClose, onActionComplete }: QuickCapturePr
   const [input, setInput] = useState("");
   const [feedback, setFeedback] = useState<FeedbackState>("idle");
   const [lastResponse, setLastResponse] = useState("");
-  const [history, setHistory] = useState<{ text: string; response: string; tipo: string }[]>([]);
+  const [adaptationNote, setAdaptationNote] = useState<string | null>(null);
+  const [history, setHistory] = useState<{ text: string; response: string; tipo: string; adapted?: boolean }[]>([]);
   const [isListening, setIsListening] = useState(false);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const historyRef = useRef<HTMLDivElement>(null);
   const recognitionRef = useRef<any>(null);
+  const dayCtx = useDayContext();
 
   useEffect(() => {
     if (open) {
