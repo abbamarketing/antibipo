@@ -273,6 +273,7 @@ export function useFlowStore() {
         horario_tomado: brasiliaTime().toISOString(),
         medicamento_id,
         tomado: true,
+        user_id: userId ?? "",
       };
       qc.setQueryData<RegistroMedicamento[]>(["registros_medicamento", todayStr], [optimisticRegistro, ...previousRegistros]);
       return { previousRegistros, todayStr };
