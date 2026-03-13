@@ -173,6 +173,18 @@ export function StructuredTaskForm({ open, onClose, onCreated }: StructuredTaskF
   const titulo = buildTitle();
   const isValid = template && titulo.length > 3;
 
+  // Smart module detection from keywords in built title
+  useEffect(() => {
+    if (!titulo || titulo.length < 4) return;
+    // Don't override if template already set the module
+    if (template === "domestico" || template === "saude") return;
+    const detected = detectModuleFromKeywords(titulo);
+    if (detected && detected !== modulo && !smartSuggested) {
+      setModulo(detected);
+      setSmartSuggested(true);
+    }
+  }, [titulo, template]);
+
   const SUBTASK_OPTIONS = useMemo(() => {
     switch (template) {
       case "acao_cliente":
