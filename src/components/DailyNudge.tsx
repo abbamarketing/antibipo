@@ -188,9 +188,9 @@ export function DailyNudge() {
     <div className="space-y-1.5">
       {/* Context alerts */}
       {contextAlerts.map((alert, i) => (
-        <div key={i} className="flex items-start gap-2 rounded-xl bg-[hsl(210,20%,95%)] dark:bg-[hsl(210,10%,22%)] px-3 py-2 animate-fade-in">
+        <div key={i} className="flex items-start gap-2 rounded-xl bg-secondary/60 px-3 py-2 animate-fade-in">
           {alert.includes("DayScore") ? (
-            <TrendingUp className="w-3.5 h-3.5 text-amber-500 mt-0.5 shrink-0" />
+            <TrendingUp className="w-3.5 h-3.5 text-primary mt-0.5 shrink-0" />
           ) : (
             <AlertTriangle className="w-3.5 h-3.5 text-amber-500 mt-0.5 shrink-0" />
           )}
