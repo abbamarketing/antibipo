@@ -1,5 +1,5 @@
 import { useState, useMemo, useCallback, useEffect, useRef } from "react";
-import { useFlowStore, type EnergyState } from "@/lib/store";
+import { useFlowStore, type Task, type EnergyState } from "@/lib/store";
 import { useDayContext } from "@/hooks/use-day-context";
 import { useCasaStore } from "@/lib/casa-store";
 import { useTrackerStore } from "@/lib/tracker-store";
