@@ -41,6 +41,8 @@ export function useTrackerStore() {
       if (error) throw error;
       return (data || []) as unknown as CustomTracker[];
     },
+    staleTime: 5 * 60 * 1000,
+    refetchOnWindowFocus: false,
   });
 
   const { data: registros = [] } = useQuery({
