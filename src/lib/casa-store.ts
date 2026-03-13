@@ -44,6 +44,8 @@ export function useCasaStore() {
       if (error) throw error;
       return (data || []) as unknown as TarefaCasa[];
     },
+    staleTime: 5 * 60 * 1000,
+    refetchOnWindowFocus: false,
   });
 
   const { data: registros = [] } = useQuery<RegistroLimpeza[]>({
