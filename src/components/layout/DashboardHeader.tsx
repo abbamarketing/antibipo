@@ -3,7 +3,7 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { brasiliaTime } from "@/lib/brasilia";
 import { WeatherWidget } from "@/components/WeatherWidget";
 import { DailyNudge } from "@/components/DailyNudge";
-import { AdaptiveGreeting } from "./AdaptiveGreeting";
+
 import { Wallet, Settings, CalendarDays } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
