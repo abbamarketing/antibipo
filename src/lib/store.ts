@@ -463,7 +463,7 @@ export function useFlowStore() {
   );
 
   const pendingMeds = useCallback(() => {
-    const currentHour = new Date().getHours();
+    const currentHour = brasiliaTime().getHours();
     return medicamentos.flatMap((med) =>
       med.horarios
         .filter((h) => {
