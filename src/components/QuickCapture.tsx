@@ -2,7 +2,8 @@ import { useState, useRef, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { logActivity } from "@/lib/activity-log";
 import { brasiliaTimeString, brasiliaISO } from "@/lib/brasilia";
-import { X, Send, Loader2, CheckCircle2, AlertCircle, Mic, MicOff } from "lucide-react";
+import { useDayContext } from "@/hooks/use-day-context";
+import { X, Send, Loader2, CheckCircle2, AlertCircle, Mic, MicOff, Brain } from "lucide-react";
 import { toast } from "sonner";
 
 interface QuickCaptureProps {
@@ -29,11 +30,13 @@ export function QuickCapture({ open, onClose, onActionComplete }: QuickCapturePr
   const [input, setInput] = useState("");
   const [feedback, setFeedback] = useState<FeedbackState>("idle");
   const [lastResponse, setLastResponse] = useState("");
-  const [history, setHistory] = useState<{ text: string; response: string; tipo: string }[]>([]);
+  const [adaptationNote, setAdaptationNote] = useState<string | null>(null);
+  const [history, setHistory] = useState<{ text: string; response: string; tipo: string; adapted?: boolean }[]>([]);
   const [isListening, setIsListening] = useState(false);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const historyRef = useRef<HTMLDivElement>(null);
   const recognitionRef = useRef<any>(null);
+  const dayCtx = useDayContext();
 
   useEffect(() => {
     if (open) {
@@ -129,17 +132,17 @@ export function QuickCapture({ open, onClose, onActionComplete }: QuickCapturePr
 
   if (!open) return null;
 
-  const executeAction = async (result: ActionResult) => {
+  const executeAction = async (result: ActionResult): Promise<string | null> => {
     const { tipo, dados } = result;
     const today = brasiliaISO();
 
     try {
       switch (tipo) {
         case "financeiro": {
-          const now = new Date();
-          const dia = now.getDate();
-          const mes = now.getMonth() + 1;
-          const ano = now.getFullYear();
+          const bDate = new Date(brasiliaISO() + "T12:00:00");
+          const dia = bDate.getDate();
+          const mes = bDate.getMonth() + 1;
+          const ano = bDate.getFullYear();
           await supabase.from("fc_lancamentos").upsert({
             ano, mes, dia,
             entrada: dados.tipo_lancamento === "entrada" ? dados.valor : 0,
@@ -240,6 +243,29 @@ export function QuickCapture({ open, onClose, onActionComplete }: QuickCapturePr
             await supabase.from("tasks").insert(subtaskInserts as any);
           }
 
+          // Classify with AI context (mood/energy aware)
+          if (mainTask) {
+            try {
+              const { data: classifyData } = await supabase.functions.invoke("classify-task", {
+                body: {
+                  titulo: dados.titulo || input,
+                  dayContext: {
+                    mood: dayCtx.moodLabel,
+                    energy: dayCtx.energy || undefined,
+                    alertLevel: dayCtx.alertLevel,
+                    dayScore: dayCtx.dayScore,
+                  },
+                },
+              });
+              if (classifyData?.classification) {
+                await supabase.from("tasks").update(classifyData.classification).eq("id", (mainTask as any).id);
+              }
+              if (classifyData?.adaptation_note) {
+                return classifyData.adaptation_note as string;
+              }
+            } catch {}
+          }
+
           logActivity("tarefa_capturada", {
             titulo: dados.titulo,
             modulo: dados.modulo || "trabalho",
@@ -275,7 +301,7 @@ export function QuickCapture({ open, onClose, onActionComplete }: QuickCapturePr
             peso_kg: dados.peso_kg,
             data: today,
           });
-          await supabase.from("profiles").update({ peso_kg: dados.peso_kg, updated_at: new Date().toISOString() } as any).eq("user_id", user.id);
+          await supabase.from("profiles").update({ peso_kg: dados.peso_kg, updated_at: new Date(brasiliaISO() + "T12:00:00").toISOString() } as any).eq("user_id", user.id);
           logActivity("captura_rapida", { tipo: "peso", peso_kg: dados.peso_kg });
           break;
         }
@@ -305,13 +331,14 @@ export function QuickCapture({ open, onClose, onActionComplete }: QuickCapturePr
           if (!user) throw new Error("Nao autenticado");
           const prazoMap: Record<string, number> = { "1_mes": 30, "6_meses": 180, "1_ano": 365 };
           const days = prazoMap[dados.meta_prazo || "6_meses"] || 180;
-          const alvo = new Date();
+          const alvo = new Date(brasiliaISO() + "T12:00:00");
           alvo.setDate(alvo.getDate() + days);
+          const alvoStr = alvo.toISOString().split("T")[0];
           await supabase.from("metas_pessoais").insert({
             user_id: user.id,
             titulo: dados.meta_titulo || input,
             prazo: dados.meta_prazo || "6_meses",
-            data_alvo: alvo.toISOString().split("T")[0],
+            data_alvo: alvoStr,
           });
           logActivity("captura_rapida", { tipo: "meta", titulo: dados.meta_titulo, prazo: dados.meta_prazo });
           break;
@@ -419,6 +446,7 @@ export function QuickCapture({ open, onClose, onActionComplete }: QuickCapturePr
           break;
         }
       }
+      return null;
     } catch (err) {
       console.error("Action execution error:", err);
       throw err;
@@ -509,12 +537,20 @@ export function QuickCapture({ open, onClose, onActionComplete }: QuickCapturePr
         return;
       }
 
+      setFeedback("idle");
+      setLastResponse("");
+      setAdaptationNote(null);
+
       const result = data as ActionResult;
-      await executeAction(result);
+      const adaptNote = await executeAction(result);
 
       setFeedback("success");
-      setLastResponse(result.resposta);
-      setHistory((prev) => [...prev, { text, response: result.resposta, tipo: result.tipo }]);
+      const fullResponse = adaptNote
+        ? `${result.resposta}\n\n🧠 ${adaptNote}`
+        : result.resposta;
+      setLastResponse(fullResponse);
+      setAdaptationNote(adaptNote);
+      setHistory((prev) => [...prev, { text, response: fullResponse, tipo: result.tipo, adapted: !!adaptNote }]);
       onActionComplete?.();
 
       setTimeout(() => setFeedback("idle"), 2000);
@@ -586,6 +622,11 @@ export function QuickCapture({ open, onClose, onActionComplete }: QuickCapturePr
                       <span className={`font-mono text-[9px] tracking-wider ${tipoColor[h.tipo] || "text-primary"}`}>
                         {tipoLabel[h.tipo] || h.tipo}
                       </span>
+                      {h.adapted && (
+                        <span className="flex items-center gap-0.5 text-[9px] font-mono text-amber-600">
+                          <Brain className="w-2.5 h-2.5" /> adaptado
+                        </span>
+                      )}
                     </div>
                     <p className="text-xs font-body text-muted-foreground">{h.response}</p>
                   </div>

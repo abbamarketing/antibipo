@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useCallback, useState } from "react";
 import type { Database } from "@/integrations/supabase/types";
+import { brasiliaISO, brasiliaTime } from "@/lib/brasilia";
 
 // Re-export types from DB enums
 export type EnergyState = Database["public"]["Enums"]["energy_state"];
@@ -21,7 +22,7 @@ export type RegistroHumor = Database["public"]["Tables"]["registros_humor"]["Row
 export type SessaoEnergia = Database["public"]["Tables"]["sessoes_energia"]["Row"];
 
 export function today(): string {
-  return new Date().toISOString().split("T")[0];
+  return brasiliaISO();
 }
 
 export function useFlowStore() {
@@ -126,7 +127,7 @@ export function useFlowStore() {
 
       const optimisticTask: Task = {
         id: makeTempId("task"),
-        criado_em: new Date().toISOString(),
+        criado_em: brasiliaTime().toISOString(),
         cliente_id: task.cliente_id ?? null,
         data_limite: task.data_limite ?? null,
         depende_de: task.depende_de ?? null,
@@ -215,7 +216,7 @@ export function useFlowStore() {
       const previousMeds = qc.getQueryData<Medicamento[]>(["medicamentos"]) || [];
       const optimisticMed: Medicamento = {
         id: makeTempId("med"),
-        criado_em: new Date().toISOString(),
+        criado_em: brasiliaTime().toISOString(),
         dose: med.dose ?? "",
         estoque: med.estoque ?? 0,
         horarios: med.horarios ?? [],
@@ -238,7 +239,7 @@ export function useFlowStore() {
       const { error } = await supabase.from("registros_medicamento").insert({
         medicamento_id,
         horario_previsto,
-        horario_tomado: new Date().toISOString(),
+        horario_tomado: brasiliaTime().toISOString(),
         tomado: true,
       });
       if (error) throw error;
@@ -251,7 +252,7 @@ export function useFlowStore() {
         id: makeTempId("medreg"),
         data: todayStr,
         horario_previsto,
-        horario_tomado: new Date().toISOString(),
+        horario_tomado: brasiliaTime().toISOString(),
         medicamento_id,
         tomado: true,
       };
@@ -305,12 +306,12 @@ export function useFlowStore() {
 
       if (type === "dormir") {
         if (existing) {
-          await supabase.from("registros_sono").update({ horario_dormir: new Date().toISOString() }).eq("id", existing.id);
+          await supabase.from("registros_sono").update({ horario_dormir: brasiliaTime().toISOString() }).eq("id", existing.id);
         } else {
-          await supabase.from("registros_sono").insert({ data: todayStr, horario_dormir: new Date().toISOString() });
+          await supabase.from("registros_sono").insert({ data: todayStr, horario_dormir: brasiliaTime().toISOString() });
         }
       } else {
-        const now = new Date();
+        const now = brasiliaTime();
         if (existing) {
           const duracao = existing.horario_dormir
             ? Math.round((now.getTime() - new Date(existing.horario_dormir).getTime()) / 60000)
@@ -332,7 +333,7 @@ export function useFlowStore() {
     onMutate: async ({ type, qualidade }) => {
       await qc.cancelQueries({ queryKey: ["registros_sono"] });
       const previousSono = qc.getQueryData<RegistroSono[]>(["registros_sono"]) || [];
-      const nowIso = new Date().toISOString();
+      const nowIso = brasiliaTime().toISOString();
       const todayStr = today();
 
       qc.setQueryData<RegistroSono[]>(["registros_sono"], (current = []) => {
@@ -388,7 +389,7 @@ export function useFlowStore() {
   // ===== DERIVED =====
   const setEnergy = useCallback((energy: EnergyState) => {
     // Optimistically update the cache for instant reactivity
-    qc.setQueryData(["current_energy"], { estado: energy, hora_inicio: new Date().toISOString(), data: today() });
+    qc.setQueryData(["current_energy"], { estado: energy, hora_inicio: brasiliaTime().toISOString(), data: today() });
     energyMut.mutate(energy);
   }, [energyMut, qc]);
 
@@ -405,7 +406,7 @@ export function useFlowStore() {
 
   const completeTask = useCallback(
     (id: string) => {
-      updateTaskMut.mutate({ id, changes: { status: "feito", feito_em: new Date().toISOString() } });
+      updateTaskMut.mutate({ id, changes: { status: "feito", feito_em: brasiliaTime().toISOString() } });
     },
     [updateTaskMut]
   );
@@ -462,7 +463,7 @@ export function useFlowStore() {
   );
 
   const pendingMeds = useCallback(() => {
-    const currentHour = new Date().getHours();
+    const currentHour = brasiliaTime().getHours();
     return medicamentos.flatMap((med) =>
       med.horarios
         .filter((h) => {
@@ -493,10 +494,10 @@ export function useFlowStore() {
   const todayHumor = registrosHumor.find((r) => r.data === today());
 
   // AI classify function
-  const classifyTask = useCallback(async (taskId: string, titulo: string) => {
+  const classifyTask = useCallback(async (taskId: string, titulo: string, dayContext?: { mood?: string; energy?: string; alertLevel?: string; dayScore?: number }) => {
     try {
       const { data, error } = await supabase.functions.invoke("classify-task", {
-        body: { titulo },
+        body: { titulo, dayContext },
       });
       if (error) throw error;
       if (data?.ai_provider) {
@@ -506,19 +507,22 @@ export function useFlowStore() {
       if (data?.classification) {
         updateTaskMut.mutate({ id: taskId, changes: data.classification });
       }
+      return data?.adaptation_note || null;
     } catch (e) {
       console.error("AI classification failed:", e);
+      return null;
     }
   }, [updateTaskMut]);
 
   // Add task with AI classification
   const addTaskWithAI = useCallback(
-    async (task: Omit<Database["public"]["Tables"]["tasks"]["Insert"], "id" | "criado_em">) => {
+    async (task: Omit<Database["public"]["Tables"]["tasks"]["Insert"], "id" | "criado_em">, dayContext?: { mood?: string; energy?: string; alertLevel?: string; dayScore?: number }) => {
       const data = await addTaskMut.mutateAsync(task);
       if (data) {
-        // Classify in background
-        classifyTask(data.id, data.titulo);
+        // Classify in background, return adaptation note
+        return classifyTask(data.id, data.titulo, dayContext);
       }
+      return null;
     },
     [addTaskMut, classifyTask]
   );
