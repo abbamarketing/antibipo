@@ -1,6 +1,6 @@
-import { Briefcase, Home, Heart, Target } from "lucide-react";
+import { Briefcase, Home, Heart, Target, LayoutDashboard } from "lucide-react";
 
-export type NavModulo = "trabalho" | "casa" | "saude" | "metas";
+export type NavModulo = "inicio" | "trabalho" | "casa" | "saude" | "metas";
 
 interface ModuleNavProps {
   current: NavModulo;
@@ -8,6 +8,7 @@ interface ModuleNavProps {
 }
 
 const modules: { key: NavModulo; label: string; icon: typeof Briefcase }[] = [
+  { key: "inicio", label: "INÍCIO", icon: LayoutDashboard },
   { key: "trabalho", label: "TRABALHO", icon: Briefcase },
   { key: "casa", label: "CASA", icon: Home },
   { key: "saude", label: "SAÚDE", icon: Heart },
