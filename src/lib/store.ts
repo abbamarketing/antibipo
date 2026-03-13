@@ -311,7 +311,7 @@ export function useFlowStore() {
           await supabase.from("registros_sono").insert({ data: todayStr, horario_dormir: brasiliaTime().toISOString() });
         }
       } else {
-        const now = new Date();
+        const now = brasiliaTime();
         if (existing) {
           const duracao = existing.horario_dormir
             ? Math.round((now.getTime() - new Date(existing.horario_dormir).getTime()) / 60000)
