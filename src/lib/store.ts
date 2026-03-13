@@ -239,7 +239,7 @@ export function useFlowStore() {
       const { error } = await supabase.from("registros_medicamento").insert({
         medicamento_id,
         horario_previsto,
-        horario_tomado: new Date().toISOString(),
+        horario_tomado: brasiliaTime().toISOString(),
         tomado: true,
       });
       if (error) throw error;
