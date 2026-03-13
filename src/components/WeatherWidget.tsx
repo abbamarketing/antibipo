@@ -66,6 +66,7 @@ async function reverseGeocode(lat: number, lon: number): Promise<string> {
 
 interface WeatherWidgetProps {
   compact?: boolean;
+  inline?: boolean;
 }
 
 export function WeatherWidget({ compact = false }: WeatherWidgetProps) {
