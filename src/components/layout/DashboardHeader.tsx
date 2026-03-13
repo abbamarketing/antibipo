@@ -26,9 +26,7 @@ export function DashboardHeader({ isCrisis, hasEnergy, dayScore, alertLevel, hid
   const navigate = useNavigate();
   const isMobile = useIsMobile();
   const now = brasiliaTime();
-  const dayNum = format(now, "d");
-  const dayName = format(now, "EEE", { locale: ptBR });
-  const monthYear = format(now, "MMM yyyy", { locale: ptBR });
+  const formatted = format(now, "EEEE, d 'de' MMMM", { locale: ptBR });
 
   const visibleNavItems = ALL_NAV_ITEMS.filter((item) => !hiddenNavItems.includes(item.key));
 
@@ -36,13 +34,7 @@ export function DashboardHeader({ isCrisis, hasEnergy, dayScore, alertLevel, hid
     <header className="mb-5">
       <div className="flex items-center justify-between mb-1">
         <div className="flex items-center gap-3">
-          <div className="flex items-baseline gap-1.5">
-            <span className="font-mono text-2xl font-bold text-foreground leading-none">{dayNum}</span>
-            <div className="flex flex-col leading-none">
-              <span className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground">{dayName}</span>
-              <span className="font-mono text-[10px] text-muted-foreground/60">{monthYear}</span>
-            </div>
-          </div>
+          <span className="font-mono text-xs text-muted-foreground tracking-wide">{formatted}</span>
           {isMobile && !isCrisis && <WeatherWidget compact />}
         </div>
         <div className="flex items-center gap-1">
