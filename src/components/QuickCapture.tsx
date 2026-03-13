@@ -622,6 +622,11 @@ export function QuickCapture({ open, onClose, onActionComplete }: QuickCapturePr
                       <span className={`font-mono text-[9px] tracking-wider ${tipoColor[h.tipo] || "text-primary"}`}>
                         {tipoLabel[h.tipo] || h.tipo}
                       </span>
+                      {h.adapted && (
+                        <span className="flex items-center gap-0.5 text-[9px] font-mono text-amber-600">
+                          <Brain className="w-2.5 h-2.5" /> adaptado
+                        </span>
+                      )}
                     </div>
                     <p className="text-xs font-body text-muted-foreground">{h.response}</p>
                   </div>
