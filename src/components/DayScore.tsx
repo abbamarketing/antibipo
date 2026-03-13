@@ -87,89 +87,46 @@ export function DayScore() {
         onClick={() => setExpanded(!expanded)}
         className="w-full rounded-xl p-4 text-left transition-all duration-200 hover:bg-secondary/20 active:scale-[0.99]"
       >
-        {isMobile ? (
-          /* ── Mobile: stacked layout ── */
-          <div className="space-y-4">
-            {/* Row 1: Gauge centered + tasks done */}
-            <div className="flex items-center justify-center gap-6">
-              <CircularGauge score={ctx.dayScore} alertLevel={ctx.alertLevel} moodLabel={ctx.moodLabel} size={100} />
-              <div className="flex flex-col items-center gap-1">
-                <CheckCircle2 className={`w-5 h-5 ${ctx.tasksCompletedToday > 0 ? "text-primary" : "text-muted-foreground/30"}`} />
-                <span className="text-lg font-mono font-bold">{ctx.tasksCompletedToday}</span>
-                <span className="text-[10px] font-mono text-muted-foreground/60">feitas</span>
-              </div>
-            </div>
-
-            {/* Row 2: Module indicators — 2x2 grid */}
-            <div className="grid grid-cols-2 gap-2">
-              <ModuleIndicator
-                icon={<MoodIcon className={`w-4 h-4 ${moodCfg.color}`} />}
-                label="Humor"
-                value={ctx.moodLabel === "neutro" ? "—" : ctx.moodLabel.replace("_", " ")}
-              />
-              <ModuleIndicator
-                icon={<Pill className={`w-4 h-4 ${ctx.medsAdherence >= 100 ? "text-green-500" : ctx.medsAdherence > 0 ? "text-amber-500" : "text-muted-foreground"}`} />}
-                label="Remédios"
-                value={`${ctx.medsTaken}/${ctx.medsTotal}`}
-              />
-              <ModuleIndicator
-                icon={<Moon className={`w-4 h-4 ${ctx.sleepQuality === 3 ? "text-green-500" : ctx.sleepQuality === 2 ? "text-amber-500" : ctx.sleepQuality === 1 ? "text-destructive" : "text-muted-foreground/30"}`} />}
-                label="Sono"
-                value={ctx.sleepHours ? `${ctx.sleepHours.toFixed(0)}h` : "—"}
-              />
-              <ModuleIndicator
-                icon={<Dumbbell className={`w-4 h-4 ${ctx.exerciseDone ? "text-green-500" : "text-muted-foreground/30"}`} />}
-                label="Exercício"
-                value={ctx.exerciseDone ? `${ctx.exerciseMinutes}m` : "—"}
-              />
-            </div>
-
-            {/* Expand hint */}
-            <div className="flex items-center justify-center">
-              {expanded
-                ? <ChevronDown className="w-4 h-4 text-muted-foreground/40" />
-                : <ChevronRight className="w-4 h-4 text-muted-foreground/40" />
-              }
+        <div className="space-y-4">
+          <div className="flex items-center justify-center gap-6">
+            <CircularGauge score={ctx.dayScore} alertLevel={ctx.alertLevel} moodLabel={ctx.moodLabel} size={100} />
+            <div className="flex flex-col items-center gap-1">
+              <CheckCircle2 className={`w-5 h-5 ${ctx.tasksCompletedToday > 0 ? "text-primary" : "text-muted-foreground/30"}`} />
+              <span className="text-lg font-mono font-bold">{ctx.tasksCompletedToday}</span>
+              <span className="text-[10px] font-mono text-muted-foreground/60">feitas</span>
             </div>
           </div>
-        ) : (
-          /* ── Desktop: horizontal layout ── */
-          <div className="flex items-center gap-4">
-            <CircularGauge score={ctx.dayScore} alertLevel={ctx.alertLevel} moodLabel={ctx.moodLabel} />
 
-            <div className="flex-1 grid grid-cols-2 gap-2">
-              <ModuleIndicator
-                icon={<MoodIcon className={`w-4 h-4 ${moodCfg.color}`} />}
-                label="Humor"
-                value={ctx.moodLabel === "neutro" ? "—" : ctx.moodLabel.replace("_", " ")}
-              />
-              <ModuleIndicator
-                icon={<Pill className={`w-4 h-4 ${ctx.medsAdherence >= 100 ? "text-green-500" : ctx.medsAdherence > 0 ? "text-amber-500" : "text-muted-foreground"}`} />}
-                label="Remédios"
-                value={`${ctx.medsTaken}/${ctx.medsTotal}`}
-              />
-              <ModuleIndicator
-                icon={<Moon className={`w-4 h-4 ${ctx.sleepQuality === 3 ? "text-green-500" : ctx.sleepQuality === 2 ? "text-amber-500" : ctx.sleepQuality === 1 ? "text-destructive" : "text-muted-foreground/30"}`} />}
-                label="Sono"
-                value={ctx.sleepHours ? `${ctx.sleepHours.toFixed(0)}h` : "—"}
-              />
-              <ModuleIndicator
-                icon={<Dumbbell className={`w-4 h-4 ${ctx.exerciseDone ? "text-green-500" : "text-muted-foreground/30"}`} />}
-                label="Exercício"
-                value={ctx.exerciseDone ? `${ctx.exerciseMinutes}m` : "—"}
-              />
-            </div>
-
-            <div className="flex flex-col items-center gap-2">
-              <div className="flex flex-col items-center">
-                <CheckCircle2 className={`w-4 h-4 ${ctx.tasksCompletedToday > 0 ? "text-primary" : "text-muted-foreground/30"}`} />
-                <span className="text-xs font-mono font-bold mt-0.5">{ctx.tasksCompletedToday}</span>
-                <span className="text-[10px] font-mono text-muted-foreground/60">feitas</span>
-              </div>
-              {expanded ? <ChevronDown className="w-4 h-4 text-muted-foreground/40" /> : <ChevronRight className="w-4 h-4 text-muted-foreground/40" />}
-            </div>
+          <div className="grid grid-cols-2 gap-2">
+            <ModuleIndicator
+              icon={<MoodIcon className={`w-4 h-4 ${moodCfg.color}`} />}
+              label="Humor"
+              value={ctx.moodLabel === "neutro" ? "—" : ctx.moodLabel.replace("_", " ")}
+            />
+            <ModuleIndicator
+              icon={<Pill className={`w-4 h-4 ${ctx.medsAdherence >= 100 ? "text-green-500" : ctx.medsAdherence > 0 ? "text-amber-500" : "text-muted-foreground"}`} />}
+              label="Remédios"
+              value={`${ctx.medsTaken}/${ctx.medsTotal}`}
+            />
+            <ModuleIndicator
+              icon={<Moon className={`w-4 h-4 ${ctx.sleepQuality === 3 ? "text-green-500" : ctx.sleepQuality === 2 ? "text-amber-500" : ctx.sleepQuality === 1 ? "text-destructive" : "text-muted-foreground/30"}`} />}
+              label="Sono"
+              value={ctx.sleepHours ? `${ctx.sleepHours.toFixed(0)}h` : "—"}
+            />
+            <ModuleIndicator
+              icon={<Dumbbell className={`w-4 h-4 ${ctx.exerciseDone ? "text-green-500" : "text-muted-foreground/30"}`} />}
+              label="Exercício"
+              value={ctx.exerciseDone ? `${ctx.exerciseMinutes}m` : "—"}
+            />
           </div>
-        )}
+
+          <div className="flex items-center justify-center">
+            {expanded
+              ? <ChevronDown className="w-4 h-4 text-muted-foreground/40" />
+              : <ChevronRight className="w-4 h-4 text-muted-foreground/40" />
+            }
+          </div>
+        </div>
       </button>
 
       {/* Expanded details */}
