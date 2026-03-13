@@ -26,11 +26,6 @@ export function ContextWidgets({ isCrisis, isLowState = false, activeNav, pendin
         <DayScore />
       </GlassCard>
 
-      {!isCrisis && !isLowState && !isMobile && (
-        <GlassCard>
-          <WeatherWidget />
-        </GlassCard>
-      )}
 
       <MoodCheckIn onMoodUpdated={onMoodUpdated} />
 
