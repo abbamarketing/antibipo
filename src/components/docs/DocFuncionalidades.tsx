@@ -30,7 +30,7 @@ export function DocFuncionalidades() {
 
         <div className="bg-secondary/50 rounded-md p-2.5 mt-3">
           <p className="font-mono text-[9px] text-muted-foreground">
-            <strong>💡 Dicas:</strong> A captura funciona em português (pt-BR). Fale de forma clara e natural. 
+            <strong>Dicas:</strong> A captura funciona em português (pt-BR). Fale de forma clara e natural. 
             A tarefa será classificada automaticamente pela IA (módulo, urgência, tipo). 
             A urgência é ajustada conforme seu estado de energia: em "Básico", a urgência padrão é 1 (baixa).
           </p>
