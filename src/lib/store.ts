@@ -98,7 +98,9 @@ export function useFlowStore() {
       if (error) throw error;
       return data;
     },
-    staleTime: 30 * 1000, // 30s — prevents constant refetching that causes flickering
+    staleTime: 2 * 60 * 1000,
+    refetchOnWindowFocus: false,
+    enabled: !!userId,
   });
 
   // Derive current energy: valid if session < 4h old
@@ -120,7 +122,9 @@ export function useFlowStore() {
       if (error) throw error;
       return data;
     },
-    staleTime: 30 * 1000,
+    staleTime: 2 * 60 * 1000,
+    refetchOnWindowFocus: false,
+    enabled: !!userId,
   });
 
   const { data: medicamentos = [] } = useQuery({
@@ -130,7 +134,9 @@ export function useFlowStore() {
       if (error) throw error;
       return data;
     },
-    staleTime: 60 * 1000,
+    staleTime: 5 * 60 * 1000,
+    refetchOnWindowFocus: false,
+    enabled: !!userId,
   });
 
   const { data: registrosMed = [] } = useQuery({
@@ -140,7 +146,9 @@ export function useFlowStore() {
       if (error) throw error;
       return data;
     },
-    staleTime: 30 * 1000,
+    staleTime: 2 * 60 * 1000,
+    refetchOnWindowFocus: false,
+    enabled: !!userId,
   });
 
   const { data: registrosHumor = [] } = useQuery({
