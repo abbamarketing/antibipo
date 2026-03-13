@@ -270,9 +270,13 @@ export function UnifiedKanban({ energy, lastMoodValue, preferredModule = null }:
   // The focused task for the "hoje" column
   const focusedTask = todayTasks[focusIndex] || null;
 
+  // Determine visual tone
+  const isLowState = energy === "basico" || (lastMoodValue !== undefined && lastMoodValue !== null && lastMoodValue <= 0);
+  const calmClass = isLowState ? "opacity-90" : "";
+
   return (
     <>
-      <div className="space-y-4 animate-fade-in">
+      <div className={`space-y-4 animate-fade-in ${calmClass}`}>
         {/* Header */}
         <div>
           <h2 className="font-mono text-lg font-bold tracking-tight flex items-center gap-2">
