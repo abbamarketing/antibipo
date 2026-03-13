@@ -17,7 +17,7 @@ const ACTIONS: { key: SpeedDialAction; label: string; icon: typeof Plus; color: 
   { key: "entrada", label: "Entrada", icon: ArrowDownLeft, color: "bg-green-500/90 text-white" },
   { key: "saida", label: "Saída", icon: ArrowUpRight, color: "bg-red-500/90 text-white" },
   { key: "evento", label: "Evento", icon: CalendarPlus, color: "bg-purple-500/90 text-white" },
-  { key: "meta", label: "Rep. Meta", icon: Target, color: "bg-amber-500/90 text-white" },
+  
 ];
 
 export function SpeedDialFAB({ onAction }: SpeedDialFABProps) {
