@@ -162,7 +162,7 @@ const Index = () => {
             <EnergyStateSelector current={current_energy} onSelect={handleSetEnergy} />
           ) : (
             <div className="space-y-4">
-              {/* Energy indicator */}
+              {/* Energy indicator (read-only) */}
               <div className="flex items-center gap-2">
                 {current_energy && (() => {
                   const cfg = energyConfig[current_energy];
@@ -174,13 +174,6 @@ const Index = () => {
                     </>
                   );
                 })()}
-                <span className="text-muted-foreground/30">·</span>
-                <button
-                  onClick={() => handleSetEnergy(current_energy === "foco_total" ? "modo_leve" : current_energy === "modo_leve" ? "basico" : "foco_total")}
-                  className="font-mono text-[11px] text-muted-foreground hover:text-foreground active:scale-95 transition-all duration-150 py-1 px-2"
-                >
-                  mudar
-                </button>
               </div>
 
               {isMobile ? (
