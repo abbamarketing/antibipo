@@ -272,6 +272,7 @@ export function StructuredTaskForm({ open, onClose, onCreated }: StructuredTaskF
           impacto: 1,
           status: "backlog" as any,
           parent_task_id: (mainTask as any).id,
+          user_id: user.id,
         }));
         await supabase.from("tasks").insert(subs as any);
 
