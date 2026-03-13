@@ -207,10 +207,13 @@ export function StructuredTaskForm({ open, onClose, onCreated }: StructuredTaskF
     if (!newClientName.trim() || savingClient) return;
     setSavingClient(true);
     try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("Not authenticated");
       const { data, error } = await supabase.from("clientes").insert({
         nome: newClientName.trim(),
         tipo: "pj",
         status: "ativo",
+        user_id: user.id,
       }).select("id, nome").single();
       if (error) throw error;
       if (data) {
@@ -235,6 +238,8 @@ export function StructuredTaskForm({ open, onClose, onCreated }: StructuredTaskF
     setSaving(true);
 
     try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("Not authenticated");
       const { data: mainTask, error } = await supabase.from("tasks").insert({
         titulo,
         modulo: modulo as any,
@@ -249,6 +254,7 @@ export function StructuredTaskForm({ open, onClose, onCreated }: StructuredTaskF
         data_limite: dataEntrega ? format(dataEntrega, "yyyy-MM-dd") : null,
         recorrente,
         frequencia_recorrencia: recorrente ? frequencia : null,
+        user_id: user.id,
       } as any).select().single();
 
       if (error) throw error;
@@ -266,6 +272,7 @@ export function StructuredTaskForm({ open, onClose, onCreated }: StructuredTaskF
           impacto: 1,
           status: "backlog" as any,
           parent_task_id: (mainTask as any).id,
+          user_id: user.id,
         }));
         await supabase.from("tasks").insert(subs as any);
 

@@ -1,9 +1,22 @@
 // FLOW v2 — Supabase-backed store with React Query
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { useCallback, useState } from "react";
+import { useCallback, useState, useEffect } from "react";
 import type { Database } from "@/integrations/supabase/types";
 import { brasiliaISO, brasiliaTime } from "@/lib/brasilia";
+
+// Helper hook to get the current authenticated user ID
+function useUserId(): string | null {
+  const [uid, setUid] = useState<string | null>(null);
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data }) => setUid(data.user?.id ?? null));
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUid(session?.user?.id ?? null);
+    });
+    return () => subscription.unsubscribe();
+  }, []);
+  return uid;
+}
 
 // Re-export types from DB enums
 export type EnergyState = Database["public"]["Enums"]["energy_state"];
@@ -27,6 +40,7 @@ export function today(): string {
 
 export function useFlowStore() {
   const qc = useQueryClient();
+  const userId = useUserId();
   const [currentModulo, setCurrentModulo] = useState<Modulo>("trabalho");
 
   // Energy state — derived from React Query (single source of truth, globally reactive)
@@ -145,6 +159,7 @@ export function useFlowStore() {
         tipo: task.tipo ?? "operacional",
         titulo: task.titulo,
         urgencia: task.urgencia ?? 2,
+        user_id: task.user_id ?? userId ?? "",
       };
 
       qc.setQueryData<Task[]>(["tasks"], [optimisticTask, ...previousTasks]);
@@ -222,6 +237,7 @@ export function useFlowStore() {
         horarios: med.horarios ?? [],
         instrucoes: med.instrucoes ?? null,
         nome: med.nome,
+        user_id: med.user_id ?? userId ?? "",
       };
       qc.setQueryData<Medicamento[]>(["medicamentos"], [optimisticMed, ...previousMeds]);
       return { previousMeds };
@@ -236,11 +252,13 @@ export function useFlowStore() {
 
   const takeMedMut = useMutation({
     mutationFn: async ({ medicamento_id, horario_previsto }: { medicamento_id: string; horario_previsto: string }) => {
+      const { data: { user } } = await supabase.auth.getUser();
       const { error } = await supabase.from("registros_medicamento").insert({
         medicamento_id,
         horario_previsto,
         horario_tomado: brasiliaTime().toISOString(),
         tomado: true,
+        user_id: user!.id,
       });
       if (error) throw error;
     },
@@ -255,6 +273,7 @@ export function useFlowStore() {
         horario_tomado: brasiliaTime().toISOString(),
         medicamento_id,
         tomado: true,
+        user_id: userId ?? "",
       };
       qc.setQueryData<RegistroMedicamento[]>(["registros_medicamento", todayStr], [optimisticRegistro, ...previousRegistros]);
       return { previousRegistros, todayStr };
@@ -269,9 +288,10 @@ export function useFlowStore() {
 
   const moodMut = useMutation({
     mutationFn: async ({ valor, notas }: { valor: number; notas?: string }) => {
+      const { data: { user } } = await supabase.auth.getUser();
       const { error } = await supabase.from("registros_humor").upsert(
-        { data: today(), valor, notas },
-        { onConflict: "data" }
+        { data: today(), valor, notas, user_id: user!.id },
+        { onConflict: "user_id,data" }
       );
       if (error) throw error;
     },
@@ -284,6 +304,7 @@ export function useFlowStore() {
         data: todayStr,
         valor,
         notas: notas ?? null,
+        user_id: userId ?? "",
       };
       qc.setQueryData<RegistroHumor[]>(["registros_humor"], [
         optimisticHumor,
@@ -301,6 +322,8 @@ export function useFlowStore() {
 
   const sleepMut = useMutation({
     mutationFn: async ({ type, qualidade }: { type: "dormir" | "acordar"; qualidade?: 1 | 2 | 3 }) => {
+      const { data: { user } } = await supabase.auth.getUser();
+      const uid = user!.id;
       const todayStr = today();
       const { data: existing } = await supabase.from("registros_sono").select("*").eq("data", todayStr).maybeSingle();
 
@@ -308,7 +331,7 @@ export function useFlowStore() {
         if (existing) {
           await supabase.from("registros_sono").update({ horario_dormir: brasiliaTime().toISOString() }).eq("id", existing.id);
         } else {
-          await supabase.from("registros_sono").insert({ data: todayStr, horario_dormir: brasiliaTime().toISOString() });
+          await supabase.from("registros_sono").insert({ data: todayStr, horario_dormir: brasiliaTime().toISOString(), user_id: uid });
         }
       } else {
         const now = brasiliaTime();
@@ -326,6 +349,7 @@ export function useFlowStore() {
             data: todayStr,
             horario_acordar: now.toISOString(),
             qualidade,
+            user_id: uid,
           });
         }
       }
@@ -364,6 +388,7 @@ export function useFlowStore() {
           horario_acordar: type === "acordar" ? nowIso : null,
           horario_dormir: type === "dormir" ? nowIso : null,
           qualidade: type === "acordar" ? (qualidade ?? null) : null,
+          user_id: userId ?? "",
         };
 
         return [optimisticRegistro, ...current];
@@ -381,7 +406,8 @@ export function useFlowStore() {
 
   const energyMut = useMutation({
     mutationFn: async (estado: EnergyState) => {
-      await supabase.from("sessoes_energia").insert({ estado, data: today() });
+      const { data: { user } } = await supabase.auth.getUser();
+      await supabase.from("sessoes_energia").insert({ estado, data: today(), user_id: user!.id });
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ["current_energy"] }),
   });
@@ -399,9 +425,9 @@ export function useFlowStore() {
 
   const addTask = useCallback(
     (task: Omit<Database["public"]["Tables"]["tasks"]["Insert"], "id" | "criado_em">) => {
-      addTaskMut.mutate(task);
+      addTaskMut.mutate({ ...task, user_id: userId! });
     },
-    [addTaskMut]
+    [addTaskMut, userId]
   );
 
   const completeTask = useCallback(
@@ -427,9 +453,9 @@ export function useFlowStore() {
 
   const addMedicamento = useCallback(
     (med: Omit<Database["public"]["Tables"]["medicamentos"]["Insert"], "id">) => {
-      addMedMut.mutate(med);
+      addMedMut.mutate({ ...med, user_id: userId! });
     },
-    [addMedMut]
+    [addMedMut, userId]
   );
 
   const registrarMedicamento = useCallback(
@@ -517,14 +543,13 @@ export function useFlowStore() {
   // Add task with AI classification
   const addTaskWithAI = useCallback(
     async (task: Omit<Database["public"]["Tables"]["tasks"]["Insert"], "id" | "criado_em">, dayContext?: { mood?: string; energy?: string; alertLevel?: string; dayScore?: number }) => {
-      const data = await addTaskMut.mutateAsync(task);
+      const data = await addTaskMut.mutateAsync({ ...task, user_id: userId! });
       if (data) {
-        // Classify in background, return adaptation note
         return classifyTask(data.id, data.titulo, dayContext);
       }
       return null;
     },
-    [addTaskMut, classifyTask]
+    [addTaskMut, classifyTask, userId]
   );
 
   return {
