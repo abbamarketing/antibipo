@@ -537,12 +537,20 @@ export function QuickCapture({ open, onClose, onActionComplete }: QuickCapturePr
         return;
       }
 
+      setFeedback("idle");
+      setLastResponse("");
+      setAdaptationNote(null);
+
       const result = data as ActionResult;
-      await executeAction(result);
+      const adaptNote = await executeAction(result);
 
       setFeedback("success");
-      setLastResponse(result.resposta);
-      setHistory((prev) => [...prev, { text, response: result.resposta, tipo: result.tipo }]);
+      const fullResponse = adaptNote
+        ? `${result.resposta}\n\n🧠 ${adaptNote}`
+        : result.resposta;
+      setLastResponse(fullResponse);
+      setAdaptationNote(adaptNote);
+      setHistory((prev) => [...prev, { text, response: fullResponse, tipo: result.tipo, adapted: !!adaptNote }]);
       onActionComplete?.();
 
       setTimeout(() => setFeedback("idle"), 2000);
