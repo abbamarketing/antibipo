@@ -191,17 +191,15 @@ const Index = () => {
         </GlassCard>
       )}
 
-      {!isCrisis && (
+      {!isCrisis && activeNav !== "inicio" && (
         <GlassCard className="p-4">
           <WeeklyCorrelationChart />
         </GlassCard>
       )}
 
-      {!isCrisis && (
+      {!isCrisis && activeNav !== "inicio" && (
         <CustomTrackers modulo={activeNav === "metas" ? "saude" : activeNav} />
       )}
-
-      <QuickOverview />
     </div>
   );
 
