@@ -139,7 +139,7 @@ export function DocFuncionalidades() {
         <p>Acesse pela aba "Saúde" na barra de navegação inferior.</p>
         {[
           { sub: "Medicamentos", desc: "Cadastre nome, dose e horários. O app envia alertas nos horários programados e rastreia se você tomou. Controle de estoque com aviso de reposição." },
-          { sub: "Check-in Emocional", desc: "Registre seu humor numa escala de 😡 (-2) a 😄 (+2). Afeta diretamente quantas tarefas aparecem e quais módulos ficam visíveis." },
+          { sub: "Check-in Emocional", desc: "Registre seu humor numa escala de -2 a +2. Afeta diretamente quantas tarefas aparecem e quais módulos ficam visíveis." },
           { sub: "Sono", desc: "Registre quando dormiu e acordou. A duração é calculada automaticamente. Se o sono for < 6h, o DailyNudge sugere reduzir o ritmo." },
           { sub: "Exercícios", desc: "Registre tipo (caminhada, corrida, academia), duração e intensidade (1-5). Avaliação pós-exercício para monitorar impacto no bem-estar." },
           { sub: "Refeições", desc: "Registre cada refeição com qualidade (1-5) e categorias. Refeições puladas são rastreadas." },
