@@ -10,10 +10,10 @@ import {
 import { useState } from "react";
 
 const ALERT_STYLES: Record<DayAlert, { bg: string; text: string; icon: typeof AlertTriangle; label: string; gaugeColor: string }> = {
-  crise: { bg: "bg-destructive/10 border-destructive/30", text: "text-destructive", icon: AlertCircle, label: "CRISE", gaugeColor: "hsl(var(--destructive))" },
-  atencao: { bg: "bg-amber-500/10 border-amber-500/30", text: "text-amber-600 dark:text-amber-400", icon: AlertTriangle, label: "ATENÇÃO", gaugeColor: "#f59e0b" },
-  estavel: { bg: "bg-primary/5 border-primary/20", text: "text-primary", icon: Sun, label: "ESTÁVEL", gaugeColor: "hsl(var(--primary))" },
-  otimo: { bg: "bg-green-500/10 border-green-500/30", text: "text-green-600 dark:text-green-400", icon: Sparkles, label: "ÓTIMO", gaugeColor: "#22c55e" },
+  crise: { bg: "bg-destructive/10", text: "text-destructive", icon: AlertCircle, label: "CRISE", gaugeColor: "hsl(var(--destructive))" },
+  atencao: { bg: "bg-amber-500/10", text: "text-amber-600 dark:text-amber-400", icon: AlertTriangle, label: "ATENÇÃO", gaugeColor: "#f59e0b" },
+  estavel: { bg: "bg-primary/5", text: "text-primary", icon: Sun, label: "ESTÁVEL", gaugeColor: "hsl(var(--primary))" },
+  otimo: { bg: "bg-green-500/10", text: "text-green-600 dark:text-green-400", icon: Sparkles, label: "ÓTIMO", gaugeColor: "#22c55e" },
 };
 
 const MOOD_ICONS: Record<DayMood, { icon: typeof Meh; color: string }> = {
@@ -31,11 +31,9 @@ function CircularGauge({ score, alertLevel }: { score: number; alertLevel: DayAl
   const strokeWidth = 8;
   const radius = (size - strokeWidth) / 2;
   const circumference = 2 * Math.PI * radius;
-  // Gauge goes 270 degrees (3/4 circle), starting from bottom-left
   const arcLength = circumference * 0.75;
   const progress = (score / 100) * arcLength;
   const dashOffset = arcLength - progress;
-  // Rotation: start at 135deg (bottom-left of the 270° arc)
   const rotation = 135;
 
   return (
@@ -47,7 +45,7 @@ function CircularGauge({ score, alertLevel }: { score: number; alertLevel: DayAl
           cy={size / 2}
           r={radius}
           fill="none"
-          stroke="hsl(var(--border))"
+          stroke="hsl(var(--border) / 0.4)"
           strokeWidth={strokeWidth}
           strokeLinecap="round"
           strokeDasharray={`${arcLength} ${circumference}`}
@@ -90,7 +88,7 @@ export function DayScore() {
   return (
     <div className="space-y-3 animate-fade-in">
       {/* Alert bar */}
-      <div className={`rounded-lg border p-3 ${alertStyle.bg}`}>
+      <div className={`rounded-lg p-3 ${alertStyle.bg}`}>
         <div className="flex items-center gap-2">
           {(() => { const I = alertStyle.icon; return <I className={`w-4 h-4 shrink-0 ${alertStyle.text}`} />; })()}
           <p className={`text-xs font-body ${alertStyle.text}`}>{ctx.alertMessage}</p>
@@ -100,7 +98,7 @@ export function DayScore() {
       {/* Gauge + modules summary */}
       <button
         onClick={() => setExpanded(!expanded)}
-        className="w-full bg-card rounded-lg border p-4 text-left transition-all hover:border-primary/30 active:scale-[0.99]"
+        className="w-full rounded-xl p-4 text-left transition-all duration-200 hover:bg-secondary/20 active:scale-[0.99]"
       >
         <div className="flex items-center gap-4">
           {/* Circular gauge */}
@@ -139,9 +137,9 @@ export function DayScore() {
             <div className="flex flex-col items-center">
               <CheckCircle2 className={`w-4 h-4 ${ctx.tasksCompletedToday > 0 ? "text-primary" : "text-muted-foreground/30"}`} />
               <span className="text-xs font-mono font-bold mt-0.5">{ctx.tasksCompletedToday}</span>
-              <span className="text-[7px] font-mono text-muted-foreground">feitas</span>
+              <span className="text-[7px] font-mono text-muted-foreground/60">feitas</span>
             </div>
-            {expanded ? <ChevronDown className="w-4 h-4 text-muted-foreground" /> : <ChevronRight className="w-4 h-4 text-muted-foreground" />}
+            {expanded ? <ChevronDown className="w-4 h-4 text-muted-foreground/40" /> : <ChevronRight className="w-4 h-4 text-muted-foreground/40" />}
           </div>
         </div>
       </button>
@@ -151,11 +149,11 @@ export function DayScore() {
         <div className="space-y-2 pl-1 animate-fade-in">
           {ctx.suggestedActions.length > 0 && (
             <div className="space-y-1">
-              <span className="text-[9px] font-mono text-muted-foreground uppercase tracking-widest">Sugestões</span>
+              <span className="text-[9px] font-mono text-muted-foreground/60 uppercase tracking-widest">Sugestões</span>
               {ctx.suggestedActions.map((s, i) => (
-                <div key={i} className="flex items-start gap-2 bg-secondary/50 rounded-md px-3 py-2">
+                <div key={i} className="flex items-start gap-2 bg-secondary/30 rounded-lg px-3 py-2">
                   <Activity className="w-3 h-3 text-primary mt-0.5 shrink-0" />
-                  <span className="text-xs font-body text-foreground/80">{s}</span>
+                  <span className="text-xs font-body text-foreground/70">{s}</span>
                 </div>
               ))}
             </div>
@@ -174,10 +172,10 @@ export function DayScore() {
 
 function ModuleIndicator({ icon, label, value }: { icon: React.ReactNode; label: string; value: string }) {
   return (
-    <div className="flex items-center gap-2 bg-secondary/40 rounded-md px-2 py-1.5">
+    <div className="flex items-center gap-2 bg-secondary/30 rounded-lg px-2 py-1.5">
       {icon}
       <div className="min-w-0">
-        <p className="text-[8px] font-mono text-muted-foreground uppercase leading-none">{label}</p>
+        <p className="text-[8px] font-mono text-muted-foreground/60 uppercase leading-none">{label}</p>
         <p className="text-[11px] font-mono font-medium truncate capitalize">{value}</p>
       </div>
     </div>
@@ -186,9 +184,9 @@ function ModuleIndicator({ icon, label, value }: { icon: React.ReactNode; label:
 
 function MiniStat({ label, value, alert = false }: { label: string; value: number; alert?: boolean }) {
   return (
-    <div className="bg-card rounded-md border p-2 text-center">
+    <div className="bg-secondary/20 rounded-lg p-2 text-center">
       <p className={`font-mono text-sm font-bold ${alert ? "text-destructive" : "text-foreground"}`}>{value}</p>
-      <p className="text-[8px] font-mono text-muted-foreground uppercase">{label}</p>
+      <p className="text-[8px] font-mono text-muted-foreground/60 uppercase">{label}</p>
     </div>
   );
 }

@@ -29,6 +29,15 @@ import { WeeklyCorrelationChart } from "@/components/WeeklyCorrelationChart";
 import { Plus, Zap, Sun, Battery, Wallet, Settings, CalendarDays, Activity } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
+/** Reusable glass-card wrapper */
+function GlassCard({ children, className = "" }: { children: React.ReactNode; className?: string }) {
+  return (
+    <div className={`rounded-xl bg-card/40 backdrop-blur-sm shadow-sm ${className}`}>
+      {children}
+    </div>
+  );
+}
+
 const Index = () => {
   const {
     state, setEnergy, setModulo, addTask, completeTask, updateTask,
@@ -142,35 +151,38 @@ const Index = () => {
         hasEnergy={!!current_energy}
       />
 
-      <div className="max-w-lg mx-auto px-4 py-4 pb-24">
+      <div className="max-w-lg mx-auto px-4 py-6 pb-28 space-y-5">
         {/* Header */}
-        <header className="mb-5">
-          <div className="flex items-center justify-between mb-2">
+        <header>
+          <div className="flex items-center justify-between mb-3">
             <p className="text-[10px] text-muted-foreground font-mono tracking-widest">
               {brasiliaDateString()}
             </p>
-            <div className="flex items-center gap-1">
-              <button onClick={() => navigate("/financeiro")} className="p-2 rounded-md text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors">
-                <Wallet className="w-4 h-4" />
-              </button>
-              <button onClick={() => navigate("/calendario")} className="p-2 rounded-md text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors">
-                <CalendarDays className="w-4 h-4" />
-              </button>
-              <button onClick={() => navigate("/log")} className="p-2 rounded-md text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors" title="Log de atividade">
-                <Activity className="w-4 h-4" />
-              </button>
-              <button onClick={() => navigate("/config")} className="p-2 rounded-md text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors">
-                <Settings className="w-4 h-4" />
-              </button>
+            <div className="flex items-center gap-0.5">
+              {[
+                { icon: Wallet, path: "/financeiro", title: "Financeiro" },
+                { icon: CalendarDays, path: "/calendario", title: "Calendário" },
+                { icon: Activity, path: "/log", title: "Log" },
+                { icon: Settings, path: "/config", title: "Configurações" },
+              ].map(({ icon: Icon, path, title }) => (
+                <button
+                  key={path}
+                  onClick={() => navigate(path)}
+                  title={title}
+                  className="p-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-secondary/60 active:scale-95 transition-all duration-150"
+                >
+                  <Icon className="w-4 h-4" />
+                </button>
+              ))}
             </div>
           </div>
           <DailyNudge />
         </header>
 
         {/* Weather */}
-        <div className="mb-4">
+        <GlassCard>
           <WeatherWidget />
-        </div>
+        </GlassCard>
 
         {/* Mood Check-In (every 3h) */}
         <MoodCheckIn onMoodUpdated={(val) => setLastMoodValue(val)} />
@@ -180,17 +192,17 @@ const Index = () => {
 
         {/* Med Alert */}
         {pending.length > 0 && (
-          <div className="mb-4">
+          <GlassCard className="p-1">
             <MedAlert pendingMeds={pending} onTake={handleTakeMed} />
-          </div>
+          </GlassCard>
         )}
 
         {showEnergySelector ? (
           <EnergyStateSelector current={current_energy} onSelect={handleSetEnergy} />
         ) : (
-          <>
+          <div className="space-y-5">
             {/* Energy indicator */}
-            <div className="flex items-center gap-2 mb-4">
+            <div className="flex items-center gap-2">
               {current_energy && (() => {
                 const cfg = energyConfig[current_energy];
                 const EIcon = cfg.icon;
@@ -204,7 +216,7 @@ const Index = () => {
               <span className="text-muted-foreground/30">·</span>
               <button
                 onClick={() => handleSetEnergy(current_energy === "foco_total" ? "modo_leve" : current_energy === "modo_leve" ? "basico" : "foco_total")}
-                className="font-mono text-[10px] text-muted-foreground hover:text-foreground transition-colors"
+                className="font-mono text-[10px] text-muted-foreground hover:text-foreground active:scale-95 transition-all duration-150"
               >
                 mudar
               </button>
@@ -214,50 +226,52 @@ const Index = () => {
             {showFridayReport && <FridayWeeklyReport onDismiss={() => setShowFridayReport(false)} />}
 
             {!showMondayReview && !showFridayReport && (
-              <>
-                {/* Integrated day score — crosses mood, meds, sleep, tasks */}
-                <div className="mb-4">
+              <div className="space-y-5">
+                {/* Integrated day score */}
+                <GlassCard className="p-4">
                   <DayScore />
-                </div>
+                </GlassCard>
 
                 {/* Weekly Correlation Chart */}
-                <div className="mb-4">
+                <GlassCard className="p-4">
                   <WeeklyCorrelationChart />
-                </div>
+                </GlassCard>
 
-                {/* Unified Daily Tasks - always visible */}
-                  <UnifiedKanban energy={current_energy!} lastMoodValue={lastMoodValue} preferredModule={activeNav === "metas" ? null : activeNav} />
+                {/* Unified Daily Tasks */}
+                <UnifiedKanban energy={current_energy!} lastMoodValue={lastMoodValue} preferredModule={activeNav === "metas" ? null : activeNav} />
 
                 {/* Trackers */}
-                <div className="mb-6">
-                  <div className="mt-4">
-                    <CustomTrackers modulo={activeNav === "metas" ? "saude" : activeNav} />
-                  </div>
+                <div>
+                  <CustomTrackers modulo={activeNav === "metas" ? "saude" : activeNav} />
                 </div>
 
-                <div className="mb-6">
+                {/* Module Nav */}
+                <GlassCard className="p-1.5">
                   <ModuleNav current={activeNav} onSelect={handleModulo} />
-                </div>
+                </GlassCard>
 
-                {activeNav === "trabalho" && (
-                  <ModuleOnboardingGuard modulo="trabalho">
-                    <WorkModule energy={current_energy!} tasks={getFilteredTasks("trabalho", current_energy!)} allTasks={state.tasks} onComplete={handleCompleteTask} onDelegate={handleDelegate} onPush={handlePush} />
-                  </ModuleOnboardingGuard>
-                )}
-                {activeNav === "casa" && (
-                  <ModuleOnboardingGuard modulo="casa">
-                    <HomeModule energy={current_energy!} />
-                  </ModuleOnboardingGuard>
-                )}
-                {activeNav === "saude" && (
-                  <ModuleOnboardingGuard modulo="saude">
-                    <HealthModule energy={current_energy!} medicamentos={state.medicamentos} registros_humor={state.registros_humor} registros_sono={state.registros_sono} onTakeMed={handleTakeMed} isMedTaken={isMedTakenToday} onMood={handleMood} onSleep={handleSleep} onAddMed={handleAddMed} todayHumor={todayHumor} />
-                  </ModuleOnboardingGuard>
-                )}
-                {activeNav === "metas" && <MetasModule />}
-              </>
+                {/* Module content with transition */}
+                <div className="animate-fade-in">
+                  {activeNav === "trabalho" && (
+                    <ModuleOnboardingGuard modulo="trabalho">
+                      <WorkModule energy={current_energy!} tasks={getFilteredTasks("trabalho", current_energy!)} allTasks={state.tasks} onComplete={handleCompleteTask} onDelegate={handleDelegate} onPush={handlePush} />
+                    </ModuleOnboardingGuard>
+                  )}
+                  {activeNav === "casa" && (
+                    <ModuleOnboardingGuard modulo="casa">
+                      <HomeModule energy={current_energy!} />
+                    </ModuleOnboardingGuard>
+                  )}
+                  {activeNav === "saude" && (
+                    <ModuleOnboardingGuard modulo="saude">
+                      <HealthModule energy={current_energy!} medicamentos={state.medicamentos} registros_humor={state.registros_humor} registros_sono={state.registros_sono} onTakeMed={handleTakeMed} isMedTaken={isMedTakenToday} onMood={handleMood} onSleep={handleSleep} onAddMed={handleAddMed} todayHumor={todayHumor} />
+                    </ModuleOnboardingGuard>
+                  )}
+                  {activeNav === "metas" && <MetasModule />}
+                </div>
+              </div>
             )}
-          </>
+          </div>
         )}
       </div>
 
@@ -265,7 +279,7 @@ const Index = () => {
       {current_energy && (
         <button
           onClick={() => setCaptureOpen(true)}
-          className="fixed bottom-6 right-6 w-14 h-14 rounded-full bg-primary text-primary-foreground shadow-lg flex items-center justify-center hover:opacity-90 transition-opacity z-40"
+          className="fixed bottom-6 right-6 w-14 h-14 rounded-full bg-primary text-primary-foreground shadow-lg flex items-center justify-center hover:opacity-90 active:scale-90 transition-all duration-200 z-40"
         >
           <Plus className="w-6 h-6" />
         </button>

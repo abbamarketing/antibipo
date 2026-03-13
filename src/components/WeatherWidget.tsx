@@ -122,7 +122,7 @@ export function WeatherWidget() {
 
   if (isLoading) {
     return (
-      <div className="flex items-center gap-2 text-muted-foreground">
+      <div className="flex items-center gap-2 text-muted-foreground p-3">
         <Loader2 className="w-3 h-3 animate-spin" />
         <span className="font-mono text-[10px]">clima...</span>
       </div>
@@ -134,25 +134,25 @@ export function WeatherWidget() {
   const CurrentIcon = weatherIcon(weather.currentCode);
 
   return (
-    <div className="bg-card rounded-lg border">
-      {/* Collapsed / Header - always visible */}
+    <div>
+      {/* Header - always visible */}
       <button
         onClick={toggleExpanded}
-        className="w-full flex items-center justify-between p-3 hover:bg-secondary/30 transition-colors rounded-lg"
+        className="w-full flex items-center justify-between p-3 hover:bg-secondary/20 active:scale-[0.99] transition-all duration-150 rounded-xl"
       >
         <div className="flex items-center gap-3">
           <CurrentIcon className="w-5 h-5 text-primary" />
           <span className="font-mono text-sm font-bold">{weather.currentTemp}°</span>
-          <span className="text-xs text-muted-foreground">{weatherLabel(weather.currentCode)}</span>
-          <span className="font-mono text-[10px] text-muted-foreground">· {weather.city}</span>
+          <span className="text-xs text-muted-foreground font-body">{weatherLabel(weather.currentCode)}</span>
+          <span className="font-mono text-[10px] text-muted-foreground/60">· {weather.city}</span>
         </div>
-        {expanded ? <ChevronUp className="w-4 h-4 text-muted-foreground" /> : <ChevronDown className="w-4 h-4 text-muted-foreground" />}
+        {expanded ? <ChevronUp className="w-4 h-4 text-muted-foreground/50" /> : <ChevronDown className="w-4 h-4 text-muted-foreground/50" />}
       </button>
 
       {/* Expanded content */}
       {expanded && (
-        <div className="px-4 pb-4">
-          <div className="flex gap-4 mb-4 text-muted-foreground">
+        <div className="px-4 pb-4 animate-fade-in">
+          <div className="flex gap-4 mb-4 text-muted-foreground/70">
             <div className="flex items-center gap-1">
               <Droplets className="w-3 h-3" />
               <span className="font-mono text-[10px]">{weather.humidity}%</span>
@@ -164,7 +164,7 @@ export function WeatherWidget() {
             <span className="font-mono text-[10px]">Sensação {weather.feelsLike}°</span>
           </div>
 
-          <div className="border-t pt-3">
+          <div className="border-t border-border/40 pt-3">
             <div className="flex justify-between">
               {weather.forecast.map((d, i) => {
                 const Icon = weatherIcon(d.code);
@@ -172,7 +172,7 @@ export function WeatherWidget() {
                 return (
                   <div
                     key={d.day + i}
-                    className={`flex flex-col items-center gap-0.5 ${isToday ? "text-foreground" : "text-muted-foreground"}`}
+                    className={`flex flex-col items-center gap-0.5 ${isToday ? "text-foreground" : "text-muted-foreground/60"}`}
                   >
                     <span className={`font-mono text-[9px] uppercase tracking-wider ${isToday ? "font-bold text-primary" : ""}`}>
                       {isToday ? "hoje" : d.day}
@@ -180,7 +180,7 @@ export function WeatherWidget() {
                     <Icon className={`w-4 h-4 ${isToday ? "text-primary" : ""}`} />
                     <div className="flex gap-0.5 font-mono text-[9px]">
                       <span className="font-medium">{d.tempMax}°</span>
-                      <span className="text-muted-foreground/60">{d.tempMin}°</span>
+                      <span className="text-muted-foreground/40">{d.tempMin}°</span>
                     </div>
                   </div>
                 );
