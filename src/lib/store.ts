@@ -291,7 +291,7 @@ export function useFlowStore() {
       const { data: { user } } = await supabase.auth.getUser();
       const { error } = await supabase.from("registros_humor").upsert(
         { data: today(), valor, notas, user_id: user!.id },
-        { onConflict: "data" }
+        { onConflict: "user_id,data" }
       );
       if (error) throw error;
     },
