@@ -389,7 +389,7 @@ export function useFlowStore() {
   // ===== DERIVED =====
   const setEnergy = useCallback((energy: EnergyState) => {
     // Optimistically update the cache for instant reactivity
-    qc.setQueryData(["current_energy"], { estado: energy, hora_inicio: new Date().toISOString(), data: today() });
+    qc.setQueryData(["current_energy"], { estado: energy, hora_inicio: brasiliaTime().toISOString(), data: today() });
     energyMut.mutate(energy);
   }, [energyMut, qc]);
 
