@@ -294,18 +294,20 @@ export function UnifiedKanban({ energy, lastMoodValue, preferredModule = null }:
           )}
         </div>
 
-        {/* Module filter — 44px min touch targets */}
-        <div className="flex gap-2">
-          <button onClick={() => setFilterModule(null)} className={`px-3 py-2 rounded-xl text-[11px] font-mono transition-all min-h-[40px] ${!filterModule ? "bg-primary text-primary-foreground" : "bg-secondary text-muted-foreground"}`}>TODOS</button>
-          {(["trabalho", "casa", "saude"] as const).map((m) => {
-            const Icon = MODULE_ICONS[m];
-            return (
-              <button key={m} onClick={() => setFilterModule(filterModule === m ? null : m)} className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-[11px] font-mono transition-all min-h-[40px] ${filterModule === m ? "bg-primary text-primary-foreground" : "bg-secondary text-muted-foreground"}`}>
-                <Icon className="w-3.5 h-3.5" />{MODULE_LABELS[m]}{moduleCounts[m] > 0 && <span className="opacity-60">({moduleCounts[m]})</span>}
-              </button>
-            );
-          })}
-        </div>
+        {/* Module filter — hidden in low state to reduce visual noise */}
+        {!isLowState && (
+          <div className="flex gap-2">
+            <button onClick={() => setFilterModule(null)} className={`px-3 py-2 rounded-xl text-[11px] font-mono transition-all min-h-[40px] ${!filterModule ? "bg-primary text-primary-foreground" : "bg-secondary text-muted-foreground"}`}>TODOS</button>
+            {(["trabalho", "casa", "saude"] as const).map((m) => {
+              const Icon = MODULE_ICONS[m];
+              return (
+                <button key={m} onClick={() => setFilterModule(filterModule === m ? null : m)} className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-[11px] font-mono transition-all min-h-[40px] ${filterModule === m ? "bg-primary text-primary-foreground" : "bg-secondary text-muted-foreground"}`}>
+                  <Icon className="w-3.5 h-3.5" />{MODULE_LABELS[m]}{moduleCounts[m] > 0 && <span className="opacity-60">({moduleCounts[m]})</span>}
+                </button>
+              );
+            })}
+          </div>
+        )}
 
         {/* Pomodoro */}
         {pomodoroTask && (
