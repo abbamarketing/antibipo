@@ -2,7 +2,8 @@ import { useState, useRef, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { logActivity } from "@/lib/activity-log";
 import { brasiliaTimeString, brasiliaISO } from "@/lib/brasilia";
-import { X, Send, Loader2, CheckCircle2, AlertCircle, Mic, MicOff } from "lucide-react";
+import { useDayContext } from "@/hooks/use-day-context";
+import { X, Send, Loader2, CheckCircle2, AlertCircle, Mic, MicOff, Brain } from "lucide-react";
 import { toast } from "sonner";
 
 interface QuickCaptureProps {
