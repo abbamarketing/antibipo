@@ -89,6 +89,7 @@ export function useFlowStore() {
       if (error) throw error;
       return data;
     },
+    staleTime: 30 * 1000,
   });
 
   const { data: medicamentos = [] } = useQuery({
@@ -98,6 +99,7 @@ export function useFlowStore() {
       if (error) throw error;
       return data;
     },
+    staleTime: 60 * 1000,
   });
 
   const { data: registrosMed = [] } = useQuery({
@@ -107,6 +109,7 @@ export function useFlowStore() {
       if (error) throw error;
       return data;
     },
+    staleTime: 30 * 1000,
   });
 
   const { data: registrosHumor = [] } = useQuery({
@@ -116,6 +119,7 @@ export function useFlowStore() {
       if (error) throw error;
       return data;
     },
+    staleTime: 60 * 1000,
   });
 
   const { data: registrosSono = [] } = useQuery({
@@ -125,6 +129,7 @@ export function useFlowStore() {
       if (error) throw error;
       return data;
     },
+    staleTime: 60 * 1000,
   });
 
   const { data: clientes = [] } = useQuery({
