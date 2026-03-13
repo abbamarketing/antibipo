@@ -136,10 +136,10 @@ export function QuickCapture({ open, onClose, onActionComplete }: QuickCapturePr
     try {
       switch (tipo) {
         case "financeiro": {
-          const now = new Date();
-          const dia = now.getDate();
-          const mes = now.getMonth() + 1;
-          const ano = now.getFullYear();
+          const bDate = new Date(brasiliaISO() + "T12:00:00");
+          const dia = bDate.getDate();
+          const mes = bDate.getMonth() + 1;
+          const ano = bDate.getFullYear();
           await supabase.from("fc_lancamentos").upsert({
             ano, mes, dia,
             entrada: dados.tipo_lancamento === "entrada" ? dados.valor : 0,
