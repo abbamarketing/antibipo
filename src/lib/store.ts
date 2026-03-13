@@ -237,6 +237,7 @@ export function useFlowStore() {
         horarios: med.horarios ?? [],
         instrucoes: med.instrucoes ?? null,
         nome: med.nome,
+        user_id: med.user_id ?? userId ?? "",
       };
       qc.setQueryData<Medicamento[]>(["medicamentos"], [optimisticMed, ...previousMeds]);
       return { previousMeds };
