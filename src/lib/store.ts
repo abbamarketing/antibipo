@@ -494,10 +494,10 @@ export function useFlowStore() {
   const todayHumor = registrosHumor.find((r) => r.data === today());
 
   // AI classify function
-  const classifyTask = useCallback(async (taskId: string, titulo: string) => {
+  const classifyTask = useCallback(async (taskId: string, titulo: string, dayContext?: { mood?: string; energy?: string; alertLevel?: string; dayScore?: number }) => {
     try {
       const { data, error } = await supabase.functions.invoke("classify-task", {
-        body: { titulo },
+        body: { titulo, dayContext },
       });
       if (error) throw error;
       if (data?.ai_provider) {
@@ -507,8 +507,10 @@ export function useFlowStore() {
       if (data?.classification) {
         updateTaskMut.mutate({ id: taskId, changes: data.classification });
       }
+      return data?.adaptation_note || null;
     } catch (e) {
       console.error("AI classification failed:", e);
+      return null;
     }
   }, [updateTaskMut]);
 
