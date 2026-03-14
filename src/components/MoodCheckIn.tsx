@@ -26,21 +26,47 @@ export function MoodCheckIn({ onMoodUpdated }: MoodCheckInProps) {
   const noMoodYet = dayCtx.moodValue === null;
 
   useEffect(() => {
-    const checkIfDue = () => {
-      const last = localStorage.getItem(STORAGE_KEY);
-      if (!last) {
-        setShowCheckin(true);
-        return;
+    let cancelled = false;
+
+    const checkIfDue = async () => {
+      // 1. Get local timestamp
+      const localLast = localStorage.getItem(STORAGE_KEY);
+      const localTs = localLast ? parseInt(localLast, 10) : 0;
+
+      // 2. Get server timestamp (source of truth for cross-device)
+      let serverTs = 0;
+      try {
+        const { data } = await supabase
+          .from("configuracoes")
+          .select("valor")
+          .eq("chave", "ultimo_mood_checkin")
+          .maybeSingle();
+        if (data?.valor) {
+          const serverDate = new Date((data.valor as any).timestamp || 0).getTime();
+          if (!isNaN(serverDate)) serverTs = serverDate;
+        }
+      } catch {
+        // offline — use localStorage only
       }
-      const elapsed = Date.now() - parseInt(last, 10);
-      if (elapsed >= CHECKIN_INTERVAL_MS) {
+
+      if (cancelled) return;
+
+      // Use whichever is more recent
+      const lastCheckin = Math.max(localTs, serverTs);
+
+      // Sync localStorage if server is newer
+      if (serverTs > localTs) {
+        localStorage.setItem(STORAGE_KEY, serverTs.toString());
+      }
+
+      if (lastCheckin === 0 || Date.now() - lastCheckin >= CHECKIN_INTERVAL_MS) {
         setShowCheckin(true);
       }
     };
 
     checkIfDue();
     const interval = setInterval(checkIfDue, 60 * 1000);
-    return () => clearInterval(interval);
+    return () => { cancelled = true; clearInterval(interval); };
   }, []);
 
   const handleSelect = async (valor: number) => {
