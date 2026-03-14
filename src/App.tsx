@@ -14,7 +14,7 @@ const Financeiro = lazy(() => import("./pages/Financeiro.tsx"));
 const Calendario = lazy(() => import("./pages/Calendario.tsx"));
 const Configuracoes = lazy(() => import("./pages/Configuracoes.tsx"));
 const Documentacao = lazy(() => import("./pages/Documentacao.tsx"));
-
+const AgentsDashboard = lazy(() => import("./pages/AgentsDashboard.tsx"));
 
 const queryClient = new QueryClient();
 
