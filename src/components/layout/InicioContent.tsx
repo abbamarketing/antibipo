@@ -4,6 +4,7 @@ import { MondayGoalsReview } from "@/components/MondayGoalsReview";
 import { FridayWeeklyReport } from "@/components/FridayWeeklyReport";
 import { QuickOverview } from "@/components/QuickOverview";
 import { WeeklyCorrelationChart } from "@/components/WeeklyCorrelationChart";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
 
 interface InicioContentProps {
   isCrisis: boolean;
