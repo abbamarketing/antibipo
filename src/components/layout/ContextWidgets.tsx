@@ -5,6 +5,7 @@ import { MoodCheckIn } from "@/components/MoodCheckIn";
 import { MedAlert } from "@/components/MedAlert";
 import { WeeklyCorrelationChart } from "@/components/WeeklyCorrelationChart";
 import { CustomTrackers } from "@/components/CustomTrackers";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { useIsMobile } from "@/hooks/use-mobile";
 import type { NavModulo } from "@/components/ModuleNav";
 
