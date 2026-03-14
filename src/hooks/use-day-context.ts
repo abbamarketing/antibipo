@@ -21,7 +21,7 @@ export interface DayContext {
   sleepHours: number | null;
   medsTaken: number;
   medsTotal: number;
-  medsAdherence: number; // 0-100%
+  medsAdherence: number | null; // 0-100% or null when no meds registered
   exerciseDone: boolean;
   exerciseMinutes: number;
 
