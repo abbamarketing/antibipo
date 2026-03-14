@@ -2,14 +2,17 @@
  * DayScore — Circular gauge with cross-module summary.
  */
 import { useDayContext, type DayAlert, type DayMood } from "@/hooks/use-day-context";
+import { useFlowStore } from "@/lib/store";
+import { getEnergyStatus } from "@/lib/energy-utils";
 import {
   Activity, Pill, Moon, Dumbbell, CheckCircle2,
   AlertTriangle, AlertCircle, Sun, Sparkles, ChevronDown, ChevronRight,
-  Angry, Frown, Meh, Smile, Laugh, ClipboardEdit,
+  Angry, Frown, Meh, Smile, Laugh, ClipboardEdit, Zap,
 } from "lucide-react";
 import { useState } from "react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { MoodCheckIn } from "./MoodCheckIn";
+import { Badge } from "@/components/ui/badge";
 
 const ALERT_STYLES: Record<DayAlert, { bg: string; text: string; icon: typeof AlertTriangle; label: string; gaugeColor: string }> = {
   crise: { bg: "bg-destructive/10", text: "text-destructive", icon: AlertCircle, label: "CRISE", gaugeColor: "hsl(var(--destructive))" },
