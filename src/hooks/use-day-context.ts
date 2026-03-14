@@ -23,6 +23,7 @@ export interface Orchestration {
   weight_adjustment_reason: string | null;
   module_order: string[];
   modules_to_show: string[] | null;
+  modules_to_hide: string[] | null;
   nudge_tone: string | null;
   nudge_focus: string | null;
   nudge_factual_base: string | null;
