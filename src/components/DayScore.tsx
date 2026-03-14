@@ -80,6 +80,7 @@ function CompactIndicator({ icon, label, value }: { icon: React.ReactNode; label
 
 export function DayScore() {
   const ctx = useDayContext();
+  const qc = useQueryClient();
   const isMobile = useIsMobile();
   const [expanded, setExpanded] = useState(false);
   const [showMoodCheckIn, setShowMoodCheckIn] = useState(false);
@@ -87,12 +88,9 @@ export function DayScore() {
   const moodCfg = MOOD_ICONS[ctx.moodLabel];
   const MoodIcon = moodCfg.icon;
 
-  // Energy session staleness — use same query key as store
-  const { data: energySession } = useQuery({
-    queryKey: ["current_energy"],
-    enabled: false, // piggyback on store's query, don't refetch
-  });
-  const energyStatus = getEnergyStatus(energySession as { hora_inicio: string } | null);
+  // Energy session staleness — read from query cache (set by store)
+  const energySession = qc.getQueryData<{ hora_inicio: string } | null>(["current_energy"]);
+  const energyStatus = getEnergyStatus(energySession ?? null);
 
   const gapDays = ctx.consecutiveDaysWithoutData;
   const isCriticalGap = gapDays >= 4;
