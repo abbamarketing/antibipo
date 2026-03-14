@@ -133,7 +133,10 @@ export function DayScore() {
         <MoodCheckIn onMoodUpdated={() => setShowMoodCheckIn(false)} />
       )}
       {/* Alert bar */}
-      <div className={`rounded-lg p-3 ${alertStyle.bg}`}>
+      <div
+        className={`rounded-lg p-3 ${alertStyle.bg}`}
+        title={{ crise: "Alerta: Crise", atencao: "Alerta: Atenção", estavel: "Estável", otimo: "Ótimo" }[ctx.alertLevel] ?? ctx.alertLevel}
+      >
         <div className="flex items-center gap-2">
           {(() => { const I = alertStyle.icon; return <I className={`w-4 h-4 shrink-0 ${alertStyle.text}`} />; })()}
           <p className={`text-xs font-body ${alertStyle.text}`}>{ctx.alertMessage}</p>
