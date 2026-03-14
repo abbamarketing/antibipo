@@ -5,10 +5,11 @@ import { useDayContext, type DayAlert, type DayMood } from "@/hooks/use-day-cont
 import {
   Activity, Pill, Moon, Dumbbell, CheckCircle2,
   AlertTriangle, AlertCircle, Sun, Sparkles, ChevronDown, ChevronRight,
-  Angry, Frown, Meh, Smile, Laugh,
+  Angry, Frown, Meh, Smile, Laugh, ClipboardEdit,
 } from "lucide-react";
 import { useState } from "react";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { MoodCheckIn } from "./MoodCheckIn";
 
 const ALERT_STYLES: Record<DayAlert, { bg: string; text: string; icon: typeof AlertTriangle; label: string; gaugeColor: string }> = {
   crise: { bg: "bg-destructive/10", text: "text-destructive", icon: AlertCircle, label: "CRISE", gaugeColor: "hsl(var(--destructive))" },
@@ -77,12 +78,51 @@ export function DayScore() {
   const ctx = useDayContext();
   const isMobile = useIsMobile();
   const [expanded, setExpanded] = useState(false);
+  const [showMoodCheckIn, setShowMoodCheckIn] = useState(false);
   const alertStyle = ALERT_STYLES[ctx.alertLevel];
   const moodCfg = MOOD_ICONS[ctx.moodLabel];
   const MoodIcon = moodCfg.icon;
 
+  const gapDays = ctx.consecutiveDaysWithoutData;
+  const isCriticalGap = gapDays >= 4;
+  const isWarningGap = gapDays >= 2;
+
   return (
     <div className="space-y-3 animate-fade-in">
+      {/* Data gap banner */}
+      {isWarningGap && (
+        <div className={`rounded-lg p-3 border animate-pulse ${
+          isCriticalGap
+            ? "bg-destructive/20 border-destructive/40"
+            : "bg-orange-500/20 border-orange-500/40"
+        }`}>
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex items-center gap-2 min-w-0">
+              <AlertTriangle className={`w-4 h-4 shrink-0 ${isCriticalGap ? "text-destructive" : "text-orange-500"}`} />
+              <p className={`text-xs font-body ${isCriticalGap ? "text-destructive" : "text-orange-600 dark:text-orange-400"}`}>
+                {isCriticalGap
+                  ? "Dados insuficientes para diagnostico confiavel. Registre agora."
+                  : `Sem registros ha ${gapDays} dias — o score pode nao refletir a realidade`}
+              </p>
+            </div>
+            <button
+              onClick={() => setShowMoodCheckIn(true)}
+              className={`shrink-0 flex items-center gap-1 rounded-md px-2 py-1 text-[11px] font-mono font-medium transition-colors ${
+                isCriticalGap
+                  ? "bg-destructive/30 text-destructive hover:bg-destructive/40"
+                  : "bg-orange-500/30 text-orange-600 dark:text-orange-400 hover:bg-orange-500/40"
+              }`}
+            >
+              <ClipboardEdit className="w-3 h-3" />
+              Registrar
+            </button>
+          </div>
+        </div>
+      )}
+
+      {showMoodCheckIn && (
+        <MoodCheckIn onMoodUpdated={() => setShowMoodCheckIn(false)} />
+      )}
       {/* Alert bar */}
       <div className={`rounded-lg p-3 ${alertStyle.bg}`}>
         <div className="flex items-center gap-2">
