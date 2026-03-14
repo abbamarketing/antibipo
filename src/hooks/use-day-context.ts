@@ -153,7 +153,7 @@ function computeSuggestions(ctx: {
 }): string[] {
   const suggestions: string[] = [];
 
-  if (ctx.medsAdherence < 100) {
+  if (ctx.medsAdherence !== null && ctx.medsAdherence < 100) {
     suggestions.push("Tomar medicacao pendente");
   }
   if (!ctx.exerciseDone && ctx.moodValue !== null && ctx.moodValue <= 0) {
