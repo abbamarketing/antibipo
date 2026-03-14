@@ -573,6 +573,7 @@ export type Database = {
           periodo_inicio: string
           resumo: string | null
           tipo: string
+          user_id: string | null
         }
         Insert: {
           created_at?: string | null
@@ -583,6 +584,7 @@ export type Database = {
           periodo_inicio: string
           resumo?: string | null
           tipo: string
+          user_id?: string | null
         }
         Update: {
           created_at?: string | null
@@ -593,6 +595,7 @@ export type Database = {
           periodo_inicio?: string
           resumo?: string | null
           tipo?: string
+          user_id?: string | null
         }
         Relationships: []
       }

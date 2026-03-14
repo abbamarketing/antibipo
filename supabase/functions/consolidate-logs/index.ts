@@ -94,6 +94,7 @@ async function consolidateForUser(supabase: any, userId: string) {
       tipo: "activity_batch",
       periodo_inicio: periodoInicio.split("T")[0],
       periodo_fim: periodoFim.split("T")[0],
+      user_id: userId,
       resumo,
       metricas: { total_logs: batch.length, por_acao: actionCounts, user_id: userId },
       detalhes: batch.map((l: any) => ({

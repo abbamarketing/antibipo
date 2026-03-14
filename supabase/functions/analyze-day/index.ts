@@ -155,6 +155,7 @@ Responda em JSON: {"resumo": "...", "sugestoes": ["..."], "alerta": "verde|amare
       tipo: "diario",
       periodo_inicio: targetDate,
       periodo_fim: targetDate,
+      user_id: effectiveUserId,
       resumo: analise?.resumo || `${summary.tarefas_concluidas} tarefas concluidas, ${summary.tarefas_pendentes} pendentes.`,
       metricas: summary,
       detalhes: analise ? [analise] : [],
