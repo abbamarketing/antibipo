@@ -13,6 +13,7 @@ import { useState } from "react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { MoodCheckIn } from "./MoodCheckIn";
 import { Badge } from "@/components/ui/badge";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 const ALERT_STYLES: Record<DayAlert, { bg: string; text: string; icon: typeof AlertTriangle; label: string; gaugeColor: string }> = {
   crise: { bg: "bg-destructive/10", text: "text-destructive", icon: AlertCircle, label: "CRISE", gaugeColor: "hsl(var(--destructive))" },
