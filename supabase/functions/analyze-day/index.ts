@@ -106,17 +106,53 @@ serve(async (req) => {
       tarefas_pendentes_lista: notCompleted.slice(0, 10).map((t: any) => ({ titulo: t.titulo, modulo: t.modulo, urgencia: t.urgencia })),
     };
 
+    // Track missing data explicitly
+    const dadosAusentes: string[] = [];
+    if (summary.humor === undefined) dadosAusentes.push("humor");
+    if (summary.sono_qualidade === undefined) dadosAusentes.push("sono");
+    // Check if user has meds but none were taken
+    const { data: userMeds } = await userClient
+      .from("medicamentos")
+      .select("id")
+      .eq("user_id", effectiveUserId)
+      .limit(1);
+    const hasMeds = (userMeds?.length || 0) > 0;
+    const { data: todayMedRecords } = await userClient
+      .from("registros_medicamento")
+      .select("id")
+      .eq("user_id", effectiveUserId)
+      .eq("data", targetDate)
+      .limit(1);
+    if (hasMeds && (!todayMedRecords || todayMedRecords.length === 0)) dadosAusentes.push("medicacao");
+
+    // Force alert level when critical data is missing
+    const forceVermelho = summary.humor === undefined && summary.sono_qualidade === undefined;
+
     // Generate AI analysis if API key available
     let analise = null;
     let ai_provider = "none";
     if (LOVABLE_API_KEY) {
-      const prompt = `Analise o dia do usuario e gere um resumo breve (max 3 frases) sobre produtividade, bem-estar e sugestoes para o dia seguinte.
+      const humorStr = summary.humor !== undefined
+        ? String(summary.humor)
+        : "humor: NAO REGISTRADO (dado clinico relevante)";
+      const sonoStr = summary.sono_qualidade
+        ? `qualidade ${summary.sono_qualidade}/3, ${summary.sono_duracao ? Math.round(summary.sono_duracao / 60) + "h" : ""}`
+        : "sono: NAO REGISTRADO (possivel privacao ou esquecimento)";
+      const medStr = dadosAusentes.includes("medicacao")
+        ? "medicacao: NAO REGISTRADO (risco de nao-adesao)"
+        : "registrada";
+
+      const prompt = `Analise o dia do usuario com transtorno bipolar e gere um resumo breve (max 3 frases) sobre produtividade, bem-estar e sugestoes para o dia seguinte.
+
+IMPORTANTE: dados ausentes sao tao relevantes quanto dados presentes. Se algum registro critico (humor, sono, medicacao) estiver ausente, inclua isso na analise e sugira captura imediata.
 
 Dados do dia ${targetDate}:
 - Tarefas concluidas: ${summary.tarefas_concluidas} (${summary.tarefas_concluidas_lista.join(", ") || "nenhuma"})
 - Tarefas pendentes: ${summary.tarefas_pendentes}
-- Humor: ${summary.humor !== undefined ? summary.humor : "nao registrado"}
-- Sono: ${summary.sono_qualidade ? `qualidade ${summary.sono_qualidade}/3, ${summary.sono_duracao ? Math.round(summary.sono_duracao / 60) + "h" : ""}` : "nao registrado"}
+- Humor: ${humorStr}
+- Sono: ${sonoStr}
+- Medicacao: ${medStr}
+- Dados ausentes: ${dadosAusentes.length > 0 ? dadosAusentes.join(", ") : "nenhum"}
 - Trackers completados: ${summary.trackers_feitos}
 - Acoes registradas: ${summary.acoes_no_dia}
 
@@ -129,7 +165,7 @@ Responda em JSON: {"resumo": "...", "sugestoes": ["..."], "alerta": "verde|amare
           body: JSON.stringify({
             model: "google/gemini-2.5-flash-lite",
             messages: [
-              { role: "system", content: "Voce analisa dados de produtividade. Responda APENAS em JSON valido." },
+              { role: "system", content: "Voce analisa dados de saude mental e produtividade de um usuario com transtorno bipolar. Dados ausentes sao sinais clinicos relevantes. Responda APENAS em JSON valido." },
               { role: "user", content: prompt },
             ],
           }),
@@ -149,6 +185,11 @@ Responda em JSON: {"resumo": "...", "sugestoes": ["..."], "alerta": "verde|amare
       }
     }
 
+    // Override alert to vermelho if both humor and sono are missing
+    if (forceVermelho && analise) {
+      analise.alerta = "vermelho";
+    }
+
     // 4. Service role client ONLY for privileged upsert to log_consolidado
     const adminClient = createClient(supabaseUrl, serviceRoleKey);
     await adminClient.from("log_consolidado").upsert({
@@ -157,7 +198,7 @@ Responda em JSON: {"resumo": "...", "sugestoes": ["..."], "alerta": "verde|amare
       periodo_fim: targetDate,
       user_id: effectiveUserId,
       resumo: analise?.resumo || `${summary.tarefas_concluidas} tarefas concluidas, ${summary.tarefas_pendentes} pendentes.`,
-      metricas: summary,
+      metricas: { ...summary, dados_ausentes: dadosAusentes },
       detalhes: analise ? [analise] : [],
     }, { onConflict: "tipo,periodo_inicio,periodo_fim" });
 
