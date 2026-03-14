@@ -151,15 +151,26 @@ serve(async (req) => {
     if (!hasData) {
       const registrosNaSemana = weekHumor?.length || 0;
 
+      // Check how long since last data via activity_log or humor
+      const lastDataDate = allLogs.length > 0
+        ? allLogs[0].criado_em
+        : allHumor.length > 0
+        ? allHumor[0].data
+        : null;
+
+      const diasSemDados = lastDataDate
+        ? Math.floor((Date.now() - new Date(lastDataDate).getTime()) / (1000 * 60 * 60 * 24))
+        : null;
+
       let noDataMessage: string;
-      if (registrosNaSemana === 0) {
-        noDataMessage = "Nenhum registro esta semana. Isso pode dificultar identificar padrões. Como você está?";
-      } else if (registrosNaSemana < 3) {
-        noDataMessage = "Você está sem registrar há alguns dias. Tudo bem? Um check-in rápido pode ajudar o app a te ajudar melhor.";
-      } else if (registrosNaSemana < 5) {
-        noDataMessage = "Ontem sem registros, mas a semana está indo. Que tal um check-in rápido?";
+      if (diasSemDados === null || diasSemDados < 1) {
+        noDataMessage = "Hoje ainda não tem dados registrados. Que tal começar com como você está dormindo?";
+      } else if (diasSemDados === 1) {
+        noDataMessage = "Ontem você não registrou dados. Não precisa ser completo — um registro de humor já ajuda.";
+      } else if (diasSemDados <= 3) {
+        noDataMessage = `Faz ${diasSemDados} dias sem registros. Tudo bem parar. Quando quiser, estou aqui.`;
       } else {
-        noDataMessage = "Novo dia. Você tem sido consistente esta semana, continue assim!";
+        noDataMessage = `Faz ${diasSemDados} dias sem registros. Sem pressão — um check-in rápido quando puder já ajuda.`;
       }
 
       return new Response(JSON.stringify({ message: noDataMessage }), {
