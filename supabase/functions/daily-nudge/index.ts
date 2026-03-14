@@ -91,7 +91,27 @@ serve(async (req) => {
 
     const hasData = (yesterdayLogs?.length || 0) > 0 || (diary?.length || 0) > 0 || wellBeing.length > 0;
     if (!hasData) {
-      return new Response(JSON.stringify({ message: "Novo dia, novas possibilidades. Vamos nessa!" }), {
+      // Count how many days in last 7 have humor records for this user
+      const { data: recentHumor } = await supabase
+        .from("registros_humor")
+        .select("data")
+        .gte("data", weekAgoStr)
+        .lte("data", todayStr);
+
+      const registrosNaSemana = recentHumor?.length || 0;
+
+      let noDataMessage: string;
+      if (registrosNaSemana === 0) {
+        noDataMessage = "Nenhum registro esta semana. Isso pode dificultar identificar padroes. Como voce esta?";
+      } else if (registrosNaSemana < 3) {
+        noDataMessage = "Voce esta sem registrar ha alguns dias. Tudo bem? Um check-in rapido pode ajudar o app a te ajudar melhor.";
+      } else if (registrosNaSemana < 5) {
+        noDataMessage = "Ontem sem registros, mas a semana esta indo. Que tal um check-in rapido?";
+      } else {
+        noDataMessage = "Novo dia. Voce tem sido consistente esta semana, continue assim!";
+      }
+
+      return new Response(JSON.stringify({ message: noDataMessage }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
@@ -99,13 +119,18 @@ serve(async (req) => {
     const nome = (profile as any)?.nome || "usuário";
     const memoryContext = (latestSummary as any)?.[0]?.valor?.resumo || "";
 
+    const registrosHumorSemana = weekHumor?.length || 0;
+    const lacunaAviso = registrosHumorSemana < 3
+      ? `\nATENCAO: usuario tem apenas ${registrosHumorSemana} registros de humor nos ultimos 7 dias. Mencione gentilmente essa lacuna e incentive a registrar.`
+      : "";
+
     const systemContent = `Você gera UMA frase curta (máx 20 palavras) para ${nome} que relata algo CONCRETO de ontem.
 NÃO seja motivacional genérico. Seja factual e específico.
 Use dados reais: tarefas concluídas, exercícios, medicamentos, sono, humor.
 Cruze módulos quando possível: "treinou e fechou 3 tarefas, humor subiu pra 4".
 Se o sono foi ruim ou humor baixo, seja empático sem ser dramático.
 Se há padrão de consistência na semana, reconheça.
-Tom: parceiro, factual, direto. Sem emojis, sem aspas.`;
+Tom: parceiro, factual, direto. Sem emojis, sem aspas.${lacunaAviso}`;
 
     const userContent = `ONTEM:\nAções: ${yesterdaySummary || "nenhuma"}\nDiário: ${diaryText || "nenhum"}\nBem-estar: ${wellBeing.join("; ") || "sem dados"}\n\nSEMANA:\nAções: ${weekSummary || "sem dados"}\nDiário: ${weekDiaryText || "nenhum"}\nMetas ativas: ${metasText || "nenhuma"}${memoryContext ? `\nMemória IA: ${memoryContext}` : ""}`;
 
