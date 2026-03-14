@@ -10,17 +10,48 @@ serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
-    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-    const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-    const supabase = createClient(supabaseUrl, supabaseKey);
+    const anonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
+    const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
 
+    // 1. Verify JWT — create user-scoped client
+    const authHeader = req.headers.get("Authorization");
+    if (!authHeader?.startsWith("Bearer ")) {
+      return new Response(JSON.stringify({ error: "Unauthorized" }), {
+        status: 401,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    const userClient = createClient(supabaseUrl, anonKey, {
+      global: { headers: { Authorization: authHeader } },
+    });
+
+    const token = authHeader.replace("Bearer ", "");
+    const { data: claimsData, error: claimsError } = await userClient.auth.getClaims(token);
+    if (claimsError || !claimsData?.claims) {
+      return new Response(JSON.stringify({ error: "Unauthorized" }), {
+        status: 401,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    const authenticatedUserId = claimsData.claims.sub as string;
+
+    // 2. Compare user_id from body with authenticated user
     const { user_id, date } = await req.json();
-    if (!user_id) throw new Error("user_id required");
+    if (user_id && user_id !== authenticatedUserId) {
+      return new Response(JSON.stringify({ error: "Forbidden: user_id mismatch" }), {
+        status: 403,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
 
+    const effectiveUserId = authenticatedUserId;
     const targetDate = date || new Date().toISOString().split("T")[0];
 
-    // Gather day data
+    // 3. All queries use user-scoped client with explicit user_id filter (RLS + defense in depth)
     const [
       { data: tasks },
       { data: logs },
@@ -28,11 +59,35 @@ serve(async (req) => {
       { data: sono },
       { data: trackerRegs },
     ] = await Promise.all([
-      supabase.from("tasks").select("titulo, status, modulo, urgencia, feito_em, criado_em").or(`feito_em.gte.${targetDate}T00:00:00,and(status.neq.feito,status.neq.descartado)`),
-      supabase.from("activity_log").select("acao, detalhes, criado_em").eq("user_id", user_id).gte("criado_em", `${targetDate}T00:00:00`).lte("criado_em", `${targetDate}T23:59:59`).order("criado_em"),
-      supabase.from("registros_humor").select("valor, notas").eq("data", targetDate).maybeSingle(),
-      supabase.from("registros_sono").select("duracao_min, qualidade").eq("data", targetDate).maybeSingle(),
-      supabase.from("tracker_registros").select("tracker_id, dados").eq("data", targetDate),
+      userClient
+        .from("tasks")
+        .select("titulo, status, modulo, urgencia, feito_em, criado_em")
+        .eq("user_id", effectiveUserId)
+        .or(`feito_em.gte.${targetDate}T00:00:00,and(status.neq.feito,status.neq.descartado)`),
+      userClient
+        .from("activity_log")
+        .select("acao, detalhes, criado_em")
+        .eq("user_id", effectiveUserId)
+        .gte("criado_em", `${targetDate}T00:00:00`)
+        .lte("criado_em", `${targetDate}T23:59:59`)
+        .order("criado_em"),
+      userClient
+        .from("registros_humor")
+        .select("valor, notas")
+        .eq("user_id", effectiveUserId)
+        .eq("data", targetDate)
+        .maybeSingle(),
+      userClient
+        .from("registros_sono")
+        .select("duracao_min, qualidade")
+        .eq("user_id", effectiveUserId)
+        .eq("data", targetDate)
+        .maybeSingle(),
+      userClient
+        .from("tracker_registros")
+        .select("tracker_id, dados")
+        .eq("user_id", effectiveUserId)
+        .eq("data", targetDate),
     ]);
 
     const completed = (tasks || []).filter((t: any) => t.status === "feito" && t.feito_em?.startsWith(targetDate));
@@ -94,8 +149,9 @@ Responda em JSON: {"resumo": "...", "sugestoes": ["..."], "alerta": "verde|amare
       }
     }
 
-    // Save analysis to log_consolidado
-    await supabase.from("log_consolidado").upsert({
+    // 4. Service role client ONLY for privileged upsert to log_consolidado
+    const adminClient = createClient(supabaseUrl, serviceRoleKey);
+    await adminClient.from("log_consolidado").upsert({
       tipo: "diario",
       periodo_inicio: targetDate,
       periodo_fim: targetDate,
