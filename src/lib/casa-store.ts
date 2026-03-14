@@ -102,9 +102,10 @@ export function useCasaStore() {
 
   const addItemCompraMut = useMutation({
     mutationFn: async (item: { item: string; quantidade?: string; categoria?: string }) => {
+      const { data: { user } } = await supabase.auth.getUser();
       const { error } = await supabase
         .from("lista_compras" as any)
-        .insert(item as any);
+        .insert({ ...item, user_id: user!.id } as any);
       if (error) throw error;
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ["lista_compras"] }),
