@@ -5,6 +5,7 @@ import { startTimeThemeWatcher } from "@/lib/time-theme";
 import { brasiliaTimeString, brasiliaTime } from "@/lib/brasilia";
 import { logActivity } from "@/lib/activity-log";
 import { EnergyStateSelector } from "@/components/EnergyStateSelector";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { ModuleNav, type NavModulo } from "@/components/ModuleNav";
 import { SpeedDialFAB, type SpeedDialAction } from "@/components/SpeedDialFAB";
 import { StructuredTaskForm } from "@/components/StructuredTaskForm";
