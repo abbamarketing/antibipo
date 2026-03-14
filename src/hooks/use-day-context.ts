@@ -53,7 +53,7 @@ function moodToLabel(val: number | null): DayMood {
 function computeDayScore(ctx: {
   moodValue: number | null;
   sleepQuality: number | null;
-  medsAdherence: number;
+  medsAdherence: number | null;
   exerciseDone: boolean;
   tasksCompletedToday: number;
   energy: EnergyState | null;
