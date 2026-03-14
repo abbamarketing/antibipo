@@ -5,10 +5,11 @@ import { useDayContext, type DayAlert, type DayMood } from "@/hooks/use-day-cont
 import {
   Activity, Pill, Moon, Dumbbell, CheckCircle2,
   AlertTriangle, AlertCircle, Sun, Sparkles, ChevronDown, ChevronRight,
-  Angry, Frown, Meh, Smile, Laugh,
+  Angry, Frown, Meh, Smile, Laugh, ClipboardEdit,
 } from "lucide-react";
 import { useState } from "react";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { MoodCheckIn } from "./MoodCheckIn";
 
 const ALERT_STYLES: Record<DayAlert, { bg: string; text: string; icon: typeof AlertTriangle; label: string; gaugeColor: string }> = {
   crise: { bg: "bg-destructive/10", text: "text-destructive", icon: AlertCircle, label: "CRISE", gaugeColor: "hsl(var(--destructive))" },
