@@ -302,6 +302,9 @@ export default function Configuracoes() {
           )}
         </section>
 
+        {/* Alert Calibration */}
+        <AlertCalibrationSection />
+
         {/* AI API Key */}
         <AIKeySettings />
 
