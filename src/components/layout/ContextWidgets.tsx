@@ -38,7 +38,7 @@ export function ContextWidgets({ isCrisis, isLowState = false, activeNav, pendin
 
       {!isCrisis && !isLowState && activeNav !== "inicio" && (
         <GlassCard className="p-4">
-          <WeeklyCorrelationChart />
+          <ErrorBoundary name="WeeklyCorrelationChart"><WeeklyCorrelationChart /></ErrorBoundary>
         </GlassCard>
       )}
 

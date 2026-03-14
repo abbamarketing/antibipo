@@ -55,7 +55,7 @@ export function DashboardHeader({ isCrisis, hasEnergy, dayScore, alertLevel, hid
       {/* Inline 7-day forecast strip */}
       {!isCrisis && <WeatherWidget inline />}
 
-      <DailyNudge />
+      <ErrorBoundary name="DailyNudge"><DailyNudge /></ErrorBoundary>
     </header>
   );
 }

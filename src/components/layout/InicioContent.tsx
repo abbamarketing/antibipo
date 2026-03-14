@@ -24,7 +24,7 @@ export function InicioContent({ isCrisis, showMondayReview, showFridayReport, on
 
       <QuickOverview />
 
-      {!isCrisis && <WeeklyCorrelationChart />}
+      {!isCrisis && <ErrorBoundary name="WeeklyCorrelationChart"><WeeklyCorrelationChart /></ErrorBoundary>}
     </div>
   );
 }

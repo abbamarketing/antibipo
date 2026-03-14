@@ -35,7 +35,7 @@ export function ModuleContent({
   return (
     <div className="space-y-4">
       {activeNav !== "metas" && (
-        <UnifiedKanban energy={energy} lastMoodValue={lastMoodValue} preferredModule={kanbanModule} />
+        <ErrorBoundary name="UnifiedKanban"><UnifiedKanban energy={energy} lastMoodValue={lastMoodValue} preferredModule={kanbanModule} /></ErrorBoundary>
       )}
 
       {!isCrisis && (
