@@ -1,3 +1,4 @@
+import { lazy, Suspense } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Route, Routes } from "react-router-dom";
 import { Toaster as Sonner } from "@/components/ui/sonner";
@@ -5,13 +6,14 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthGuard } from "@/components/AuthGuard";
 import Index from "./pages/Index.tsx";
-import ActivityLogPage from "./pages/ActivityLog.tsx";
-import Financeiro from "./pages/Financeiro.tsx";
-import Calendario from "./pages/Calendario.tsx";
-import Configuracoes from "./pages/Configuracoes.tsx";
-import Documentacao from "./pages/Documentacao.tsx";
 import AuthPage from "./pages/Auth.tsx";
 import NotFound from "./pages/NotFound.tsx";
+
+const ActivityLogPage = lazy(() => import("./pages/ActivityLog.tsx"));
+const Financeiro = lazy(() => import("./pages/Financeiro.tsx"));
+const Calendario = lazy(() => import("./pages/Calendario.tsx"));
+const Configuracoes = lazy(() => import("./pages/Configuracoes.tsx"));
+const Documentacao = lazy(() => import("./pages/Documentacao.tsx"));
 
 
 const queryClient = new QueryClient();
