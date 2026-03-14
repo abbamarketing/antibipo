@@ -30,6 +30,12 @@ export async function seedTarefasCasa(profile: {
   casa_pets?: boolean | null;
   casa_frequencia_ideal?: string | null;
 }, queryClient?: QueryClient) {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) {
+    console.error("No user for casa seed");
+    return;
+  }
+
   const { count } = await supabase
     .from("tarefas_casa" as any)
     .select("*", { count: "exact", head: true });
