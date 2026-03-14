@@ -15,6 +15,7 @@ import { MoodCheckIn } from "@/components/MoodCheckIn";
 import { DayScore } from "@/components/DayScore";
 import { MedAlert } from "@/components/MedAlert";
 import { CustomTrackers } from "@/components/CustomTrackers";
+import { AlertBanner } from "@/components/AlertBanner";
 import { GlassCard } from "@/components/layout/GlassCard";
 import { DashboardHeader } from "@/components/layout/DashboardHeader";
 import { ContextWidgets } from "@/components/layout/ContextWidgets";
