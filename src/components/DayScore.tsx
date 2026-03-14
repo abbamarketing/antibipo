@@ -4,7 +4,6 @@
 import { useDayContext, type DayAlert, type DayMood } from "@/hooks/use-day-context";
 import { useQueryClient } from "@tanstack/react-query";
 import { getEnergyStatus } from "@/lib/energy-utils";
-import { getEnergyStatus } from "@/lib/energy-utils";
 import {
   Activity, Pill, Moon, Dumbbell, CheckCircle2,
   AlertTriangle, AlertCircle, Sun, Sparkles, ChevronDown, ChevronRight,
