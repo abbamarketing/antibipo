@@ -69,9 +69,30 @@ export function MoodCheckIn({ onMoodUpdated }: MoodCheckInProps) {
     return () => { cancelled = true; clearInterval(interval); };
   }, []);
 
+  const persistCheckinTimestamp = async () => {
+    const now = Date.now();
+    localStorage.setItem(STORAGE_KEY, now.toString());
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        await supabase.from("configuracoes").upsert(
+          {
+            user_id: user.id,
+            chave: "ultimo_mood_checkin",
+            valor: { timestamp: new Date(now).toISOString() },
+            updated_at: new Date().toISOString(),
+          },
+          { onConflict: "user_id,chave" }
+        );
+      }
+    } catch {
+      // offline — localStorage is enough
+    }
+  };
+
   const handleSelect = async (valor: number) => {
     setSelected(valor);
-    localStorage.setItem(STORAGE_KEY, Date.now().toString());
+    await persistCheckinTimestamp();
 
     const today = new Date().toISOString().split("T")[0];
     const hora = new Date().toLocaleTimeString("pt-BR", { timeZone: "America/Sao_Paulo", hour: "2-digit", minute: "2-digit" });
@@ -94,7 +115,7 @@ export function MoodCheckIn({ onMoodUpdated }: MoodCheckInProps) {
   };
 
   const dismiss = () => {
-    localStorage.setItem(STORAGE_KEY, Date.now().toString());
+    persistCheckinTimestamp();
     setShowCheckin(false);
   };
 
