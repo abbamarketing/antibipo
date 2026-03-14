@@ -194,7 +194,7 @@ const Index = () => {
 
               {isMobile ? (
                 <div className="space-y-5">
-                  {/* Med alert — always visible, priority in low state */}
+                  <AlertBanner alerts={(dayCtx.alerts ?? []) as any[]} />
                   {pending.length > 0 && (
                     <GlassCard className={`p-1 ${isCrisis || isLowState ? "ring-2 ring-destructive/30" : ""}`}>
                       <MedAlert pendingMeds={pending} onTake={handleTakeMed} />
