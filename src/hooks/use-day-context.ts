@@ -106,7 +106,7 @@ function computeAlert(score: number, moodValue: number | null, medsAdherence: nu
     return { level: "atencao", message: `${consecutiveDaysWithoutData} dias sem dados. Que tal registrar como voce esta?` };
   }
 
-  if (moodValue !== null && moodValue <= -2 && medsAdherence < 50) {
+  if (moodValue !== null && moodValue <= -2 && medsAdherence !== null && medsAdherence < 50) {
     return { level: "crise", message: "Humor muito baixo e medicacao pendente. Priorize so o essencial." };
   }
   if (score < 30 || (moodValue !== null && moodValue <= -2)) {
