@@ -2,6 +2,7 @@
  * DayScore — Circular gauge with cross-module summary.
  */
 import { useDayContext, type DayAlert, type DayMood } from "@/hooks/use-day-context";
+import { useQueryClient } from "@tanstack/react-query";
 import { useFlowStore } from "@/lib/store";
 import { getEnergyStatus } from "@/lib/energy-utils";
 import {
