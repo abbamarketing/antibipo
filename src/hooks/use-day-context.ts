@@ -95,9 +95,12 @@ function computeDayScore(ctx: {
 }
 
 function computeAlert(score: number, moodValue: number | null, medsAdherence: number, consecutiveDaysWithoutData: number): { level: DayAlert; message: string } {
-  // Data gap overrides
-  if (consecutiveDaysWithoutData >= 4) {
-    return { level: "crise", message: `${consecutiveDaysWithoutData} dias sem registros. Registre humor, sono ou medicacao.` };
+  // Data gap overrides — silence is dangerous in bipolar condition
+  if (consecutiveDaysWithoutData >= 5) {
+    return { level: "crise", message: `Voce esta sumido ha ${consecutiveDaysWithoutData} dias. Tudo bem? Registre como se sente.` };
+  }
+  if (consecutiveDaysWithoutData >= 3) {
+    return { level: "atencao", message: `Voce esta sumido ha ${consecutiveDaysWithoutData} dias. Tudo bem? Que tal registrar como se sente?` };
   }
   if (consecutiveDaysWithoutData >= 2) {
     return { level: "atencao", message: `${consecutiveDaysWithoutData} dias sem dados. Que tal registrar como voce esta?` };
