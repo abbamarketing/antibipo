@@ -80,9 +80,10 @@ export function useCasaStore() {
 
   const completarTarefaMut = useMutation({
     mutationFn: async (t: { tarefa_casa_id: string; comodo: string; tarefa: string; notas?: string }) => {
+      const { data: { user } } = await supabase.auth.getUser();
       const { error } = await supabase
         .from("registros_limpeza" as any)
-        .insert({ ...t, feito_em: new Date().toISOString() } as any);
+        .insert({ ...t, feito_em: new Date().toISOString(), user_id: user!.id } as any);
       if (error) throw error;
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ["registros_limpeza"] }),
@@ -90,9 +91,10 @@ export function useCasaStore() {
 
   const addTarefaMut = useMutation({
     mutationFn: async (t: { comodo: string; tarefa: string; frequencia: string; tempo_min: number }) => {
+      const { data: { user } } = await supabase.auth.getUser();
       const { error } = await supabase
         .from("tarefas_casa" as any)
-        .insert(t as any);
+        .insert({ ...t, user_id: user!.id } as any);
       if (error) throw error;
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ["tarefas_casa"] }),
