@@ -181,12 +181,7 @@ serve(async (req) => {
     const nome = profile?.nome || "usuário";
     const memoryContext = latestSummary?.[0]?.valor?.resumo || "";
 
-    // Parse orchestration context from request body (optional)
-    let orchestrationContext: any = null;
-    try {
-      const body = await req.json().catch(() => null);
-      orchestrationContext = body?.orchestration_context || null;
-    } catch { /* no body */ }
+    const orchestrationContext = reqBody?.orchestration_context || null;
 
     const registrosHumorSemana = weekHumor?.length || 0;
     const lacunaAviso = registrosHumorSemana < 3
