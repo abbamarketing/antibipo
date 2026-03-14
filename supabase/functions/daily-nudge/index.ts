@@ -6,6 +6,10 @@ serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
+    // Parse body early (stream can only be read once)
+    let reqBody: any = null;
+    try { reqBody = await req.json(); } catch { /* no body */ }
+
     const authHeader = req.headers.get("Authorization");
     const supabase = createClient(
       Deno.env.get("SUPABASE_URL")!,
