@@ -24,7 +24,7 @@ export function ContextWidgets({ isCrisis, isLowState = false, activeNav, pendin
   return (
     <div className="space-y-4">
       <GlassCard className="p-4">
-        <DayScore />
+        <ErrorBoundary name="DayScore"><DayScore /></ErrorBoundary>
       </GlassCard>
 
 
