@@ -1,8 +1,12 @@
 import { useState, useEffect } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useProfileStore } from "@/lib/profile-store";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, RotateCcw, LogOut, Bell, User, Shield, ScrollText, BookOpen, Key, Eye, EyeOff, Activity } from "lucide-react";
+import { ArrowLeft, RotateCcw, LogOut, Bell, User, Shield, ScrollText, BookOpen, Key, Eye, EyeOff, Activity, SlidersHorizontal } from "lucide-react";
+import { Slider } from "@/components/ui/slider";
+import { Switch } from "@/components/ui/switch";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 function AIKeySettings() {
   const [apiKey, setApiKey] = useState("");
@@ -123,6 +127,120 @@ function AIKeySettings() {
           </div>
         </div>
       )}
+    </section>
+  );
+}
+
+const DEFAULTS_AGENTES = {
+  med_gap_threshold: 2,
+  sleep_quality_threshold: 2,
+  mood_volatility_threshold: 3.0,
+  notify_on_warning: true,
+  notify_on_crisis: true,
+};
+
+function AlertCalibrationSection() {
+  const queryClient = useQueryClient();
+
+  const { data: config } = useQuery({
+    queryKey: ["agentes_config"],
+    queryFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return DEFAULTS_AGENTES;
+      const { data } = await supabase
+        .from("agentes_config")
+        .select("*")
+        .eq("user_id", user.id)
+        .maybeSingle();
+      return data ? { ...DEFAULTS_AGENTES, ...data } : DEFAULTS_AGENTES;
+    },
+  });
+
+  const save = useMutation({
+    mutationFn: async (values: Record<string, any>) => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+      await supabase.from("agentes_config").upsert(
+        {
+          user_id: user.id,
+          ...values,
+          updated_at: new Date().toISOString(),
+        } as any,
+        { onConflict: "user_id" }
+      );
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["agentes_config"] }),
+  });
+
+  const c = config ?? DEFAULTS_AGENTES;
+
+  const update = (field: string, value: any) => {
+    save.mutate({ ...c, [field]: value });
+  };
+
+  return (
+    <section className="bg-card rounded-lg border p-4 mb-4">
+      <div className="flex items-center gap-2 mb-3">
+        <SlidersHorizontal className="w-4 h-4 text-muted-foreground" />
+        <h2 className="font-mono text-xs font-semibold tracking-wider">CALIBRAÇÃO DE ALERTAS</h2>
+      </div>
+      <p className="font-mono text-[10px] text-muted-foreground/70 mb-4 leading-relaxed">
+        Ajuste os thresholds dos agentes ao seu baseline pessoal.
+      </p>
+
+      {/* Med gap threshold */}
+      <div className="py-3 border-b border-border/50">
+        <div className="flex items-center justify-between mb-2">
+          <span className="font-mono text-xs text-muted-foreground">Gap de medicação para alerta</span>
+          <span className="font-mono text-xs font-medium">{c.med_gap_threshold} dia{(c.med_gap_threshold ?? 2) !== 1 ? "s" : ""}</span>
+        </div>
+        <Slider
+          value={[c.med_gap_threshold ?? 2]}
+          min={1}
+          max={5}
+          step={1}
+          onValueCommit={(v) => update("med_gap_threshold", v[0])}
+          className="w-full"
+        />
+      </div>
+
+      {/* Sleep quality threshold */}
+      <div className="py-3 border-b border-border/50">
+        <div className="flex items-center justify-between">
+          <span className="font-mono text-xs text-muted-foreground">Qualidade mínima de sono</span>
+          <Select
+            value={String(c.sleep_quality_threshold ?? 2)}
+            onValueChange={(v) => update("sleep_quality_threshold", Number(v))}
+          >
+            <SelectTrigger className="w-28 h-7 font-mono text-xs">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="1">Ruim</SelectItem>
+              <SelectItem value="2">Regular</SelectItem>
+              <SelectItem value="3">Boa</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
+
+      {/* Notify on warning */}
+      <div className="py-3 border-b border-border/50 flex items-center justify-between">
+        <span className="font-mono text-xs text-muted-foreground">Notificar em alerta</span>
+        <Switch
+          checked={c.notify_on_warning ?? true}
+          onCheckedChange={(v) => update("notify_on_warning", v)}
+        />
+      </div>
+
+      {/* Notify on crisis */}
+      <div className="py-3 flex items-center justify-between">
+        <span className="font-mono text-xs text-muted-foreground">Notificar em crise</span>
+        <Switch
+          checked={c.notify_on_crisis ?? true}
+          onCheckedChange={(v) => update("notify_on_crisis", v)}
+        />
+      </div>
     </section>
   );
 }
@@ -297,6 +415,9 @@ export default function Configuracoes() {
             </div>
           )}
         </section>
+
+        {/* Alert Calibration */}
+        <AlertCalibrationSection />
 
         {/* AI API Key */}
         <AIKeySettings />
