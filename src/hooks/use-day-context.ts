@@ -229,14 +229,34 @@ function countConsecutiveDaysWithoutData(
   return count;
 }
 
+const defaultModuleOrder = ["saude", "trabalho", "casa", "financeiro", "calendario", "metas"];
+
 export function useDayContext(): DayContext {
   const { state } = useFlowStore();
   const bemEstar = useBemEstarStore();
   const casa = useCasaStore();
   const trackers = useTrackerStore();
 
+  const todayStr = today();
+
+  const { data: orchestration } = useQuery({
+    queryKey: ["orchestration", todayStr],
+    queryFn: async () => {
+      const { data: userData } = await supabase.auth.getUser();
+      if (!userData.user) return null;
+      const { data } = await supabase
+        .from("agentes_orquestracao")
+        .select("*")
+        .eq("user_id", userData.user.id)
+        .eq("periodo", todayStr)
+        .maybeSingle();
+      return data as Orchestration | null;
+    },
+    staleTime: 1000 * 60 * 15,
+    refetchOnWindowFocus: false,
+  });
+
   return useMemo(() => {
-    const todayStr = today();
     const energy = state.current_energy;
 
     // Mood
@@ -248,7 +268,7 @@ export function useDayContext(): DayContext {
     const sleepQuality = todaySleep?.qualidade ?? null;
     const sleepHours = todaySleep?.duracao_min ? todaySleep.duracao_min / 60 : null;
 
-    // Meds — neutral (50) when no meds registered, not inflated 100
+    // Meds
     const todayMedRecords = state.registros_medicamento.filter((r) => r.data === todayStr);
     const totalMedSlots = state.medicamentos.reduce((sum, m) => sum + m.horarios.length, 0);
     const medsTaken = todayMedRecords.filter((r) => r.tomado).length;
@@ -276,9 +296,15 @@ export function useDayContext(): DayContext {
       state.registros_medicamento,
     );
 
-    // Computed
-    const dayScore = computeDayScore({ moodValue, sleepQuality, medsAdherence, exerciseDone, tasksCompletedToday, energy, consecutiveDaysWithoutData });
-    const { level: alertLevel, message: alertMessage } = computeAlert(dayScore, moodValue, medsAdherence, consecutiveDaysWithoutData);
+    // Computed local score
+    const localDayScore = computeDayScore({ moodValue, sleepQuality, medsAdherence, exerciseDone, tasksCompletedToday, energy, consecutiveDaysWithoutData });
+    const localAlert = computeAlert(localDayScore, moodValue, medsAdherence, consecutiveDaysWithoutData);
+
+    // Prefer orchestration values when available
+    const dayScore = orchestration?.day_score_recalibrated ?? localDayScore;
+    const alertLevel = (orchestration?.alert_level_recalibrated as DayAlert) ?? localAlert.level;
+    const alertMessage = localAlert.message;
+
     const { taskLimit, casaLimit } = computeTaskLimits(energy, moodValue);
     const suggestedActions = computeSuggestions({ moodValue, medsAdherence, exerciseDone, sleepQuality, tasksCompletedToday, energy });
 
@@ -306,8 +332,14 @@ export function useDayContext(): DayContext {
       tasksCompletedToday,
       tasksPending,
       tasksOverdue,
+      moduleOrder: orchestration?.module_order ?? defaultModuleOrder,
+      orchestration: orchestration ?? null,
+      scoreShift: orchestration?.score_shift ?? null,
+      weightAdjustmentReason: orchestration?.weight_adjustment_reason ?? null,
+      alerts: [],
     };
   }, [
+    todayStr,
     state.current_energy,
     state.registros_humor,
     state.registros_sono,
@@ -315,5 +347,6 @@ export function useDayContext(): DayContext {
     state.medicamentos,
     state.tasks,
     bemEstar.exerciciosHoje,
+    orchestration,
   ]);
 }
