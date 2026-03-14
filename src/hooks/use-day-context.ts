@@ -248,7 +248,7 @@ export function useDayContext(): DayContext {
     );
 
     // Computed
-    const dayScore = computeDayScore({ moodValue, sleepQuality, medsAdherence, exerciseDone, tasksCompletedToday, energy });
+    const dayScore = computeDayScore({ moodValue, sleepQuality, medsAdherence, exerciseDone, tasksCompletedToday, energy, consecutiveDaysWithoutData });
     const { level: alertLevel, message: alertMessage } = computeAlert(dayScore, moodValue, medsAdherence, consecutiveDaysWithoutData);
     const { taskLimit, casaLimit } = computeTaskLimits(energy, moodValue);
     const suggestedActions = computeSuggestions({ moodValue, medsAdherence, exerciseDone, sleepQuality, tasksCompletedToday, energy });
