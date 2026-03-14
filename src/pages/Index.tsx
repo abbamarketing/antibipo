@@ -203,7 +203,7 @@ const Index = () => {
                   {/* DayScore & Mood — only on inicio */}
                   {activeNav === "inicio" && (
                     <>
-                      <GlassCard className="p-3"><DayScore /></GlassCard>
+                      <GlassCard className="p-3"><ErrorBoundary name="DayScore"><DayScore /></ErrorBoundary></GlassCard>
                       <MoodCheckIn onMoodUpdated={(val) => setLastMoodValue(val)} />
                     </>
                   )}
