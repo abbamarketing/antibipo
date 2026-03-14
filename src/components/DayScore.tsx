@@ -79,12 +79,17 @@ function CompactIndicator({ icon, label, value }: { icon: React.ReactNode; label
 
 export function DayScore() {
   const ctx = useDayContext();
+  const { state } = useFlowStore();
   const isMobile = useIsMobile();
   const [expanded, setExpanded] = useState(false);
   const [showMoodCheckIn, setShowMoodCheckIn] = useState(false);
   const alertStyle = ALERT_STYLES[ctx.alertLevel];
   const moodCfg = MOOD_ICONS[ctx.moodLabel];
   const MoodIcon = moodCfg.icon;
+
+  // Energy session staleness
+  const energySession = state.sessoes_energia?.[0] || (ctx.energy ? { hora_inicio: new Date().toISOString() } : null);
+  const energyStatus = getEnergyStatus(energySession as any);
 
   const gapDays = ctx.consecutiveDaysWithoutData;
   const isCriticalGap = gapDays >= 4;
