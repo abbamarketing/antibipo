@@ -91,7 +91,27 @@ serve(async (req) => {
 
     const hasData = (yesterdayLogs?.length || 0) > 0 || (diary?.length || 0) > 0 || wellBeing.length > 0;
     if (!hasData) {
-      return new Response(JSON.stringify({ message: "Novo dia, novas possibilidades. Vamos nessa!" }), {
+      // Count how many days in last 7 have humor records for this user
+      const { data: recentHumor } = await supabase
+        .from("registros_humor")
+        .select("data")
+        .gte("data", weekAgoStr)
+        .lte("data", todayStr);
+
+      const registrosNaSemana = recentHumor?.length || 0;
+
+      let noDataMessage: string;
+      if (registrosNaSemana === 0) {
+        noDataMessage = "Nenhum registro esta semana. Isso pode dificultar identificar padroes. Como voce esta?";
+      } else if (registrosNaSemana < 3) {
+        noDataMessage = "Voce esta sem registrar ha alguns dias. Tudo bem? Um check-in rapido pode ajudar o app a te ajudar melhor.";
+      } else if (registrosNaSemana < 5) {
+        noDataMessage = "Ontem sem registros, mas a semana esta indo. Que tal um check-in rapido?";
+      } else {
+        noDataMessage = "Novo dia. Voce tem sido consistente esta semana, continue assim!";
+      }
+
+      return new Response(JSON.stringify({ message: noDataMessage }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
