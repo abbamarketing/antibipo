@@ -26,7 +26,7 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 const energyConfig: Record<string, { icon: typeof Zap; label: string }> = {
   foco_total: { icon: Zap, label: "FOCO TOTAL" },
   modo_leve: { icon: Sun, label: "MODO LEVE" },
-  basico: { icon: Battery, label: "SO O BASICO" },
+  basico: { icon: Battery, label: "SÓ O BÁSICO" },
 };
 
 const Index = () => {

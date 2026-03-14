@@ -564,7 +564,7 @@ export function QuickCapture({ open, onClose, onActionComplete }: QuickCapturePr
 
   const tipoLabel: Record<string, string> = {
     financeiro: "Financeiro",
-    calendario: "Calendario",
+    calendario: "Calendário",
     casa: "Casa",
     trabalho: "Trabalho",
     saude_exercicio: "Exercicio",

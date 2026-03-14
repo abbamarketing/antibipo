@@ -202,7 +202,7 @@ export function NotificationManager({ medicamentos, isMedTaken, hasEnergy }: Not
         const elapsed = lastCheckin ? Date.now() - parseInt(lastCheckin, 10) : Infinity;
 
         if (elapsed > 2.5 * 60 * 60 * 1000) { // 2.5h since last check-in
-          notifyOnce("Check-in emocional", "Como voce esta se sentindo? Abra o app para registrar.", tag);
+          notifyOnce("Check-in emocional", "Como você está se sentindo? Abra o app para registrar.", tag);
         }
       }
     };

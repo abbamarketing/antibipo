@@ -101,8 +101,8 @@ export function DayScore() {
               <AlertTriangle className={`w-4 h-4 shrink-0 ${isCriticalGap ? "text-destructive" : "text-orange-500"}`} />
               <p className={`text-xs font-body ${isCriticalGap ? "text-destructive" : "text-orange-600 dark:text-orange-400"}`}>
                 {isCriticalGap
-                  ? "Dados insuficientes para diagnostico confiavel. Registre agora."
-                  : `Sem registros ha ${gapDays} dias — o score pode nao refletir a realidade`}
+                  ? "Dados insuficientes para diagnóstico confiável. Registre agora."
+                  : `Sem registros há ${gapDays} dias — o score pode não refletir a realidade`}
               </p>
             </div>
             <button
