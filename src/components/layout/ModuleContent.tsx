@@ -1,5 +1,6 @@
 import { useFlowStore } from "@/lib/store";
 import { UnifiedKanban } from "@/components/UnifiedKanban";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { WorkModule } from "@/components/WorkModule";
 import { HomeModule } from "@/components/HomeModule";
 import { HealthModule } from "@/components/HealthModule";
