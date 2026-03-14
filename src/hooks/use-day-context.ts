@@ -4,6 +4,8 @@
  * components can consume. This is the connective tissue between modules.
  */
 import { useMemo } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 import { useFlowStore, today, type EnergyState } from "@/lib/store";
 import { useBemEstarStore } from "@/lib/bem-estar-store";
 import { useCasaStore } from "@/lib/casa-store";
