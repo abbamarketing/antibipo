@@ -59,7 +59,7 @@ export function QuickCapture({ open, onClose, onActionComplete }: QuickCapturePr
   const startListening = () => {
     const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
     if (!SpeechRecognition) {
-      toast.error("Seu navegador nao suporta reconhecimento de voz");
+      toast.error("Seu navegador não suporta reconhecimento de voz");
       return;
     }
 
