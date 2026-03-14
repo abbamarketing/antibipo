@@ -223,7 +223,7 @@ export function useDayContext(): DayContext {
     const todayMedRecords = state.registros_medicamento.filter((r) => r.data === todayStr);
     const totalMedSlots = state.medicamentos.reduce((sum, m) => sum + m.horarios.length, 0);
     const medsTaken = todayMedRecords.filter((r) => r.tomado).length;
-    const medsAdherence = totalMedSlots > 0 ? Math.round((medsTaken / totalMedSlots) * 100) : 50;
+    const medsAdherence = totalMedSlots > 0 ? Math.round((medsTaken / totalMedSlots) * 100) : null;
 
     // Exercise
     const exerciseDone = bemEstar.exerciciosHoje.length > 0;
