@@ -173,6 +173,20 @@ export function DayScore() {
                 <span className="text-[11px] font-mono font-bold">{ctx.tasksCompletedToday}</span>
               </div>
             </div>
+            {ctx.scoreShift !== null && ctx.scoreShift !== 0 && (
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <span className="text-xs text-muted-foreground cursor-help ml-1">
+                      {ctx.scoreShift > 0 ? `↑${ctx.scoreShift}` : `↓${Math.abs(ctx.scoreShift)}`} ajustado
+                    </span>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p className="max-w-xs text-xs">{ctx.weightAdjustmentReason}</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            )}
           </div>
 
           {/* 4 compact indicators in a row */}
