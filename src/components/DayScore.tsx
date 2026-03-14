@@ -13,6 +13,7 @@ import { useState } from "react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { MoodCheckIn } from "./MoodCheckIn";
 import { Badge } from "@/components/ui/badge";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 const ALERT_STYLES: Record<DayAlert, { bg: string; text: string; icon: typeof AlertTriangle; label: string; gaugeColor: string }> = {
   crise: { bg: "bg-destructive/10", text: "text-destructive", icon: AlertCircle, label: "CRISE", gaugeColor: "hsl(var(--destructive))" },
@@ -172,6 +173,20 @@ export function DayScore() {
                 <span className="text-[11px] font-mono font-bold">{ctx.tasksCompletedToday}</span>
               </div>
             </div>
+            {ctx.scoreShift !== null && ctx.scoreShift !== 0 && (
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <span className="text-xs text-muted-foreground cursor-help ml-1">
+                      {ctx.scoreShift > 0 ? `↑${ctx.scoreShift}` : `↓${Math.abs(ctx.scoreShift)}`} ajustado
+                    </span>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p className="max-w-xs text-xs">{ctx.weightAdjustmentReason}</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            )}
           </div>
 
           {/* 4 compact indicators in a row */}
