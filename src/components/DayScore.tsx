@@ -199,7 +199,7 @@ export function DayScore() {
             <CompactIndicator
               icon={<Pill className={`w-3.5 h-3.5 ${ctx.medsAdherence !== null && ctx.medsAdherence >= 100 ? "text-green-500" : ctx.medsAdherence !== null && ctx.medsAdherence > 0 ? "text-amber-500" : "text-muted-foreground"}`} />}
               label="Meds"
-              value={`${ctx.medsTaken}/${ctx.medsTotal}`}
+              value={ctx.medsAdherence === null ? "sem registro" : `${ctx.medsTaken}/${ctx.medsTotal}`}
             />
             <CompactIndicator
               icon={<Moon className={`w-3.5 h-3.5 ${ctx.sleepQuality === 3 ? "text-green-500" : ctx.sleepQuality === 2 ? "text-amber-500" : ctx.sleepQuality === 1 ? "text-destructive" : "text-muted-foreground/30"}`} />}
