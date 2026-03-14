@@ -2,14 +2,17 @@
  * DayScore — Circular gauge with cross-module summary.
  */
 import { useDayContext, type DayAlert, type DayMood } from "@/hooks/use-day-context";
+import { useQueryClient } from "@tanstack/react-query";
+import { getEnergyStatus } from "@/lib/energy-utils";
 import {
   Activity, Pill, Moon, Dumbbell, CheckCircle2,
   AlertTriangle, AlertCircle, Sun, Sparkles, ChevronDown, ChevronRight,
-  Angry, Frown, Meh, Smile, Laugh, ClipboardEdit,
+  Angry, Frown, Meh, Smile, Laugh, ClipboardEdit, Zap,
 } from "lucide-react";
 import { useState } from "react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { MoodCheckIn } from "./MoodCheckIn";
+import { Badge } from "@/components/ui/badge";
 
 const ALERT_STYLES: Record<DayAlert, { bg: string; text: string; icon: typeof AlertTriangle; label: string; gaugeColor: string }> = {
   crise: { bg: "bg-destructive/10", text: "text-destructive", icon: AlertCircle, label: "CRISE", gaugeColor: "hsl(var(--destructive))" },
@@ -76,12 +79,17 @@ function CompactIndicator({ icon, label, value }: { icon: React.ReactNode; label
 
 export function DayScore() {
   const ctx = useDayContext();
+  const qc = useQueryClient();
   const isMobile = useIsMobile();
   const [expanded, setExpanded] = useState(false);
   const [showMoodCheckIn, setShowMoodCheckIn] = useState(false);
   const alertStyle = ALERT_STYLES[ctx.alertLevel];
   const moodCfg = MOOD_ICONS[ctx.moodLabel];
   const MoodIcon = moodCfg.icon;
+
+  // Energy session staleness — read from query cache (set by store)
+  const energySession = qc.getQueryData<{ hora_inicio: string } | null>(["current_energy"]);
+  const energyStatus = getEnergyStatus(energySession ?? null);
 
   const gapDays = ctx.consecutiveDaysWithoutData;
   const isCriticalGap = gapDays >= 4;
@@ -130,6 +138,23 @@ export function DayScore() {
           <p className={`text-xs font-body ${alertStyle.text}`}>{ctx.alertMessage}</p>
         </div>
       </div>
+
+      {/* Energy staleness badge */}
+      {energyStatus === 'expirado' && (
+        <Badge variant="destructive" className="text-xs w-full justify-center gap-1">
+          <Zap className="w-3 h-3" /> Energia desatualizada — registre agora
+        </Badge>
+      )}
+      {energyStatus === 'expirando' && (
+        <Badge variant="outline" className="text-xs w-full justify-center gap-1 border-yellow-500 text-yellow-600 dark:text-yellow-400">
+          <Zap className="w-3 h-3" /> Atualizar energia em breve
+        </Badge>
+      )}
+      {energyStatus === 'sem_dados' && (
+        <Badge variant="outline" className="text-xs w-full justify-center gap-1 text-muted-foreground">
+          <Zap className="w-3 h-3" /> Energia não registrada hoje
+        </Badge>
+      )}
 
       {/* Gauge + modules summary */}
       <button
