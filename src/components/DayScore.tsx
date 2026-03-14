@@ -157,7 +157,7 @@ export function DayScore() {
               value={ctx.moodLabel === "neutro" ? "—" : ctx.moodLabel.replace("_", " ")}
             />
             <CompactIndicator
-              icon={<Pill className={`w-3.5 h-3.5 ${ctx.medsAdherence >= 100 ? "text-green-500" : ctx.medsAdherence > 0 ? "text-amber-500" : "text-muted-foreground"}`} />}
+              icon={<Pill className={`w-3.5 h-3.5 ${ctx.medsAdherence !== null && ctx.medsAdherence >= 100 ? "text-green-500" : ctx.medsAdherence !== null && ctx.medsAdherence > 0 ? "text-amber-500" : "text-muted-foreground"}`} />}
               label="Meds"
               value={`${ctx.medsTaken}/${ctx.medsTotal}`}
             />

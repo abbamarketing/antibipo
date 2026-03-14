@@ -21,7 +21,7 @@ export interface DayContext {
   sleepHours: number | null;
   medsTaken: number;
   medsTotal: number;
-  medsAdherence: number; // 0-100%
+  medsAdherence: number | null; // 0-100% or null when no meds registered
   exerciseDone: boolean;
   exerciseMinutes: number;
 
@@ -53,7 +53,7 @@ function moodToLabel(val: number | null): DayMood {
 function computeDayScore(ctx: {
   moodValue: number | null;
   sleepQuality: number | null;
-  medsAdherence: number;
+  medsAdherence: number | null;
   exerciseDone: boolean;
   tasksCompletedToday: number;
   energy: EnergyState | null;
@@ -72,7 +72,7 @@ function computeDayScore(ctx: {
   }
 
   // Medication adherence (0-15)
-  score += (ctx.medsAdherence / 100) * 15;
+  score += ctx.medsAdherence !== null ? (ctx.medsAdherence / 100) * 15 : 0;
 
   // Exercise bonus (0-10)
   if (ctx.exerciseDone) score += 10;
@@ -94,7 +94,7 @@ function computeDayScore(ctx: {
   return Math.max(0, Math.min(100, Math.round(score)));
 }
 
-function computeAlert(score: number, moodValue: number | null, medsAdherence: number, consecutiveDaysWithoutData: number): { level: DayAlert; message: string } {
+function computeAlert(score: number, moodValue: number | null, medsAdherence: number | null, consecutiveDaysWithoutData: number): { level: DayAlert; message: string } {
   // Data gap overrides — silence is dangerous in bipolar condition
   if (consecutiveDaysWithoutData >= 5) {
     return { level: "crise", message: `Voce esta sumido ha ${consecutiveDaysWithoutData} dias. Tudo bem? Registre como se sente.` };
@@ -106,7 +106,7 @@ function computeAlert(score: number, moodValue: number | null, medsAdherence: nu
     return { level: "atencao", message: `${consecutiveDaysWithoutData} dias sem dados. Que tal registrar como voce esta?` };
   }
 
-  if (moodValue !== null && moodValue <= -2 && medsAdherence < 50) {
+  if (moodValue !== null && moodValue <= -2 && medsAdherence !== null && medsAdherence < 50) {
     return { level: "crise", message: "Humor muito baixo e medicacao pendente. Priorize so o essencial." };
   }
   if (score < 30 || (moodValue !== null && moodValue <= -2)) {
@@ -145,7 +145,7 @@ function computeTaskLimits(energy: EnergyState | null, moodValue: number | null)
 
 function computeSuggestions(ctx: {
   moodValue: number | null;
-  medsAdherence: number;
+  medsAdherence: number | null;
   exerciseDone: boolean;
   sleepQuality: number | null;
   tasksCompletedToday: number;
@@ -153,7 +153,7 @@ function computeSuggestions(ctx: {
 }): string[] {
   const suggestions: string[] = [];
 
-  if (ctx.medsAdherence < 100) {
+  if (ctx.medsAdherence !== null && ctx.medsAdherence < 100) {
     suggestions.push("Tomar medicacao pendente");
   }
   if (!ctx.exerciseDone && ctx.moodValue !== null && ctx.moodValue <= 0) {
@@ -223,7 +223,7 @@ export function useDayContext(): DayContext {
     const todayMedRecords = state.registros_medicamento.filter((r) => r.data === todayStr);
     const totalMedSlots = state.medicamentos.reduce((sum, m) => sum + m.horarios.length, 0);
     const medsTaken = todayMedRecords.filter((r) => r.tomado).length;
-    const medsAdherence = totalMedSlots > 0 ? Math.round((medsTaken / totalMedSlots) * 100) : 50;
+    const medsAdherence = totalMedSlots > 0 ? Math.round((medsTaken / totalMedSlots) * 100) : null;
 
     // Exercise
     const exerciseDone = bemEstar.exerciciosHoje.length > 0;
