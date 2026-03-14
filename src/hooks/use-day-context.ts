@@ -57,6 +57,7 @@ function computeDayScore(ctx: {
   exerciseDone: boolean;
   tasksCompletedToday: number;
   energy: EnergyState | null;
+  consecutiveDaysWithoutData: number;
 }): number {
   let score = 50; // baseline
 
@@ -79,13 +80,27 @@ function computeDayScore(ctx: {
   // Task momentum (0-10)
   score += Math.min(ctx.tasksCompletedToday * 2, 10);
 
+  // Data absence penalty — silence is a signal in bipolar condition
+  if (ctx.consecutiveDaysWithoutData >= 1 && ctx.moodValue === null && ctx.sleepQuality === null) {
+    score -= 10;
+  }
+  if (ctx.consecutiveDaysWithoutData >= 3) {
+    score -= 20;
+  }
+  if (ctx.consecutiveDaysWithoutData >= 5) {
+    score -= 30;
+  }
+
   return Math.max(0, Math.min(100, Math.round(score)));
 }
 
 function computeAlert(score: number, moodValue: number | null, medsAdherence: number, consecutiveDaysWithoutData: number): { level: DayAlert; message: string } {
-  // Data gap overrides
-  if (consecutiveDaysWithoutData >= 4) {
-    return { level: "crise", message: `${consecutiveDaysWithoutData} dias sem registros. Registre humor, sono ou medicacao.` };
+  // Data gap overrides — silence is dangerous in bipolar condition
+  if (consecutiveDaysWithoutData >= 5) {
+    return { level: "crise", message: `Voce esta sumido ha ${consecutiveDaysWithoutData} dias. Tudo bem? Registre como se sente.` };
+  }
+  if (consecutiveDaysWithoutData >= 3) {
+    return { level: "atencao", message: `Voce esta sumido ha ${consecutiveDaysWithoutData} dias. Tudo bem? Que tal registrar como se sente?` };
   }
   if (consecutiveDaysWithoutData >= 2) {
     return { level: "atencao", message: `${consecutiveDaysWithoutData} dias sem dados. Que tal registrar como voce esta?` };
@@ -233,7 +248,7 @@ export function useDayContext(): DayContext {
     );
 
     // Computed
-    const dayScore = computeDayScore({ moodValue, sleepQuality, medsAdherence, exerciseDone, tasksCompletedToday, energy });
+    const dayScore = computeDayScore({ moodValue, sleepQuality, medsAdherence, exerciseDone, tasksCompletedToday, energy, consecutiveDaysWithoutData });
     const { level: alertLevel, message: alertMessage } = computeAlert(dayScore, moodValue, medsAdherence, consecutiveDaysWithoutData);
     const { taskLimit, casaLimit } = computeTaskLimits(energy, moodValue);
     const suggestedActions = computeSuggestions({ moodValue, medsAdherence, exerciseDone, sleepQuality, tasksCompletedToday, energy });
