@@ -6,14 +6,13 @@ import { useTrackerStore } from "@/lib/tracker-store";
 import { isRecorrenteDue, type RecorrenteConfig, type ChecklistConfig } from "@/lib/tracker-blueprints";
 import { logActivity } from "@/lib/activity-log";
 import { brasiliaTimeString, brasiliaISO } from "@/lib/brasilia";
-import { CheckCircle2, ChevronDown, ChevronRight, Sparkles } from "lucide-react";
-import { KanbanCard } from "@/components/kanban/KanbanCard";
+import { CheckCircle2, Sparkles } from "lucide-react";
 import { TaskDetailDialog } from "@/components/kanban/TaskDetailDialog";
 import { PomodoroBar } from "@/components/atomic/PomodoroBar";
 import { CompletedSection } from "@/components/atomic/CompletedSection";
-import {
-  type UnifiedTask, STATUS_COLUMNS, MODULE_COLORS, MODULE_LABELS, MODULE_ICONS,
-} from "@/components/kanban/kanban-types";
+import { KanbanColumn } from "@/components/kanban/KanbanColumn";
+import { KanbanFilters } from "@/components/kanban/KanbanFilters";
+import { type UnifiedTask, STATUS_COLUMNS } from "@/components/kanban/kanban-types";
 
 interface UnifiedKanbanProps {
   energy: EnergyState;
@@ -22,9 +21,7 @@ interface UnifiedKanbanProps {
 }
 
 function getMoodMessage(mood?: number, todayCount?: number, energy?: string): string {
-  if (energy === "basico" && (mood === undefined || mood === null || mood <= 0)) {
-    return "Só uma tarefa por vez. Sem pressa.";
-  }
+  if (energy === "basico" && (mood === undefined || mood === null || mood <= 0)) return "Só uma tarefa por vez. Sem pressa.";
   if (mood === undefined || mood === null) return "Todas as suas tarefas em um só lugar.";
   if (mood <= -2) return "Vai com calma hoje. Só o essencial.";
   if (mood === -1) return "Dia mais leve — uma coisa de cada vez.";
@@ -34,61 +31,18 @@ function getMoodMessage(mood?: number, todayCount?: number, energy?: string): st
   return "Suas tarefas do dia.";
 }
 
-/* ── Queue Stepper (dot progress bar) ── */
-function QueueStepper({ total, current, tasks, onPeek }: {
-  total: number; current: number;
-  tasks: UnifiedTask[];
-  onPeek: (idx: number) => void;
-}) {
-  const [hoveredIdx, setHoveredIdx] = useState<number | null>(null);
-
-  if (total <= 1) return null;
-
-  return (
-    <div className="flex items-center gap-3 mb-3">
-      <div className="flex items-center gap-1.5 relative">
-        {Array.from({ length: total }).map((_, i) => (
-          <button
-            key={i}
-            className={`w-2 h-2 rounded-full transition-all duration-300 ${
-              i === current
-                ? "bg-primary scale-125"
-                : i < current
-                ? "bg-primary/30"
-                : "bg-muted-foreground/20"
-            }`}
-            onMouseEnter={() => { setHoveredIdx(i); onPeek(i); }}
-            onMouseLeave={() => setHoveredIdx(null)}
-            aria-label={`Tarefa ${i + 1}: ${tasks[i]?.titulo}`}
-          />
-        ))}
-        {/* Tooltip */}
-        {hoveredIdx !== null && hoveredIdx !== current && tasks[hoveredIdx] && (
-          <div className="absolute left-0 -top-8 bg-card border border-border/60 rounded-lg px-2.5 py-1 shadow-md z-20 whitespace-nowrap animate-fade-in pointer-events-none">
-            <span className="font-mono text-[9px] text-muted-foreground">{tasks[hoveredIdx].titulo}</span>
-          </div>
-        )}
-      </div>
-      <span className="font-mono text-[10px] text-muted-foreground/60">
-        {current + 1} de {total}
-      </span>
-    </div>
-  );
-}
-
 export function UnifiedKanban({ energy, lastMoodValue, preferredModule = null }: UnifiedKanbanProps) {
   const { state, completeTask, updateTask, deleteTask } = useFlowStore();
   const casa = useCasaStore();
   const { trackers, getTodayRegistros, getLastCompletion } = useTrackerStore();
   const dayCtx = useDayContext();
+
   const [detailTask, setDetailTask] = useState<UnifiedTask | null>(null);
   const [collapsedCols, setCollapsedCols] = useState<Set<string>>(
     () => new Set(energy === "basico" ? ["em_andamento", "aguardando", "backlog"] : energy === "modo_leve" ? ["backlog"] : [])
   );
   const [filterModule, setFilterModule] = useState<"trabalho" | "casa" | "saude" | null>(preferredModule);
   const [showCompleted, setShowCompleted] = useState(false);
-
-  // Focus mode: track which index in the "hoje" queue is visible
   const [focusIndex, setFocusIndex] = useState(0);
   const [slideDirection, setSlideDirection] = useState<"up" | "none">("none");
   const slideTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -220,8 +174,8 @@ export function UnifiedKanban({ energy, lastMoodValue, preferredModule = null }:
     return tasks;
   }, [filtered, energy, dayCtx.taskLimit]);
 
-  // Keep focusIndex in bounds when today tasks change
   const todayTasks = useMemo(() => getColumnTasks("hoje"), [getColumnTasks]);
+
   useEffect(() => {
     if (focusIndex >= todayTasks.length) setFocusIndex(Math.max(0, todayTasks.length - 1));
   }, [todayTasks.length, focusIndex]);
@@ -237,29 +191,30 @@ export function UnifiedKanban({ energy, lastMoodValue, preferredModule = null }:
   const handleComplete = (item: UnifiedTask) => {
     if (item.tipo === "task") { completeTask(item.id); logActivity("tarefa_concluida", { task_id: item.id, titulo: item.titulo, hora: brasiliaTimeString() }); }
     else if (item.tipo === "casa") { const t = item.sourceData; casa.completarTarefa({ tarefa_casa_id: t.id, comodo: t.comodo, tarefa: t.tarefa }); logActivity("tarefa_casa_concluida", { tarefa: t.tarefa, comodo: t.comodo, hora: brasiliaTimeString() }); }
-    // After completing, trigger slide animation for next task
     triggerSlideUp();
   };
 
-  const handleDelegate = (id: string) => {
-    updateTask(id, { status: "aguardando" });
-    logActivity("tarefa_delegada", { task_id: id, hora: brasiliaTimeString() });
+  const handleDelegate = (item: UnifiedTask) => {
+    updateTask(item.id, { status: "aguardando" });
+    logActivity("tarefa_delegada", { task_id: item.id, hora: brasiliaTimeString() });
     triggerSlideUp();
   };
 
-  const handlePush = (id: string) => {
-    const task = state.tasks.find((t) => t.id === id);
-    updateTask(id, { urgencia: Math.max(1, (task?.urgencia || 2) - 1) as 1 | 2 | 3 });
-    logActivity("tarefa_empurrada", { task_id: id, hora: brasiliaTimeString() });
+  const handlePush = (item: UnifiedTask) => {
+    const task = state.tasks.find((t) => t.id === item.id);
+    updateTask(item.id, { urgencia: Math.max(1, (task?.urgencia || 2) - 1) as 1 | 2 | 3 });
+    logActivity("tarefa_empurrada", { task_id: item.id, hora: brasiliaTimeString() });
     triggerSlideUp();
   };
 
   const handleDelete = (item: UnifiedTask) => { if (item.tipo === "task") { deleteTask(item.id); logActivity("tarefa_excluida", { task_id: item.id, titulo: item.titulo, hora: brasiliaTimeString() }); } setDetailTask(null); };
-  const handleMoveStatus = (id: string, newStatus: string) => {
-    updateTask(id, { status: newStatus as any });
-    logActivity("tarefa_movida", { task_id: id, status: newStatus, hora: brasiliaTimeString() });
+  const handleMoveStatus = (item: UnifiedTask, newStatus: string) => {
+    updateTask(item.id, { status: newStatus as any });
+    logActivity("tarefa_movida", { task_id: item.id, status: newStatus, hora: brasiliaTimeString() });
     if (newStatus !== "hoje") triggerSlideUp();
   };
+
+  const handleCompleteSubtask = (subId: string) => { completeTask(subId); logActivity("subtarefa_concluida", { task_id: subId, hora: brasiliaTimeString() }); };
 
   const pomodoroTask = pomodoroTaskId ? allItems.find((t) => t.id === pomodoroTaskId) : null;
   const moodMessage = getMoodMessage(lastMoodValue, todayTasks.length, energy);
@@ -267,12 +222,11 @@ export function UnifiedKanban({ energy, lastMoodValue, preferredModule = null }:
     ? STATUS_COLUMNS.filter((c) => c.key === "hoje")
     : energy === "modo_leve" ? STATUS_COLUMNS.filter((c) => c.key === "hoje" || c.key === "em_andamento") : STATUS_COLUMNS;
 
-  // The focused task for the "hoje" column
   const focusedTask = todayTasks[focusIndex] || null;
-
-  // Determine visual tone
   const isLowState = energy === "basico" || (lastMoodValue !== undefined && lastMoodValue !== null && lastMoodValue <= 0);
   const calmClass = isLowState ? "opacity-90" : "";
+
+  const startPomodoro = (item: UnifiedTask) => { setPomodoroTaskId(item.id); setPomodoroTime(25 * 60); setPomodoroRunning(true); };
 
   return (
     <>
@@ -294,22 +248,8 @@ export function UnifiedKanban({ energy, lastMoodValue, preferredModule = null }:
           )}
         </div>
 
-        {/* Module filter — hidden in low state to reduce visual noise */}
-        {!isLowState && (
-          <div className="flex gap-2">
-            <button onClick={() => setFilterModule(null)} className={`px-3 py-2 rounded-xl text-[11px] font-mono transition-all min-h-[40px] ${!filterModule ? "bg-primary text-primary-foreground" : "bg-secondary text-muted-foreground"}`}>TODOS</button>
-            {(["trabalho", "casa", "saude"] as const).map((m) => {
-              const Icon = MODULE_ICONS[m];
-              return (
-                <button key={m} onClick={() => setFilterModule(filterModule === m ? null : m)} className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-[11px] font-mono transition-all min-h-[40px] ${filterModule === m ? "bg-primary text-primary-foreground" : "bg-secondary text-muted-foreground"}`}>
-                  <Icon className="w-3.5 h-3.5" />{MODULE_LABELS[m]}{moduleCounts[m] > 0 && <span className="opacity-60">({moduleCounts[m]})</span>}
-                </button>
-              );
-            })}
-          </div>
-        )}
+        {!isLowState && <KanbanFilters filterModule={filterModule} onFilterChange={setFilterModule} moduleCounts={moduleCounts} />}
 
-        {/* Pomodoro */}
         {pomodoroTask && (
           <PomodoroBar
             taskTitle={pomodoroTask.titulo} time={pomodoroTime} running={pomodoroRunning}
@@ -319,93 +259,34 @@ export function UnifiedKanban({ energy, lastMoodValue, preferredModule = null }:
           />
         )}
 
-        {/* Kanban columns */}
         <div className="space-y-4">
           {visibleColumns.map((col) => {
             const isHoje = col.key === "hoje";
-            const colTasks = isHoje ? todayTasks : getColumnTasks(col.key);
-            const isCollapsed = collapsedCols.has(col.key);
-
             return (
-              <div key={col.key} className="space-y-2">
-                <button onClick={() => toggleCol(col.key)} className="flex items-center gap-2 w-full">
-                  {isCollapsed ? <ChevronRight className="w-3 h-3 text-muted-foreground" /> : <ChevronDown className="w-3 h-3 text-muted-foreground" />}
-                  <div className={`w-2 h-2 rounded-full ${col.dot}`} />
-                  <span className="font-mono text-[10px] tracking-widest text-muted-foreground">{col.label}</span>
-                  <span className="font-mono text-[10px] text-muted-foreground/50">{colTasks.length}</span>
-                </button>
-                {!isCollapsed && (
-                  <div className="space-y-2 pl-5">
-                    {colTasks.length === 0 ? (
-                      <p className="text-[10px] text-muted-foreground/40 font-mono py-2">Vazio</p>
-                    ) : isHoje && focusedTask ? (
-                      /* ── Foco Único: show one task at a time ── */
-                      <div>
-                        <QueueStepper
-                          total={todayTasks.length}
-                          current={focusIndex}
-                          tasks={todayTasks}
-                          onPeek={() => {}}
-                        />
-                        <div
-                          key={focusedTask.id}
-                          className={`transition-all duration-300 ease-out ${
-                            slideDirection === "up"
-                              ? "animate-[slideUp_0.35s_ease-out]"
-                              : ""
-                          }`}
-                        >
-                          <KanbanCard
-                            item={focusedTask}
-                            onComplete={() => handleComplete(focusedTask)}
-                            onDelegate={() => focusedTask.tipo === "task" && handleDelegate(focusedTask.id)}
-                            onPush={() => focusedTask.tipo === "task" && handlePush(focusedTask.id)}
-                            onMoveStatus={(s) => focusedTask.tipo === "task" && handleMoveStatus(focusedTask.id, s)}
-                            onStartPomodoro={() => { setPomodoroTaskId(focusedTask.id); setPomodoroTime(25 * 60); setPomodoroRunning(true); }}
-                            showPomodoro={!pomodoroTask}
-                            onCompleteSubtask={(subId) => { completeTask(subId); logActivity("subtarefa_concluida", { task_id: subId, hora: brasiliaTimeString() }); }}
-                            onOpen={() => setDetailTask(focusedTask)}
-                            onDelete={() => handleDelete(focusedTask)}
-                          />
-                        </div>
-                        {/* Skip / navigate buttons */}
-                        {todayTasks.length > 1 && (
-                          <div className="flex items-center justify-between mt-2">
-                            <button
-                              onClick={() => { triggerSlideUp(); setFocusIndex((i) => (i > 0 ? i - 1 : todayTasks.length - 1)); }}
-                              className="font-mono text-[10px] text-muted-foreground hover:text-foreground px-2 py-1 rounded-lg hover:bg-secondary/60 transition-all active:scale-95"
-                            >
-                              ← anterior
-                            </button>
-                            <button
-                              onClick={() => { triggerSlideUp(); setFocusIndex((i) => (i < todayTasks.length - 1 ? i + 1 : 0)); }}
-                              className="font-mono text-[10px] text-muted-foreground hover:text-foreground px-2 py-1 rounded-lg hover:bg-secondary/60 transition-all active:scale-95"
-                            >
-                              pular →
-                            </button>
-                          </div>
-                        )}
-                      </div>
-                    ) : (
-                      /* Other columns: normal list */
-                      colTasks.map((item) => (
-                        <KanbanCard
-                          key={item.id} item={item}
-                          onComplete={() => handleComplete(item)}
-                          onDelegate={() => item.tipo === "task" && handleDelegate(item.id)}
-                          onPush={() => item.tipo === "task" && handlePush(item.id)}
-                          onMoveStatus={(s) => item.tipo === "task" && handleMoveStatus(item.id, s)}
-                          onStartPomodoro={() => { setPomodoroTaskId(item.id); setPomodoroTime(25 * 60); setPomodoroRunning(true); }}
-                          showPomodoro={!pomodoroTask}
-                          onCompleteSubtask={(subId) => { completeTask(subId); logActivity("subtarefa_concluida", { task_id: subId, hora: brasiliaTimeString() }); }}
-                          onOpen={() => setDetailTask(item)}
-                          onDelete={() => handleDelete(item)}
-                        />
-                      ))
-                    )}
-                  </div>
-                )}
-              </div>
+              <KanbanColumn
+                key={col.key}
+                colKey={col.key}
+                label={col.label}
+                dot={col.dot}
+                tasks={isHoje ? todayTasks : getColumnTasks(col.key)}
+                isCollapsed={collapsedCols.has(col.key)}
+                onToggleCollapse={() => toggleCol(col.key)}
+                focusMode={isHoje}
+                focusIndex={focusIndex}
+                focusedTask={isHoje ? focusedTask : undefined}
+                slideDirection={isHoje ? slideDirection : undefined}
+                onFocusPrev={() => { triggerSlideUp(); setFocusIndex((i) => (i > 0 ? i - 1 : todayTasks.length - 1)); }}
+                onFocusNext={() => { triggerSlideUp(); setFocusIndex((i) => (i < todayTasks.length - 1 ? i + 1 : 0)); }}
+                onComplete={handleComplete}
+                onDelegate={handleDelegate}
+                onPush={handlePush}
+                onMoveStatus={handleMoveStatus}
+                onStartPomodoro={startPomodoro}
+                showPomodoro={!pomodoroTask}
+                onCompleteSubtask={handleCompleteSubtask}
+                onOpen={setDetailTask}
+                onDelete={handleDelete}
+              />
             );
           })}
         </div>
@@ -426,7 +307,7 @@ export function UnifiedKanban({ energy, lastMoodValue, preferredModule = null }:
           onUpdateNotes={(notes) => { if (detailTask.tipo === "task") { updateTask(detailTask.id, { notas: notes || null }); setDetailTask({ ...detailTask, notas: notes || null }); } }}
           onDelete={() => handleDelete(detailTask)}
           onComplete={() => { handleComplete(detailTask); setDetailTask(null); }}
-          onMoveStatus={(s) => { if (detailTask.tipo === "task") handleMoveStatus(detailTask.id, s); }}
+          onMoveStatus={(s) => { if (detailTask.tipo === "task") handleMoveStatus(detailTask, s); }}
         />
       )}
     </>
