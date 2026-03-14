@@ -119,13 +119,18 @@ serve(async (req) => {
     const nome = (profile as any)?.nome || "usuário";
     const memoryContext = (latestSummary as any)?.[0]?.valor?.resumo || "";
 
+    const registrosHumorSemana = weekHumor?.length || 0;
+    const lacunaAviso = registrosHumorSemana < 3
+      ? `\nATENCAO: usuario tem apenas ${registrosHumorSemana} registros de humor nos ultimos 7 dias. Mencione gentilmente essa lacuna e incentive a registrar.`
+      : "";
+
     const systemContent = `Você gera UMA frase curta (máx 20 palavras) para ${nome} que relata algo CONCRETO de ontem.
 NÃO seja motivacional genérico. Seja factual e específico.
 Use dados reais: tarefas concluídas, exercícios, medicamentos, sono, humor.
 Cruze módulos quando possível: "treinou e fechou 3 tarefas, humor subiu pra 4".
 Se o sono foi ruim ou humor baixo, seja empático sem ser dramático.
 Se há padrão de consistência na semana, reconheça.
-Tom: parceiro, factual, direto. Sem emojis, sem aspas.`;
+Tom: parceiro, factual, direto. Sem emojis, sem aspas.${lacunaAviso}`;
 
     const userContent = `ONTEM:\nAções: ${yesterdaySummary || "nenhuma"}\nDiário: ${diaryText || "nenhum"}\nBem-estar: ${wellBeing.join("; ") || "sem dados"}\n\nSEMANA:\nAções: ${weekSummary || "sem dados"}\nDiário: ${weekDiaryText || "nenhum"}\nMetas ativas: ${metasText || "nenhuma"}${memoryContext ? `\nMemória IA: ${memoryContext}` : ""}`;
 
