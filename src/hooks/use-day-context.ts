@@ -72,7 +72,7 @@ function computeDayScore(ctx: {
   }
 
   // Medication adherence (0-15)
-  score += (ctx.medsAdherence / 100) * 15;
+  score += ctx.medsAdherence !== null ? (ctx.medsAdherence / 100) * 15 : 0;
 
   // Exercise bonus (0-10)
   if (ctx.exerciseDone) score += 10;
