@@ -232,6 +232,7 @@ const Index = () => {
                     <ContextWidgets isCrisis={isCrisis} isLowState={isLowState} activeNav={activeNav} pending={pending} onTakeMed={handleTakeMed} onMoodUpdated={(val) => setLastMoodValue(val)} />
                   </aside>
                   <main className="col-span-9">
+                    <AlertBanner alerts={(dayCtx.alerts ?? []) as any[]} />
                     {isVeryLow && (
                       <div className="rounded-2xl bg-[hsl(210,20%,95%)] border border-border/30 p-4 text-center mb-4 animate-fade-in">
                         <p className="font-body text-sm text-muted-foreground leading-relaxed">
