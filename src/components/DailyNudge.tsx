@@ -210,7 +210,7 @@ export function DailyNudge() {
       {/* AI nudge + voice capture */}
       <div className="flex items-center justify-between gap-2">
         {hasNudge && (
-          <p className="font-mono text-[11px] leading-relaxed text-foreground/80 flex-1">
+          <p className="font-mono text-[11px] leading-relaxed text-foreground/80 flex-1 line-clamp-2 md:line-clamp-none">
             {data.message}
           </p>
         )}
