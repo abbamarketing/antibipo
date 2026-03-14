@@ -33,6 +33,7 @@ export interface DayContext {
   casaLimit: number; // max casa tasks based on mood+energy
   suggestedActions: string[];
   contextMessage: string; // adaptive message for the user
+  consecutiveDaysWithoutData: number;
 
   // Stats
   tasksCompletedToday: number;
@@ -81,24 +82,31 @@ function computeDayScore(ctx: {
   return Math.max(0, Math.min(100, Math.round(score)));
 }
 
-function computeAlert(score: number, moodValue: number | null, medsAdherence: number): { level: DayAlert; message: string } {
+function computeAlert(score: number, moodValue: number | null, medsAdherence: number, consecutiveDaysWithoutData: number): { level: DayAlert; message: string } {
+  // Data gap overrides
+  if (consecutiveDaysWithoutData >= 4) {
+    return { level: "crise", message: `${consecutiveDaysWithoutData} dias sem registros. Registre humor, sono ou medicacao.` };
+  }
+  if (consecutiveDaysWithoutData >= 2) {
+    return { level: "atencao", message: `${consecutiveDaysWithoutData} dias sem dados. Que tal registrar como voce esta?` };
+  }
+
   if (moodValue !== null && moodValue <= -2 && medsAdherence < 50) {
-    return { level: "crise", message: "Humor muito baixo e medicação pendente. Priorize só o essencial." };
+    return { level: "crise", message: "Humor muito baixo e medicacao pendente. Priorize so o essencial." };
   }
   if (score < 30 || (moodValue !== null && moodValue <= -2)) {
-    return { level: "crise", message: "Dia difícil. Foque no básico: remédio, água, descanso." };
+    return { level: "crise", message: "Dia dificil. Foque no basico: remedio, agua, descanso." };
   }
   if (score < 50 || (moodValue !== null && moodValue === -1)) {
-    return { level: "atencao", message: "Energia moderada. Faça o possível sem se cobrar." };
+    return { level: "atencao", message: "Energia moderada. Faca o possivel sem se cobrar." };
   }
   if (score >= 75) {
-    return { level: "otimo", message: "Dia forte! Bom momento para tarefas estratégicas." };
+    return { level: "otimo", message: "Dia forte! Bom momento para tarefas estrategicas." };
   }
   return { level: "estavel", message: "Siga no seu ritmo. Tudo fluindo." };
 }
 
 function computeTaskLimits(energy: EnergyState | null, moodValue: number | null): { taskLimit: number; casaLimit: number } {
-  // Energy base limits
   const energyLimits: Record<string, { tasks: number; casa: number }> = {
     foco_total: { tasks: 10, casa: 5 },
     modo_leve: { tasks: 6, casa: 3 },
@@ -107,7 +115,6 @@ function computeTaskLimits(energy: EnergyState | null, moodValue: number | null)
 
   const base = energy ? energyLimits[energy] : { tasks: 6, casa: 3 };
 
-  // Mood modifier — low mood reduces limits further
   if (moodValue !== null && moodValue <= -2) {
     return { taskLimit: Math.min(base.tasks, 2), casaLimit: 1 };
   }
@@ -132,7 +139,7 @@ function computeSuggestions(ctx: {
   const suggestions: string[] = [];
 
   if (ctx.medsAdherence < 100) {
-    suggestions.push("Tomar medicação pendente");
+    suggestions.push("Tomar medicacao pendente");
   }
   if (!ctx.exerciseDone && ctx.moodValue !== null && ctx.moodValue <= 0) {
     suggestions.push("Uma caminhada leve pode ajudar o humor");
@@ -148,6 +155,34 @@ function computeSuggestions(ctx: {
   }
 
   return suggestions;
+}
+
+/** Count consecutive days without ANY health data (humor, sono, or meds) going back from yesterday */
+function countConsecutiveDaysWithoutData(
+  registrosHumor: { data: string }[],
+  registrosSono: { data: string }[],
+  registrosMed: { data: string }[],
+): number {
+  const todayDate = new Date();
+  let count = 0;
+
+  for (let i = 1; i <= 7; i++) {
+    const d = new Date(todayDate);
+    d.setDate(d.getDate() - i);
+    const dateStr = d.toISOString().split("T")[0];
+
+    const hasHumor = registrosHumor.some((r) => r.data === dateStr);
+    const hasSono = registrosSono.some((r) => r.data === dateStr);
+    const hasMed = registrosMed.some((r) => r.data === dateStr);
+
+    if (!hasHumor && !hasSono && !hasMed) {
+      count++;
+    } else {
+      break; // consecutive streak broken
+    }
+  }
+
+  return count;
 }
 
 export function useDayContext(): DayContext {
@@ -169,11 +204,11 @@ export function useDayContext(): DayContext {
     const sleepQuality = todaySleep?.qualidade ?? null;
     const sleepHours = todaySleep?.duracao_min ? todaySleep.duracao_min / 60 : null;
 
-    // Meds
+    // Meds — neutral (50) when no meds registered, not inflated 100
     const todayMedRecords = state.registros_medicamento.filter((r) => r.data === todayStr);
     const totalMedSlots = state.medicamentos.reduce((sum, m) => sum + m.horarios.length, 0);
     const medsTaken = todayMedRecords.filter((r) => r.tomado).length;
-    const medsAdherence = totalMedSlots > 0 ? Math.round((medsTaken / totalMedSlots) * 100) : 100;
+    const medsAdherence = totalMedSlots > 0 ? Math.round((medsTaken / totalMedSlots) * 100) : 50;
 
     // Exercise
     const exerciseDone = bemEstar.exerciciosHoje.length > 0;
@@ -190,13 +225,19 @@ export function useDayContext(): DayContext {
       (t) => t.data_limite && t.data_limite < todayStr && t.status !== "feito" && t.status !== "descartado"
     ).length;
 
+    // Consecutive days without data
+    const consecutiveDaysWithoutData = countConsecutiveDaysWithoutData(
+      state.registros_humor,
+      state.registros_sono,
+      state.registros_medicamento,
+    );
+
     // Computed
     const dayScore = computeDayScore({ moodValue, sleepQuality, medsAdherence, exerciseDone, tasksCompletedToday, energy });
-    const { level: alertLevel, message: alertMessage } = computeAlert(dayScore, moodValue, medsAdherence);
+    const { level: alertLevel, message: alertMessage } = computeAlert(dayScore, moodValue, medsAdherence, consecutiveDaysWithoutData);
     const { taskLimit, casaLimit } = computeTaskLimits(energy, moodValue);
     const suggestedActions = computeSuggestions({ moodValue, medsAdherence, exerciseDone, sleepQuality, tasksCompletedToday, energy });
 
-    // Context message — combines everything into a single sentence
     const contextMessage = alertMessage;
 
     return {
@@ -217,6 +258,7 @@ export function useDayContext(): DayContext {
       casaLimit,
       suggestedActions,
       contextMessage,
+      consecutiveDaysWithoutData,
       tasksCompletedToday,
       tasksPending,
       tasksOverdue,
