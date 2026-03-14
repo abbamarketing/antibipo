@@ -32,27 +32,85 @@ serve(async (req) => {
     weekAgo.setDate(weekAgo.getDate() - 7);
     const weekAgoStr = weekAgo.toISOString().split("T")[0];
 
-    const [
-      { data: yesterdayLogs }, { data: weekLogs }, { data: diary }, { data: weekDiary },
-      { data: metas }, { data: yesterdayHumor }, { data: weekHumor }, { data: yesterdaySono },
-      { data: yesterdayMeds }, { data: yesterdayExercicio }, { data: pendingTasks },
-      { data: completedYesterday }, { data: profile }, { data: latestSummary },
-    ] = await Promise.all([
-      supabase.from("activity_log").select("acao, detalhes").gte("criado_em", `${yesterdayStr}T00:00:00`).lt("criado_em", `${yesterdayStr}T23:59:59`).order("criado_em", { ascending: false }).limit(20),
-      supabase.from("activity_log").select("acao, detalhes").gte("criado_em", `${weekAgoStr}T00:00:00`).lt("criado_em", `${yesterdayStr}T00:00:00`).order("criado_em", { ascending: false }).limit(50),
-      supabase.from("diario_entradas").select("texto, humor_detectado, sentimento").eq("user_id", user.id).eq("data", yesterdayStr).order("created_at", { ascending: false }).limit(5),
-      supabase.from("diario_entradas").select("texto, humor_detectado, sentimento, data").eq("user_id", user.id).gte("data", weekAgoStr).lt("data", yesterdayStr).order("created_at", { ascending: false }).limit(10),
-      supabase.from("metas_pessoais").select("titulo, progresso, status").eq("user_id", user.id).eq("status", "ativa").limit(5),
-      supabase.from("registros_humor").select("valor, notas").eq("data", yesterdayStr).maybeSingle(),
-      supabase.from("registros_humor").select("valor, data").gte("data", weekAgoStr).lte("data", yesterdayStr).order("data", { ascending: false }),
-      supabase.from("registros_sono").select("horario_dormir, horario_acordar, duracao_min, qualidade").eq("data", yesterdayStr).maybeSingle(),
-      supabase.from("registros_medicamento").select("tomado, medicamento_id").eq("data", yesterdayStr),
-      supabase.from("bm_exercicios").select("tipo, duracao_min, intensidade").eq("data", yesterdayStr),
-      supabase.from("tasks").select("titulo, status, urgencia").in("status", ["hoje", "em_andamento", "aguardando"]).limit(5),
-      supabase.from("tasks").select("titulo").eq("status", "feito").gte("feito_em", `${yesterdayStr}T00:00:00`).lt("feito_em", `${todayStr}T00:00:00`),
-      supabase.from("profiles").select("nome, objetivo_saude").eq("user_id", user.id).maybeSingle(),
-      supabase.from("configuracoes").select("valor").eq("user_id", user.id).like("chave", "resumo_logs_%").order("updated_at", { ascending: false }).limit(1),
+    // 6 parallel queries (down from 14)
+    const timeout = new Promise<null[]>((r) => setTimeout(() => r(Array(6).fill(null)), 5000));
+
+    const queries = Promise.all([
+      // Q1: activity_log — 7 days unified
+      supabase.from("activity_log").select("acao, detalhes, criado_em")
+        .gte("criado_em", `${weekAgoStr}T00:00:00`).lt("criado_em", `${todayStr}T00:00:00`)
+        .order("criado_em", { ascending: false }).limit(70),
+
+      // Q2: diario — 7 days unified
+      supabase.from("diario_entradas").select("texto, humor_detectado, sentimento, data")
+        .eq("user_id", user.id).gte("data", weekAgoStr).lte("data", yesterdayStr)
+        .order("created_at", { ascending: false }).limit(15),
+
+      // Q3: humor — 8 days unified (week + yesterday)
+      supabase.from("registros_humor").select("valor, notas, data")
+        .gte("data", weekAgoStr).lte("data", yesterdayStr)
+        .order("data", { ascending: false }),
+
+      // Q4: sono + meds + exercicio + tasks (grouped health/tasks)
+      Promise.all([
+        supabase.from("registros_sono").select("horario_dormir, horario_acordar, duracao_min, qualidade").eq("data", yesterdayStr).maybeSingle(),
+        supabase.from("registros_medicamento").select("tomado, medicamento_id").eq("data", yesterdayStr),
+        supabase.from("bm_exercicios").select("tipo, duracao_min, intensidade").eq("data", yesterdayStr),
+        supabase.from("tasks").select("titulo, status, urgencia").in("status", ["hoje", "em_andamento", "aguardando"]).limit(5),
+        supabase.from("tasks").select("titulo").eq("status", "feito").gte("feito_em", `${yesterdayStr}T00:00:00`).lt("feito_em", `${todayStr}T00:00:00`),
+      ]),
+
+      // Q5: metas
+      supabase.from("metas_pessoais").select("titulo, progresso, status")
+        .eq("user_id", user.id).eq("status", "ativa").limit(5),
+
+      // Q6: profile + latestSummary
+      Promise.all([
+        supabase.from("profiles").select("nome, objetivo_saude").eq("user_id", user.id).maybeSingle(),
+        supabase.from("configuracoes").select("valor").eq("user_id", user.id).like("chave", "resumo_logs_%").order("updated_at", { ascending: false }).limit(1),
+      ]),
     ]);
+
+    const results = await Promise.race([queries, timeout]);
+
+    // If timed out, return fallback
+    if (!results || results.every((r) => r === null)) {
+      return new Response(JSON.stringify({ message: "Bom dia! Vamos começar bem hoje." }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    const [allLogsRes, allDiaryRes, allHumorRes, healthResults, metasRes, profileResults] = results as any[];
+
+    // Split activity logs by date
+    const allLogs = allLogsRes?.data || [];
+    const yesterdayLogs = allLogs.filter((l: any) => l.criado_em?.startsWith(yesterdayStr));
+    const weekLogs = allLogs.filter((l: any) => !l.criado_em?.startsWith(yesterdayStr));
+
+    // Split diary by date
+    const allDiary = allDiaryRes?.data || [];
+    const diary = allDiary.filter((d: any) => d.data === yesterdayStr);
+    const weekDiary = allDiary.filter((d: any) => d.data !== yesterdayStr);
+
+    // Split humor: yesterday vs week
+    const allHumor = allHumorRes?.data || [];
+    const yesterdayHumor = allHumor.find((h: any) => h.data === yesterdayStr) || null;
+    const weekHumor = allHumor;
+
+    // Destructure health group
+    const [sonoRes, medsRes, exercicioRes, pendingRes, completedRes] = healthResults || [];
+    const yesterdaySono = sonoRes?.data || null;
+    const yesterdayMeds = medsRes?.data || [];
+    const yesterdayExercicio = exercicioRes?.data || [];
+    const pendingTasks = pendingRes?.data || [];
+    const completedYesterday = completedRes?.data || [];
+
+    const metas = metasRes?.data || [];
+
+    // Profile group
+    const [profileRes, summaryRes] = profileResults || [];
+    const profile = profileRes?.data || null;
+    const latestSummary = summaryRes?.data || [];
 
     const summarize = (logs: any[]) => {
       const counts: Record<string, number> = {};
@@ -60,22 +118,22 @@ serve(async (req) => {
       return Object.entries(counts).map(([k, v]) => `${k}: ${v}x`).join(", ");
     };
 
-    const yesterdaySummary = summarize(yesterdayLogs || []);
-    const weekSummary = summarize(weekLogs || []);
-    const diaryText = (diary || []).map((d: any) => `[humor:${d.humor_detectado}] ${d.texto}`).join("\n");
-    const weekDiaryText = (weekDiary || []).map((d: any) => `[${d.data}] ${d.texto}`).join("\n");
-    const metasText = (metas || []).map((m: any) => `${m.titulo} (${m.progresso}%)`).join(", ");
+    const yesterdaySummary = summarize(yesterdayLogs);
+    const weekSummary = summarize(weekLogs);
+    const diaryText = diary.map((d: any) => `[humor:${d.humor_detectado}] ${d.texto}`).join("\n");
+    const weekDiaryText = weekDiary.map((d: any) => `[${d.data}] ${d.texto}`).join("\n");
+    const metasText = metas.map((m: any) => `${m.titulo} (${m.progresso}%)`).join(", ");
 
     const wellBeing: string[] = [];
-    if (yesterdayHumor) wellBeing.push(`Humor ontem: ${(yesterdayHumor as any).valor}/5${(yesterdayHumor as any).notas ? ` (${(yesterdayHumor as any).notas})` : ""}`);
+    if (yesterdayHumor) wellBeing.push(`Humor ontem: ${yesterdayHumor.valor}/5${yesterdayHumor.notas ? ` (${yesterdayHumor.notas})` : ""}`);
     if (weekHumor?.length) {
       const avg = weekHumor.reduce((s: number, h: any) => s + h.valor, 0) / weekHumor.length;
       wellBeing.push(`Humor médio semana: ${avg.toFixed(1)}/5 (${weekHumor.length} registros)`);
     }
     if (yesterdaySono) {
       const si: string[] = [];
-      if ((yesterdaySono as any).duracao_min) si.push(`${Math.round((yesterdaySono as any).duracao_min / 60)}h`);
-      if ((yesterdaySono as any).qualidade) si.push(`qualidade ${(yesterdaySono as any).qualidade}/3`);
+      if (yesterdaySono.duracao_min) si.push(`${Math.round(yesterdaySono.duracao_min / 60)}h`);
+      if (yesterdaySono.qualidade) si.push(`qualidade ${yesterdaySono.qualidade}/3`);
       if (si.length) wellBeing.push(`Sono ontem: ${si.join(", ")}`);
     }
     if (yesterdayMeds?.length) {
@@ -89,26 +147,19 @@ serve(async (req) => {
     if (completedYesterday?.length) wellBeing.push(`Tarefas concluídas ontem: ${completedYesterday.length}`);
     if (pendingTasks?.length) wellBeing.push(`Pendentes hoje: ${pendingTasks.map((t: any) => `${t.titulo} [urg:${t.urgencia}]`).join(", ")}`);
 
-    const hasData = (yesterdayLogs?.length || 0) > 0 || (diary?.length || 0) > 0 || wellBeing.length > 0;
+    const hasData = yesterdayLogs.length > 0 || diary.length > 0 || wellBeing.length > 0;
     if (!hasData) {
-      // Count how many days in last 7 have humor records for this user
-      const { data: recentHumor } = await supabase
-        .from("registros_humor")
-        .select("data")
-        .gte("data", weekAgoStr)
-        .lte("data", todayStr);
-
-      const registrosNaSemana = recentHumor?.length || 0;
+      const registrosNaSemana = weekHumor?.length || 0;
 
       let noDataMessage: string;
       if (registrosNaSemana === 0) {
-        noDataMessage = "Nenhum registro esta semana. Isso pode dificultar identificar padroes. Como voce esta?";
+        noDataMessage = "Nenhum registro esta semana. Isso pode dificultar identificar padrões. Como você está?";
       } else if (registrosNaSemana < 3) {
-        noDataMessage = "Voce esta sem registrar ha alguns dias. Tudo bem? Um check-in rapido pode ajudar o app a te ajudar melhor.";
+        noDataMessage = "Você está sem registrar há alguns dias. Tudo bem? Um check-in rápido pode ajudar o app a te ajudar melhor.";
       } else if (registrosNaSemana < 5) {
-        noDataMessage = "Ontem sem registros, mas a semana esta indo. Que tal um check-in rapido?";
+        noDataMessage = "Ontem sem registros, mas a semana está indo. Que tal um check-in rápido?";
       } else {
-        noDataMessage = "Novo dia. Voce tem sido consistente esta semana, continue assim!";
+        noDataMessage = "Novo dia. Você tem sido consistente esta semana, continue assim!";
       }
 
       return new Response(JSON.stringify({ message: noDataMessage }), {
@@ -116,8 +167,8 @@ serve(async (req) => {
       });
     }
 
-    const nome = (profile as any)?.nome || "usuário";
-    const memoryContext = (latestSummary as any)?.[0]?.valor?.resumo || "";
+    const nome = profile?.nome || "usuário";
+    const memoryContext = latestSummary?.[0]?.valor?.resumo || "";
 
     const registrosHumorSemana = weekHumor?.length || 0;
     const lacunaAviso = registrosHumorSemana < 3
