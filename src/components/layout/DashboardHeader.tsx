@@ -5,7 +5,7 @@ import { WeatherWidget } from "@/components/WeatherWidget";
 import { DailyNudge } from "@/components/DailyNudge";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 
-import { Wallet, Settings, CalendarDays } from "lucide-react";
+import { Wallet, Settings, CalendarDays, Bot } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
@@ -20,6 +20,7 @@ interface DashboardHeaderProps {
 const ALL_NAV_ITEMS = [
   { icon: Wallet, path: "/financeiro", title: "Financeiro", key: "financeiro" },
   { icon: CalendarDays, path: "/calendario", title: "Calendário", key: "calendario" },
+  { icon: Bot, path: "/agentes", title: "Agentes", key: "agentes" },
   { icon: Settings, path: "/config", title: "Configurações", key: "config" },
 ] as const;
 
