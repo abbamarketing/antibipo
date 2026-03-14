@@ -14,6 +14,26 @@ import { useTrackerStore } from "@/lib/tracker-store";
 export type DayMood = "muito_baixo" | "baixo" | "neutro" | "bom" | "muito_bom";
 export type DayAlert = "crise" | "atencao" | "estavel" | "otimo";
 
+export interface Orchestration {
+  manic_precursor: boolean | null;
+  depressive_precursor: boolean | null;
+  manic_confidence: number | null;
+  depressive_confidence: number | null;
+  weights: Record<string, number>;
+  weight_adjustment_reason: string | null;
+  module_order: string[];
+  modules_to_show: string[] | null;
+  nudge_tone: string | null;
+  nudge_focus: string | null;
+  nudge_factual_base: string | null;
+  meds_adherence_7d: number | null;
+  meds_status: string | null;
+  meds_as_anchor: boolean | null;
+  day_score_recalibrated: number | null;
+  alert_level_recalibrated: string | null;
+  score_shift: number | null;
+}
+
 export interface DayContext {
   // Raw values
   moodValue: number | null; // -2 to 2
@@ -41,6 +61,13 @@ export interface DayContext {
   tasksCompletedToday: number;
   tasksPending: number;
   tasksOverdue: number;
+
+  // Orchestration
+  moduleOrder: string[];
+  orchestration: Orchestration | null;
+  scoreShift: number | null;
+  weightAdjustmentReason: string | null;
+  alerts: object[];
 }
 
 function moodToLabel(val: number | null): DayMood {
