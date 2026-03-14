@@ -3,6 +3,7 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { brasiliaTime } from "@/lib/brasilia";
 import { WeatherWidget } from "@/components/WeatherWidget";
 import { DailyNudge } from "@/components/DailyNudge";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
 
 import { Wallet, Settings, CalendarDays } from "lucide-react";
 import { format } from "date-fns";
@@ -54,7 +55,7 @@ export function DashboardHeader({ isCrisis, hasEnergy, dayScore, alertLevel, hid
       {/* Inline 7-day forecast strip */}
       {!isCrisis && <WeatherWidget inline />}
 
-      <DailyNudge />
+      <ErrorBoundary name="DailyNudge"><DailyNudge /></ErrorBoundary>
     </header>
   );
 }

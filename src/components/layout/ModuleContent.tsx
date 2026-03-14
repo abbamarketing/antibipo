@@ -1,5 +1,6 @@
 import { useFlowStore } from "@/lib/store";
 import { UnifiedKanban } from "@/components/UnifiedKanban";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { WorkModule } from "@/components/WorkModule";
 import { HomeModule } from "@/components/HomeModule";
 import { HealthModule } from "@/components/HealthModule";
@@ -34,7 +35,7 @@ export function ModuleContent({
   return (
     <div className="space-y-4">
       {activeNav !== "metas" && (
-        <UnifiedKanban energy={energy} lastMoodValue={lastMoodValue} preferredModule={kanbanModule} />
+        <ErrorBoundary name="UnifiedKanban"><UnifiedKanban energy={energy} lastMoodValue={lastMoodValue} preferredModule={kanbanModule} /></ErrorBoundary>
       )}
 
       {!isCrisis && (

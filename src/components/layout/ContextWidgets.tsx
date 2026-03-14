@@ -5,6 +5,7 @@ import { MoodCheckIn } from "@/components/MoodCheckIn";
 import { MedAlert } from "@/components/MedAlert";
 import { WeeklyCorrelationChart } from "@/components/WeeklyCorrelationChart";
 import { CustomTrackers } from "@/components/CustomTrackers";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { useIsMobile } from "@/hooks/use-mobile";
 import type { NavModulo } from "@/components/ModuleNav";
 
@@ -23,7 +24,7 @@ export function ContextWidgets({ isCrisis, isLowState = false, activeNav, pendin
   return (
     <div className="space-y-4">
       <GlassCard className="p-4">
-        <DayScore />
+        <ErrorBoundary name="DayScore"><DayScore /></ErrorBoundary>
       </GlassCard>
 
 
@@ -37,7 +38,7 @@ export function ContextWidgets({ isCrisis, isLowState = false, activeNav, pendin
 
       {!isCrisis && !isLowState && activeNav !== "inicio" && (
         <GlassCard className="p-4">
-          <WeeklyCorrelationChart />
+          <ErrorBoundary name="WeeklyCorrelationChart"><WeeklyCorrelationChart /></ErrorBoundary>
         </GlassCard>
       )}
 
