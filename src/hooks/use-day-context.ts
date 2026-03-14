@@ -145,7 +145,7 @@ function computeTaskLimits(energy: EnergyState | null, moodValue: number | null)
 
 function computeSuggestions(ctx: {
   moodValue: number | null;
-  medsAdherence: number;
+  medsAdherence: number | null;
   exerciseDone: boolean;
   sleepQuality: number | null;
   tasksCompletedToday: number;
