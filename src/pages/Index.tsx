@@ -15,6 +15,7 @@ import { MoodCheckIn } from "@/components/MoodCheckIn";
 import { DayScore } from "@/components/DayScore";
 import { MedAlert } from "@/components/MedAlert";
 import { CustomTrackers } from "@/components/CustomTrackers";
+import { AlertBanner } from "@/components/AlertBanner";
 import { GlassCard } from "@/components/layout/GlassCard";
 import { DashboardHeader } from "@/components/layout/DashboardHeader";
 import { ContextWidgets } from "@/components/layout/ContextWidgets";
@@ -193,7 +194,7 @@ const Index = () => {
 
               {isMobile ? (
                 <div className="space-y-5">
-                  {/* Med alert — always visible, priority in low state */}
+                  <AlertBanner alerts={(dayCtx.alerts ?? []) as any[]} />
                   {pending.length > 0 && (
                     <GlassCard className={`p-1 ${isCrisis || isLowState ? "ring-2 ring-destructive/30" : ""}`}>
                       <MedAlert pendingMeds={pending} onTake={handleTakeMed} />
@@ -231,6 +232,7 @@ const Index = () => {
                     <ContextWidgets isCrisis={isCrisis} isLowState={isLowState} activeNav={activeNav} pending={pending} onTakeMed={handleTakeMed} onMoodUpdated={(val) => setLastMoodValue(val)} />
                   </aside>
                   <main className="col-span-9">
+                    <AlertBanner alerts={(dayCtx.alerts ?? []) as any[]} />
                     {isVeryLow && (
                       <div className="rounded-2xl bg-[hsl(210,20%,95%)] border border-border/30 p-4 text-center mb-4 animate-fade-in">
                         <p className="font-body text-sm text-muted-foreground leading-relaxed">
