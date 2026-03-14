@@ -139,6 +139,23 @@ export function DayScore() {
         </div>
       </div>
 
+      {/* Energy staleness badge */}
+      {energyStatus === 'expirado' && (
+        <Badge variant="destructive" className="text-xs w-full justify-center gap-1">
+          <Zap className="w-3 h-3" /> Energia desatualizada — registre agora
+        </Badge>
+      )}
+      {energyStatus === 'expirando' && (
+        <Badge variant="outline" className="text-xs w-full justify-center gap-1 border-yellow-500 text-yellow-600 dark:text-yellow-400">
+          <Zap className="w-3 h-3" /> Atualizar energia em breve
+        </Badge>
+      )}
+      {energyStatus === 'sem_dados' && (
+        <Badge variant="outline" className="text-xs w-full justify-center gap-1 text-muted-foreground">
+          <Zap className="w-3 h-3" /> Energia não registrada hoje
+        </Badge>
+      )}
+
       {/* Gauge + modules summary */}
       <button
         onClick={() => setExpanded(!expanded)}
