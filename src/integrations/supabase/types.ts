@@ -748,6 +748,7 @@ export type Database = {
           id: string
           item: string
           quantidade: string | null
+          user_id: string
         }
         Insert: {
           categoria?: string | null
@@ -756,6 +757,7 @@ export type Database = {
           id?: string
           item: string
           quantidade?: string | null
+          user_id?: string
         }
         Update: {
           categoria?: string | null
@@ -764,6 +766,7 @@ export type Database = {
           id?: string
           item?: string
           quantidade?: string | null
+          user_id?: string
         }
         Relationships: []
       }
@@ -1045,6 +1048,7 @@ export type Database = {
           notas: string | null
           tarefa: string
           tarefa_casa_id: string | null
+          user_id: string
         }
         Insert: {
           comodo: string
@@ -1053,6 +1057,7 @@ export type Database = {
           notas?: string | null
           tarefa: string
           tarefa_casa_id?: string | null
+          user_id?: string
         }
         Update: {
           comodo?: string
@@ -1061,6 +1066,7 @@ export type Database = {
           notas?: string | null
           tarefa?: string
           tarefa_casa_id?: string | null
+          user_id?: string
         }
         Relationships: [
           {
@@ -1290,6 +1296,7 @@ export type Database = {
           id: string
           tarefa: string
           tempo_min: number | null
+          user_id: string
         }
         Insert: {
           ativo?: boolean | null
@@ -1299,6 +1306,7 @@ export type Database = {
           id?: string
           tarefa: string
           tempo_min?: number | null
+          user_id?: string
         }
         Update: {
           ativo?: boolean | null
@@ -1308,6 +1316,7 @@ export type Database = {
           id?: string
           tarefa?: string
           tempo_min?: number | null
+          user_id?: string
         }
         Relationships: []
       }
