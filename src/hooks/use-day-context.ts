@@ -57,6 +57,7 @@ function computeDayScore(ctx: {
   exerciseDone: boolean;
   tasksCompletedToday: number;
   energy: EnergyState | null;
+  consecutiveDaysWithoutData: number;
 }): number {
   let score = 50; // baseline
 
@@ -78,6 +79,17 @@ function computeDayScore(ctx: {
 
   // Task momentum (0-10)
   score += Math.min(ctx.tasksCompletedToday * 2, 10);
+
+  // Data absence penalty — silence is a signal in bipolar condition
+  if (ctx.consecutiveDaysWithoutData >= 1 && ctx.moodValue === null && ctx.sleepQuality === null) {
+    score -= 10;
+  }
+  if (ctx.consecutiveDaysWithoutData >= 3) {
+    score -= 20;
+  }
+  if (ctx.consecutiveDaysWithoutData >= 5) {
+    score -= 30;
+  }
 
   return Math.max(0, Math.min(100, Math.round(score)));
 }
