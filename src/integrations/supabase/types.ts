@@ -21,7 +21,7 @@ export type Database = {
           criado_em: string
           detalhes: Json | null
           id: string
-          user_id: string | null
+          user_id: string
         }
         Insert: {
           acao: string
@@ -29,7 +29,7 @@ export type Database = {
           criado_em?: string
           detalhes?: Json | null
           id?: string
-          user_id?: string | null
+          user_id?: string
         }
         Update: {
           acao?: string
@@ -37,7 +37,7 @@ export type Database = {
           criado_em?: string
           detalhes?: Json | null
           id?: string
-          user_id?: string | null
+          user_id?: string
         }
         Relationships: []
       }
@@ -281,7 +281,7 @@ export type Database = {
           nome: string
           status: string
           tipo: string
-          user_id: string | null
+          user_id: string
           valor_mensal: number | null
         }
         Insert: {
@@ -292,7 +292,7 @@ export type Database = {
           nome: string
           status?: string
           tipo?: string
-          user_id?: string | null
+          user_id?: string
           valor_mensal?: number | null
         }
         Update: {
@@ -303,7 +303,7 @@ export type Database = {
           nome?: string
           status?: string
           tipo?: string
-          user_id?: string | null
+          user_id?: string
           valor_mensal?: number | null
         }
         Relationships: []
@@ -608,7 +608,7 @@ export type Database = {
           id: string
           instrucoes: string | null
           nome: string
-          user_id: string | null
+          user_id: string
         }
         Insert: {
           criado_em?: string
@@ -618,7 +618,7 @@ export type Database = {
           id?: string
           instrucoes?: string | null
           nome: string
-          user_id?: string | null
+          user_id?: string
         }
         Update: {
           criado_em?: string
@@ -628,7 +628,7 @@ export type Database = {
           id?: string
           instrucoes?: string | null
           nome?: string
-          user_id?: string | null
+          user_id?: string
         }
         Relationships: []
       }
@@ -814,21 +814,21 @@ export type Database = {
           data: string
           id: string
           notas: string | null
-          user_id: string | null
+          user_id: string
           valor: number
         }
         Insert: {
           data?: string
           id?: string
           notas?: string | null
-          user_id?: string | null
+          user_id?: string
           valor: number
         }
         Update: {
           data?: string
           id?: string
           notas?: string | null
-          user_id?: string | null
+          user_id?: string
           valor?: number
         }
         Relationships: []
@@ -876,7 +876,7 @@ export type Database = {
           id: string
           medicamento_id: string
           tomado: boolean
-          user_id: string | null
+          user_id: string
         }
         Insert: {
           data?: string
@@ -885,7 +885,7 @@ export type Database = {
           id?: string
           medicamento_id: string
           tomado?: boolean
-          user_id?: string | null
+          user_id?: string
         }
         Update: {
           data?: string
@@ -894,7 +894,7 @@ export type Database = {
           id?: string
           medicamento_id?: string
           tomado?: boolean
-          user_id?: string | null
+          user_id?: string
         }
         Relationships: [
           {
@@ -941,7 +941,7 @@ export type Database = {
           horario_dormir: string | null
           id: string
           qualidade: number | null
-          user_id: string | null
+          user_id: string
         }
         Insert: {
           data?: string
@@ -950,7 +950,7 @@ export type Database = {
           horario_dormir?: string | null
           id?: string
           qualidade?: number | null
-          user_id?: string | null
+          user_id?: string
         }
         Update: {
           data?: string
@@ -959,7 +959,7 @@ export type Database = {
           horario_dormir?: string | null
           id?: string
           qualidade?: number | null
-          user_id?: string | null
+          user_id?: string
         }
         Relationships: []
       }
@@ -1059,21 +1059,21 @@ export type Database = {
           estado: Database["public"]["Enums"]["energy_state"]
           hora_inicio: string
           id: string
-          user_id: string | null
+          user_id: string
         }
         Insert: {
           data?: string
           estado: Database["public"]["Enums"]["energy_state"]
           hora_inicio?: string
           id?: string
-          user_id?: string | null
+          user_id?: string
         }
         Update: {
           data?: string
           estado?: Database["public"]["Enums"]["energy_state"]
           hora_inicio?: string
           id?: string
-          user_id?: string | null
+          user_id?: string
         }
         Relationships: []
       }
@@ -1128,7 +1128,7 @@ export type Database = {
           tipo: Database["public"]["Enums"]["task_tipo"]
           titulo: string
           urgencia: number
-          user_id: string | null
+          user_id: string
         }
         Insert: {
           cliente_id?: string | null
@@ -1150,7 +1150,7 @@ export type Database = {
           tipo?: Database["public"]["Enums"]["task_tipo"]
           titulo: string
           urgencia?: number
-          user_id?: string | null
+          user_id?: string
         }
         Update: {
           cliente_id?: string | null
@@ -1172,7 +1172,7 @@ export type Database = {
           tipo?: Database["public"]["Enums"]["task_tipo"]
           titulo?: string
           urgencia?: number
-          user_id?: string | null
+          user_id?: string
         }
         Relationships: [
           {
