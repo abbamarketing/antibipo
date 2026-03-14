@@ -177,10 +177,34 @@ serve(async (req) => {
     const nome = profile?.nome || "usuário";
     const memoryContext = latestSummary?.[0]?.valor?.resumo || "";
 
+    // Parse orchestration context from request body (optional)
+    let orchestrationContext: any = null;
+    try {
+      const body = await req.json().catch(() => null);
+      orchestrationContext = body?.orchestration_context || null;
+    } catch { /* no body */ }
+
     const registrosHumorSemana = weekHumor?.length || 0;
     const lacunaAviso = registrosHumorSemana < 3
       ? `\nATENCAO: usuario tem apenas ${registrosHumorSemana} registros de humor nos ultimos 7 dias. Mencione gentilmente essa lacuna e incentive a registrar.`
       : "";
+
+    // Tone instruction from orchestration
+    let toneInstruction = "Tom: parceiro, factual, direto.";
+    if (orchestrationContext?.depressive_precursor) {
+      toneInstruction = "Tom: acolhedor e sem pressão. Foco em pequenos passos. Reconheça o esforço mínimo.";
+    } else if (orchestrationContext?.manic_precursor) {
+      toneInstruction = "Tom: atencioso e calmante. Foco em consistência e pausas. Evite estimular novos projetos.";
+    } else if (orchestrationContext?.nudge_tone) {
+      toneInstruction = `Tom: ${orchestrationContext.nudge_tone}.`;
+    }
+
+    const focusInstruction = orchestrationContext?.nudge_focus
+      ? `\nFoco principal: ${orchestrationContext.nudge_focus}.` : "";
+    const factualBase = orchestrationContext?.nudge_factual_base
+      ? `\nBase factual da orquestradora: ${orchestrationContext.nudge_factual_base}` : "";
+    const medsAnchor = orchestrationContext?.meds_as_anchor
+      ? "\nMedicação é âncora importante hoje — reforce adesão gentilmente." : "";
 
     const systemContent = `Você gera UMA frase curta (máx 20 palavras) para ${nome} que relata algo CONCRETO de ontem.
 NÃO seja motivacional genérico. Seja factual e específico.
@@ -188,7 +212,7 @@ Use dados reais: tarefas concluídas, exercícios, medicamentos, sono, humor.
 Cruze módulos quando possível: "treinou e fechou 3 tarefas, humor subiu pra 4".
 Se o sono foi ruim ou humor baixo, seja empático sem ser dramático.
 Se há padrão de consistência na semana, reconheça.
-Tom: parceiro, factual, direto. Sem emojis, sem aspas.${lacunaAviso}`;
+${toneInstruction} Sem emojis, sem aspas.${focusInstruction}${factualBase}${medsAnchor}${lacunaAviso}`;
 
     const userContent = `ONTEM:\nAções: ${yesterdaySummary || "nenhuma"}\nDiário: ${diaryText || "nenhum"}\nBem-estar: ${wellBeing.join("; ") || "sem dados"}\n\nSEMANA:\nAções: ${weekSummary || "sem dados"}\nDiário: ${weekDiaryText || "nenhum"}\nMetas ativas: ${metasText || "nenhuma"}${memoryContext ? `\nMemória IA: ${memoryContext}` : ""}`;
 
