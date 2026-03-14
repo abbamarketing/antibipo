@@ -69,7 +69,7 @@ export async function seedTarefasCasa(profile: {
 
   const { error } = await supabase
     .from("tarefas_casa" as any)
-    .insert(tarefas.map((t) => ({ ...t, ativo: true })) as any);
+    .insert(tarefas.map((t) => ({ ...t, ativo: true, user_id: user.id })) as any);
 
   if (error) {
     console.error("Failed to seed casa tasks:", error);
