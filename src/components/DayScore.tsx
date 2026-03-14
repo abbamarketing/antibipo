@@ -164,6 +164,8 @@ export function DayScore() {
       <button
         onClick={() => setExpanded(!expanded)}
         className="w-full rounded-xl p-4 text-left transition-all duration-200 hover:bg-secondary/20 active:scale-[0.99]"
+        aria-label={`DayScore: ${ctx.dayScore} de 100. Nível de alerta: ${{ crise: "Crise", atencao: "Atenção", estavel: "Estável", otimo: "Ótimo" }[ctx.alertLevel] ?? ctx.alertLevel}`}
+        role="status"
       >
         <div className="space-y-3">
           {/* Gauge centered with score inside, tasks count as badge */}
