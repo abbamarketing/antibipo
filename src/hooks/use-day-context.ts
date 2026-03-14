@@ -94,7 +94,7 @@ function computeDayScore(ctx: {
   return Math.max(0, Math.min(100, Math.round(score)));
 }
 
-function computeAlert(score: number, moodValue: number | null, medsAdherence: number, consecutiveDaysWithoutData: number): { level: DayAlert; message: string } {
+function computeAlert(score: number, moodValue: number | null, medsAdherence: number | null, consecutiveDaysWithoutData: number): { level: DayAlert; message: string } {
   // Data gap overrides — silence is dangerous in bipolar condition
   if (consecutiveDaysWithoutData >= 5) {
     return { level: "crise", message: `Voce esta sumido ha ${consecutiveDaysWithoutData} dias. Tudo bem? Registre como se sente.` };
