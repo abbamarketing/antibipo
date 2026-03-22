@@ -9,7 +9,7 @@ import {
   AlertTriangle, AlertCircle, Sun, Sparkles, ChevronDown, ChevronRight,
   Angry, Frown, Meh, Smile, Laugh, ClipboardEdit, Zap,
 } from "lucide-react";
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { MoodCheckIn } from "./MoodCheckIn";
 import { Badge } from "@/components/ui/badge";
@@ -63,17 +63,17 @@ function CircularGauge({ score, alertLevel, moodLabel, size = 120 }: { score: nu
         />
       </svg>
       <div className="absolute inset-0 flex items-center justify-center">
-        <span className={`font-mono text-3xl font-bold ${style.text}`}>{score}</span>
+        <span className={`font-mono font-bold ${size <= 80 ? "text-2xl" : "text-3xl"} ${style.text}`}>{score}</span>
       </div>
     </div>
   );
 }
 function CompactIndicator({ icon, label, value }: { icon: React.ReactNode; label: string; value: string }) {
   return (
-    <div className="flex flex-col items-center gap-1 bg-secondary/30 rounded-lg py-2 px-1 min-h-[44px]">
+    <div className="flex flex-col items-center gap-1 bg-secondary/30 rounded-lg py-2 px-1 min-h-[44px] overflow-hidden">
       {icon}
       <p className="text-[9px] font-mono text-muted-foreground/60 uppercase leading-none">{label}</p>
-      <p className="text-[11px] font-mono font-medium truncate capitalize">{value}</p>
+      <p className="text-[11px] font-mono font-medium truncate capitalize max-w-full">{value}</p>
     </div>
   );
 }
@@ -91,6 +91,28 @@ export function DayScore() {
   // Energy session staleness — read from query cache (set by store)
   const energySession = qc.getQueryData<{ hora_inicio: string } | null>(["current_energy"]);
   const energyStatus = getEnergyStatus(energySession ?? null);
+
+  // Energy expiry countdown — shows remaining time when within 1 hour of the 4-hour limit
+  const energyCountdown = useMemo(() => {
+    if (!energySession?.hora_inicio) return null;
+    const sessionTime = new Date(energySession.hora_inicio).getTime();
+    const fourHoursMs = 4 * 60 * 60 * 1000;
+    const elapsed = Date.now() - sessionTime;
+    const remaining = fourHoursMs - elapsed;
+
+    if (remaining <= 0) {
+      return { expired: true, text: "Energia expirada — selecione novamente" };
+    }
+    if (remaining <= 60 * 60 * 1000) {
+      // Within 1 hour of expiry
+      const mins = Math.floor(remaining / 60000);
+      const h = Math.floor(mins / 60);
+      const m = mins % 60;
+      const timeStr = h > 0 ? `${h}h ${m}m` : `${m}m`;
+      return { expired: false, text: `Energia expira em ${timeStr}` };
+    }
+    return null;
+  }, [energySession]);
 
   const gapDays = ctx.consecutiveDaysWithoutData;
   const isCriticalGap = gapDays >= 4;
@@ -159,6 +181,12 @@ export function DayScore() {
           <Zap className="w-3 h-3" /> Energia não registrada hoje
         </Badge>
       )}
+      {/* Energy expiry countdown — visible when within 1 hour of the 4-hour limit */}
+      {energyCountdown && energyStatus !== 'expirado' && energyStatus !== 'sem_dados' && (
+        <p className={`text-[10px] font-mono text-center ${energyCountdown.expired ? "text-destructive" : "text-muted-foreground"}`}>
+          {energyCountdown.text}
+        </p>
+      )}
 
       {/* Gauge + modules summary */}
       <button
@@ -171,7 +199,7 @@ export function DayScore() {
           {/* Gauge centered with score inside, tasks count as badge */}
           <div className="flex flex-col items-center gap-1">
             <div className="relative">
-              <CircularGauge score={ctx.dayScore} alertLevel={ctx.alertLevel} moodLabel={ctx.moodLabel} size={96} />
+              <CircularGauge score={ctx.dayScore} alertLevel={ctx.alertLevel} moodLabel={ctx.moodLabel} size={isMobile ? 80 : 96} />
               {/* Tasks badge overlaid at bottom-right of gauge */}
               <div className="absolute -bottom-1 -right-1 flex items-center gap-1 bg-secondary/60 backdrop-blur-sm rounded-full px-2 py-0.5">
                 <CheckCircle2 className={`w-3 h-3 ${ctx.tasksCompletedToday > 0 ? "text-primary" : "text-muted-foreground/40"}`} />
@@ -194,8 +222,8 @@ export function DayScore() {
             )}
           </div>
 
-          {/* 4 compact indicators in a row */}
-          <div className="grid grid-cols-4 gap-1.5">
+          {/* 4 compact indicators — stacks 2x2 on very small screens */}
+          <div className="grid grid-cols-2 min-[375px]:grid-cols-4 gap-1.5">
             <CompactIndicator
               icon={<MoodIcon className={`w-3.5 h-3.5 ${moodCfg.color}`} />}
               label="Humor"

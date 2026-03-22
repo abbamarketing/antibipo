@@ -12,10 +12,7 @@ interface TaskCardProps {
 }
 
 const typeLabels: Record<string, string> = {
-  estrategico: "Estratégico",
   operacional: "Operacional",
-  delegavel: "Delegável",
-  administrativo: "Admin",
   domestico: "Doméstico",
 };
 

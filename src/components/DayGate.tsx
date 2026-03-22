@@ -4,9 +4,11 @@ import { brasiliaTime } from "@/lib/brasilia";
 import { useMetasStore } from "@/lib/metas-store";
 import { MondayGoalsReview } from "@/components/MondayGoalsReview";
 import { FridayWeeklyReport } from "@/components/FridayWeeklyReport";
-import { Target, BarChart3, Lock } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Target, BarChart3, Lock, SkipForward } from "lucide-react";
 import { startOfWeek, endOfWeek, format } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
+import { logActivity } from "@/lib/activity-log";
 
 interface DayGateProps {
   children: React.ReactNode;
@@ -70,7 +72,7 @@ export function DayGate({ children }: DayGateProps) {
         {
           user_id: user.id,
           chave,
-          valor: todayStr as any,
+          valor: todayStr,
         },
         { onConflict: "user_id,chave" }
       );
@@ -112,9 +114,36 @@ export function DayGate({ children }: DayGateProps) {
   }, [dia, fridayDone, todayStr]);
 
   const metasStore = useMetasStore();
+  const [skipConfirm, setSkipConfirm] = useState<"monday" | "friday" | null>(null);
 
-  // While configs are loading, show children (don't block)
-  if (configsLoading) return <>{children}</>;
+  // Skip handler — marks gate as completed and logs the skip
+  const handleSkip = useCallback(
+    async (gate: "monday" | "friday") => {
+      const chave = gate === "monday" ? "daysgate_ultima_revisao" : "daysgate_ultimo_relatorio";
+      if (gate === "monday") setMondayDoneLocal(true);
+      else setFridayDoneLocal(true);
+      markComplete(chave);
+      logActivity("daygate_skip", { gate, date: todayStr });
+      setSkipConfirm(null);
+    },
+    [markComplete, todayStr]
+  );
+
+  // While configs are loading, show loading skeleton
+  if (configsLoading) {
+    return (
+      <div className="min-h-screen bg-background">
+        <div className="max-w-lg mx-auto px-4 py-6 space-y-4">
+          <Skeleton className="h-8 w-48" />
+          <Skeleton className="h-4 w-32" />
+          <Skeleton className="h-28 w-full rounded-xl" />
+          <Skeleton className="h-20 w-full rounded-xl" />
+          <Skeleton className="h-20 w-full rounded-xl" />
+          <Skeleton className="h-16 w-full rounded-xl" />
+        </div>
+      </div>
+    );
+  }
 
   // Monday gate: must review goals
   if (dia === 1 && !mondayDone) {
@@ -160,6 +189,36 @@ export function DayGate({ children }: DayGateProps) {
               </button>
             </div>
           )}
+
+          {/* Skip this week — with confirmation */}
+          {skipConfirm === "monday" ? (
+            <div className="bg-amber-500/10 border border-amber-500/30 rounded-lg p-4 mt-4 space-y-3 animate-fade-in">
+              <p className="text-xs text-amber-600 dark:text-amber-400 font-body text-center">
+                Tem certeza? A reflexao semanal e importante.
+              </p>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => setSkipConfirm(null)}
+                  className="flex-1 py-2 rounded-lg border font-mono text-[10px] hover:bg-secondary"
+                >
+                  CANCELAR
+                </button>
+                <button
+                  onClick={() => handleSkip("monday")}
+                  className="flex-1 py-2 rounded-lg bg-amber-500/20 text-amber-600 dark:text-amber-400 font-mono text-[10px] hover:bg-amber-500/30"
+                >
+                  PULAR MESMO
+                </button>
+              </div>
+            </div>
+          ) : (
+            <button
+              onClick={() => setSkipConfirm("monday")}
+              className="w-full mt-4 flex items-center justify-center gap-1.5 font-mono text-[10px] text-muted-foreground hover:text-foreground transition-colors"
+            >
+              <SkipForward className="w-3 h-3" /> Pular esta semana
+            </button>
+          )}
         </div>
       </div>
     );
@@ -186,6 +245,36 @@ export function DayGate({ children }: DayGateProps) {
           </div>
 
           <FridayWeeklyReport onDismiss={handleFridayDone} />
+
+          {/* Skip this week — with confirmation */}
+          {skipConfirm === "friday" ? (
+            <div className="bg-amber-500/10 border border-amber-500/30 rounded-lg p-4 mt-4 space-y-3 animate-fade-in">
+              <p className="text-xs text-amber-600 dark:text-amber-400 font-body text-center">
+                Tem certeza? A reflexao semanal e importante.
+              </p>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => setSkipConfirm(null)}
+                  className="flex-1 py-2 rounded-lg border font-mono text-[10px] hover:bg-secondary"
+                >
+                  CANCELAR
+                </button>
+                <button
+                  onClick={() => handleSkip("friday")}
+                  className="flex-1 py-2 rounded-lg bg-amber-500/20 text-amber-600 dark:text-amber-400 font-mono text-[10px] hover:bg-amber-500/30"
+                >
+                  PULAR MESMO
+                </button>
+              </div>
+            </div>
+          ) : (
+            <button
+              onClick={() => setSkipConfirm("friday")}
+              className="w-full mt-4 flex items-center justify-center gap-1.5 font-mono text-[10px] text-muted-foreground hover:text-foreground transition-colors"
+            >
+              <SkipForward className="w-3 h-3" /> Pular esta semana
+            </button>
+          )}
         </div>
       </div>
     );

@@ -1,10 +1,21 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useDayContext } from "@/hooks/use-day-context";
+import { useFlowStore, today } from "@/lib/store";
 import { logActivity } from "@/lib/activity-log";
-import { Angry, Frown, Meh, Smile, Laugh, X, Bell, CheckCircle2 } from "lucide-react";
+import { Angry, Frown, Meh, Smile, Laugh, X, Bell, CheckCircle2, ThumbsUp, Minus, ThumbsDown } from "lucide-react";
 
-const CHECKIN_INTERVAL_MS = 3 * 60 * 60 * 1000; // 3 hours
+// Adaptive check-in interval based on energy state:
+// basico: 6h (less interruption when low energy)
+// modo_leve: 4h
+// foco_total: 3h (more frequent tracking when highly active)
+// no energy set: 4h (safe default)
+const ENERGY_INTERVAL_HOURS: Record<string, number> = {
+  basico: 6,
+  modo_leve: 4,
+  foco_total: 3,
+};
+const DEFAULT_INTERVAL_HOURS = 4;
 const STORAGE_KEY = "last_mood_checkin";
 
 const moodOptions = [
@@ -19,10 +30,15 @@ interface MoodCheckInProps {
   onMoodUpdated?: (valor: number) => void;
 }
 
+type MedEffectiveness = "bem" | "normal" | "sem_efeito";
+
 export function MoodCheckIn({ onMoodUpdated }: MoodCheckInProps) {
   const [showCheckin, setShowCheckin] = useState(false);
   const [selected, setSelected] = useState<number | null>(null);
+  const [showMedFollowUp, setShowMedFollowUp] = useState(false);
+  const [medEffectiveness, setMedEffectiveness] = useState<MedEffectiveness | null>(null);
   const dayCtx = useDayContext();
+  const { state } = useFlowStore();
   const noMoodYet = dayCtx.moodValue === null;
 
   useEffect(() => {
@@ -42,7 +58,8 @@ export function MoodCheckIn({ onMoodUpdated }: MoodCheckInProps) {
           .eq("chave", "ultimo_mood_checkin")
           .maybeSingle();
         if (data?.valor) {
-          const serverDate = new Date((data.valor as any).timestamp || 0).getTime();
+          const valor = data.valor as Record<string, string> | null;
+          const serverDate = new Date(valor?.timestamp || 0).getTime();
           if (!isNaN(serverDate)) serverTs = serverDate;
         }
       } catch {
@@ -59,7 +76,13 @@ export function MoodCheckIn({ onMoodUpdated }: MoodCheckInProps) {
         localStorage.setItem(STORAGE_KEY, serverTs.toString());
       }
 
-      if (lastCheckin === 0 || Date.now() - lastCheckin >= CHECKIN_INTERVAL_MS) {
+      // Adaptive interval based on current energy state
+      const intervalHours = dayCtx.energy
+        ? (ENERGY_INTERVAL_HOURS[dayCtx.energy] ?? DEFAULT_INTERVAL_HOURS)
+        : DEFAULT_INTERVAL_HOURS;
+      const intervalMs = intervalHours * 60 * 60 * 1000;
+
+      if (lastCheckin === 0 || Date.now() - lastCheckin >= intervalMs) {
         setShowCheckin(true);
       }
     };
@@ -67,7 +90,7 @@ export function MoodCheckIn({ onMoodUpdated }: MoodCheckInProps) {
     checkIfDue();
     const interval = setInterval(checkIfDue, 60 * 1000);
     return () => { cancelled = true; clearInterval(interval); };
-  }, []);
+  }, [dayCtx.energy]);
 
   const persistCheckinTimestamp = async () => {
     const now = Date.now();
@@ -90,16 +113,45 @@ export function MoodCheckIn({ onMoodUpdated }: MoodCheckInProps) {
     }
   };
 
+  const checkRecentMeds = (): boolean => {
+    const fourHoursAgo = Date.now() - 4 * 60 * 60 * 1000;
+    return state.registros_medicamento.some((r) => {
+      if (!r.tomado || r.data !== today()) return false;
+      if (!r.horario_tomado) return false;
+      return new Date(r.horario_tomado).getTime() >= fourHoursAgo;
+    });
+  };
+
+  const saveMedEffectiveness = async (effectiveness: MedEffectiveness) => {
+    setMedEffectiveness(effectiveness);
+    try {
+      const todayStr = today();
+      const hora = new Date().toLocaleTimeString("pt-BR", { timeZone: "America/Sao_Paulo", hour: "2-digit", minute: "2-digit" });
+      await supabase.from("registros_humor").update(
+        { notas: `Check-in ${hora} | med_effectiveness: ${effectiveness}` }
+      ).eq("data", todayStr);
+      logActivity("mood_checkin", { med_effectiveness: effectiveness, hora });
+    } catch (e) {
+      console.error("Med effectiveness save error:", e);
+    }
+    setTimeout(() => {
+      setShowCheckin(false);
+      setSelected(null);
+      setShowMedFollowUp(false);
+      setMedEffectiveness(null);
+    }, 1200);
+  };
+
   const handleSelect = async (valor: number) => {
     setSelected(valor);
     await persistCheckinTimestamp();
 
-    const today = new Date().toISOString().split("T")[0];
+    const todayStr = today();
     const hora = new Date().toLocaleTimeString("pt-BR", { timeZone: "America/Sao_Paulo", hour: "2-digit", minute: "2-digit" });
 
     try {
       await supabase.from("registros_humor").upsert(
-        { data: today, valor, notas: `Check-in ${hora}` },
+        { data: todayStr, valor, notas: `Check-in ${hora}` },
         { onConflict: "data" }
       );
       logActivity("mood_checkin", { valor, hora, automatico: true });
@@ -108,10 +160,15 @@ export function MoodCheckIn({ onMoodUpdated }: MoodCheckInProps) {
       console.error("Mood check-in error:", e);
     }
 
-    setTimeout(() => {
-      setShowCheckin(false);
-      setSelected(null);
-    }, 1500);
+    // Check if any medication was taken in the last 4 hours
+    if (checkRecentMeds()) {
+      setTimeout(() => setShowMedFollowUp(true), 800);
+    } else {
+      setTimeout(() => {
+        setShowCheckin(false);
+        setSelected(null);
+      }, 1500);
+    }
   };
 
   const dismiss = () => {
@@ -128,6 +185,9 @@ export function MoodCheckIn({ onMoodUpdated }: MoodCheckInProps) {
 
   return (
     <div
+      role="dialog"
+      aria-modal="false"
+      aria-label="Check-in emocional"
       className={`rounded-xl p-4 mb-4 animate-fade-in transition-all duration-300 ${
         noMoodYet
           ? "bg-card/60 backdrop-blur-sm border border-primary/30 shadow-[0_0_20px_-4px_hsl(var(--primary)/0.25)]"
@@ -146,7 +206,7 @@ export function MoodCheckIn({ onMoodUpdated }: MoodCheckInProps) {
       <p className="text-xs text-muted-foreground font-body mb-3">
         {contextHint}
       </p>
-      <div className="flex justify-between">
+      <div className="flex justify-between" role="radiogroup" aria-label="Como você está se sentindo">
         {moodOptions.map((m) => {
           const Icon = m.icon;
           const isSelected = selected === m.val;
@@ -155,6 +215,9 @@ export function MoodCheckIn({ onMoodUpdated }: MoodCheckInProps) {
               key={m.val}
               onClick={() => handleSelect(m.val)}
               disabled={selected !== null}
+              role="radio"
+              aria-checked={isSelected}
+              aria-label={`Humor: ${m.label}`}
               className={`flex flex-col items-center gap-1 p-2 rounded-lg transition-all duration-200 ${
                 isSelected
                   ? "bg-primary/10 ring-1 ring-primary scale-110"
@@ -169,10 +232,39 @@ export function MoodCheckIn({ onMoodUpdated }: MoodCheckInProps) {
           );
         })}
       </div>
-      {selected !== null && (
+      {selected !== null && !showMedFollowUp && (
         <div className="flex items-center justify-center gap-1 mt-2 animate-fade-in">
           <CheckCircle2 className="w-3 h-3 text-primary" />
           <p className="text-[10px] text-primary font-mono">Registrado. Tarefas ajustadas.</p>
+        </div>
+      )}
+      {showMedFollowUp && medEffectiveness === null && (
+        <div className="mt-3 pt-3 border-t border-border/30 animate-fade-in">
+          <p className="text-xs text-muted-foreground font-body mb-2">
+            Como os remedios estao funcionando?
+          </p>
+          <div className="flex gap-2">
+            {([
+              { val: "bem" as MedEffectiveness, label: "Bem", Icon: ThumbsUp, color: "text-green-500" },
+              { val: "normal" as MedEffectiveness, label: "Normal", Icon: Minus, color: "text-muted-foreground" },
+              { val: "sem_efeito" as MedEffectiveness, label: "Sem efeito", Icon: ThumbsDown, color: "text-orange-400" },
+            ]).map(({ val, label, Icon, color }) => (
+              <button
+                key={val}
+                onClick={() => saveMedEffectiveness(val)}
+                className="flex-1 flex flex-col items-center gap-1 p-2 rounded-lg hover:bg-secondary/60 active:scale-95 transition-all"
+              >
+                <Icon className={`w-4 h-4 ${color}`} />
+                <span className="font-mono text-[8px] text-muted-foreground">{label}</span>
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+      {medEffectiveness !== null && (
+        <div className="flex items-center justify-center gap-1 mt-2 animate-fade-in">
+          <CheckCircle2 className="w-3 h-3 text-primary" />
+          <p className="text-[10px] text-primary font-mono">Eficacia registrada.</p>
         </div>
       )}
     </div>

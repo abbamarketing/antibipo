@@ -1,13 +1,10 @@
 import {
-  Briefcase, Home, Heart, Clock, AlertTriangle, Zap,
-  Users, FileText, Wrench, Stethoscope,
+  Home, Heart, Clock, AlertTriangle, Zap,
+  Wrench, Stethoscope,
 } from "lucide-react";
 
 // ─── Templates ──────────────────────────────────────────────
 export const TEMPLATES = [
-  { id: "acao_cliente", label: "Ação / Cliente", icon: Briefcase, fields: ["acao", "cliente", "data_entrega"] },
-  { id: "reuniao", label: "Reunião / Call", icon: Users, fields: ["assunto", "participante", "data_entrega"] },
-  { id: "entrega", label: "Entregar projeto", icon: FileText, fields: ["projeto", "cliente", "data_entrega"] },
   { id: "tarefa_geral", label: "Tarefa operacional", icon: Wrench, fields: ["descricao", "data_entrega"] },
   { id: "domestico", label: "Tarefa doméstica", icon: Home, fields: ["tarefa_casa", "comodo", "data_entrega"] },
   { id: "saude", label: "Tarefa de saúde", icon: Stethoscope, fields: ["atividade", "data_entrega"] },
@@ -15,17 +12,6 @@ export const TEMPLATES = [
 
 export type TemplateId = typeof TEMPLATES[number]["id"];
 export type FieldValues = Record<string, string>;
-
-export const ACOES = [
-  "Integração", "Deploy", "Design", "Desenvolvimento", "Revisão",
-  "Configuração", "Análise", "Documentação", "Teste", "Suporte",
-  "Atualização", "Migração", "Correção", "Otimização", "Apresentação",
-];
-
-export const ASSUNTOS = [
-  "Alinhamento", "Planejamento", "Retrospectiva", "Review", "Daily",
-  "Kickoff", "Follow-up", "Feedback", "Onboarding", "Treinamento",
-];
 
 export const COMODOS = [
   "Cozinha", "Sala", "Quarto", "Banheiro", "Lavanderia",
@@ -42,11 +28,6 @@ export const ATIVIDADES_SAUDE = [
   "Fisioterapia", "Terapia", "Nutricionista", "Dentista", "Check-up",
 ];
 
-export const PROJETOS = [
-  "App", "Site", "Sistema", "Integração", "Automação",
-  "Dashboard", "Landing Page", "E-commerce", "API", "MVP",
-];
-
 export const URGENCIA_OPTIONS = [
   { value: 1, label: "Baixa", icon: Clock, color: "bg-secondary text-muted-foreground", activeColor: "bg-secondary border-muted-foreground text-foreground" },
   { value: 2, label: "Média", icon: AlertTriangle, color: "bg-amber-500/15 text-amber-700 dark:text-amber-300", activeColor: "bg-amber-500/15 border-amber-500 text-amber-700 dark:text-amber-300" },
@@ -54,7 +35,6 @@ export const URGENCIA_OPTIONS = [
 ];
 
 export const MODULO_OPTIONS = [
-  { value: "trabalho", label: "Trabalho", icon: Briefcase },
   { value: "casa", label: "Casa", icon: Home },
   { value: "saude", label: "Saúde", icon: Heart },
 ];
@@ -67,13 +47,12 @@ export const RECURRENCE_OPTIONS = [
 ];
 
 // ─── Keyword-based module detection ─────────────────────────
-const KEYWORD_MODULE_MAP: { keywords: string[]; module: "trabalho" | "casa" | "saude" }[] = [
-  { keywords: ["cliente", "deploy", "código", "api", "design", "meeting", "reunião", "projeto", "sprint", "dev", "review", "apresentação", "relatório", "email", "contrato"], module: "trabalho" },
+const KEYWORD_MODULE_MAP: { keywords: string[]; module: "casa" | "saude" }[] = [
   { keywords: ["limpeza", "cozinha", "lavar", "aspirar", "organizar", "compras", "mercado", "louça", "roupa", "varrer", "lixo", "cama", "banheiro", "jardim"], module: "casa" },
   { keywords: ["médico", "remédio", "exercício", "terapia", "exame", "consulta", "dentista", "academia", "caminhada", "fisio", "nutricionista", "sono", "medicamento", "saúde"], module: "saude" },
 ];
 
-export function detectModuleFromKeywords(text: string): "trabalho" | "casa" | "saude" | null {
+export function detectModuleFromKeywords(text: string): "casa" | "saude" | null {
   const lower = text.toLowerCase();
   for (const entry of KEYWORD_MODULE_MAP) {
     if (entry.keywords.some((kw) => lower.includes(kw))) return entry.module;
@@ -82,8 +61,7 @@ export function detectModuleFromKeywords(text: string): "trabalho" | "casa" | "s
 }
 
 // ─── Quick Bar parsing ──────────────────────────────────────
-const TAG_MODULE_MAP: Record<string, "trabalho" | "casa" | "saude"> = {
-  "@trabalho": "trabalho", "@work": "trabalho", "@trab": "trabalho",
+const TAG_MODULE_MAP: Record<string, "casa" | "saude"> = {
   "@casa": "casa", "@home": "casa", "@lar": "casa",
   "@saude": "saude", "@saúde": "saude", "@health": "saude", "@med": "saude",
 };
@@ -96,13 +74,13 @@ const TAG_URGENCIA_MAP: Record<string, number> = {
 
 export interface QuickBarResult {
   titulo: string;
-  modulo: "trabalho" | "casa" | "saude" | null;
+  modulo: "casa" | "saude" | null;
   urgencia: number | null;
 }
 
 export function parseQuickBar(input: string): QuickBarResult {
   let text = input.trim();
-  let modulo: "trabalho" | "casa" | "saude" | null = null;
+  let modulo: "casa" | "saude" | null = null;
   let urgencia: number | null = null;
 
   // Extract @module tags
@@ -143,11 +121,6 @@ export function parseQuickBar(input: string): QuickBarResult {
 
 export function getSubtaskOptions(template: TemplateId | null): string[] {
   switch (template) {
-    case "acao_cliente":
-    case "entrega":
-      return ["Planejamento", "Desenvolvimento", "Teste", "Review", "Deploy", "Documentação", "Notificar cliente"];
-    case "reuniao":
-      return ["Preparar pauta", "Enviar convite", "Criar apresentação", "Anotar ata", "Enviar follow-up"];
     case "tarefa_geral":
       return ["Pesquisar", "Executar", "Revisar", "Finalizar", "Reportar"];
     case "domestico":
@@ -161,9 +134,6 @@ export function getSubtaskOptions(template: TemplateId | null): string[] {
 
 export function buildTitle(template: TemplateId | null, fields: FieldValues): string {
   switch (template) {
-    case "acao_cliente": return `${fields.acao || "Ação"} para ${fields.cliente || "cliente"}`;
-    case "reuniao": return `${fields.assunto || "Reunião"} com ${fields.participante || "participante"}`;
-    case "entrega": return `Entregar ${fields.projeto || "projeto"} — ${fields.cliente || "cliente"}`;
     case "tarefa_geral": return fields.descricao || "Tarefa";
     case "domestico": return `${fields.tarefa_casa || "Tarefa"} — ${fields.comodo || "Geral"}`;
     case "saude": return fields.atividade || "Saúde";

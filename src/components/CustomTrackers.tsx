@@ -25,7 +25,15 @@ export function CustomTrackers({ modulo, secao }: CustomTrackersProps) {
   let trackers = getTrackersByModulo(modulo);
   if (secao) trackers = trackers.filter((t) => t.secao === secao);
 
-  if (trackers.length === 0) return null;
+  if (trackers.length === 0) {
+    return (
+      <div className="bg-card rounded-lg border p-6 text-center">
+        <Target className="w-6 h-6 mx-auto text-muted-foreground/40 mb-2" />
+        <p className="text-sm text-muted-foreground font-body">Nenhum tracker criado ainda.</p>
+        <p className="text-xs text-muted-foreground/60 font-body mt-1">Crie um para acompanhar seus hábitos.</p>
+      </div>
+    );
+  }
 
   // Group by secao
   const grouped = trackers.reduce<Record<string, CustomTracker[]>>((acc, t) => {
@@ -155,7 +163,7 @@ function ChecklistCard({ tracker, todayRegistros, onComplete }: { tracker: Custo
               disabled={done}
               className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-md font-mono text-xs transition-all ${
                 done
-                  ? "bg-secondary text-muted-foreground cursor-default"
+                  ? "bg-secondary text-foreground/50 cursor-default"
                   : "bg-primary text-primary-foreground hover:opacity-90"
               }`}
             >

@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import type { Json } from "@/integrations/supabase/types";
 
 export type MetaPessoal = {
   id: string;
@@ -47,7 +48,7 @@ export function useMetasStore() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return [];
       const { data, error } = await supabase
-        .from("metas_pessoais" as any)
+        .from("metas_pessoais")
         .select("*")
         .eq("user_id", user.id)
         .order("created_at", { ascending: false });
@@ -62,7 +63,7 @@ export function useMetasStore() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return [];
       const { data, error } = await supabase
-        .from("reports_semanais" as any)
+        .from("reports_semanais")
         .select("*")
         .eq("user_id", user.id)
         .order("semana_inicio", { ascending: false })
@@ -77,8 +78,8 @@ export function useMetasStore() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Not authenticated");
       const { error } = await supabase
-        .from("metas_pessoais" as any)
-        .insert({ ...meta, user_id: user.id } as any);
+        .from("metas_pessoais")
+        .insert({ ...meta, user_id: user.id });
       if (error) throw error;
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ["metas_pessoais"] }),
@@ -87,8 +88,8 @@ export function useMetasStore() {
   const updateMetaMut = useMutation({
     mutationFn: async ({ id, ...changes }: { id: string } & Partial<MetaPessoal>) => {
       const { error } = await supabase
-        .from("metas_pessoais" as any)
-        .update({ ...changes, updated_at: new Date().toISOString() } as any)
+        .from("metas_pessoais")
+        .update({ ...changes, updated_at: new Date().toISOString() })
         .eq("id", id);
       if (error) throw error;
     },
@@ -101,8 +102,8 @@ export function useMetasStore() {
       if (!meta) throw new Error("Meta not found");
       const notes = [...(meta.notas_progresso || []), { data: new Date().toISOString().split("T")[0], texto, progresso }];
       const { error } = await supabase
-        .from("metas_pessoais" as any)
-        .update({ notas_progresso: notes, progresso, updated_at: new Date().toISOString() } as any)
+        .from("metas_pessoais")
+        .update({ notas_progresso: notes as unknown as Json, progresso, updated_at: new Date().toISOString() })
         .eq("id", id);
       if (error) throw error;
     },
@@ -112,8 +113,15 @@ export function useMetasStore() {
   const saveReportMut = useMutation({
     mutationFn: async (report: Omit<ReportSemanal, "id" | "created_at">) => {
       const { error } = await supabase
-        .from("reports_semanais" as any)
-        .upsert(report as any, { onConflict: "user_id,semana_inicio" });
+        .from("reports_semanais")
+        .upsert({
+          ...report,
+          notas_progresso: undefined,
+          metas_update: report.metas_update as unknown as Json,
+          metricas: report.metricas as unknown as Json,
+          destaques: report.destaques ?? null,
+          dificuldades: report.dificuldades ?? null,
+        }, { onConflict: "user_id,semana_inicio" });
       if (error) throw error;
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ["reports_semanais"] }),

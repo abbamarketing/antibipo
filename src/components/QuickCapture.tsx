@@ -179,104 +179,6 @@ export function QuickCapture({ open, onClose, onActionComplete }: QuickCapturePr
           break;
         }
 
-        case "trabalho": {
-          // Find or auto-create client by name
-          let clienteId = null;
-          if (dados.cliente_nome) {
-            const { data: clienteMatch } = await supabase
-              .from("clientes")
-              .select("id")
-              .ilike("nome", `%${dados.cliente_nome}%`)
-              .limit(1)
-              .maybeSingle();
-            
-            if (clienteMatch) {
-              clienteId = clienteMatch.id;
-            } else {
-              // Auto-create client
-              const { data: newCliente } = await supabase
-                .from("clientes")
-                .insert({ nome: dados.cliente_nome, tipo: "recorrente", status: "ativo" })
-                .select("id")
-                .single();
-              clienteId = newCliente?.id || null;
-              if (clienteId) {
-                toast.info(`Cliente "${dados.cliente_nome}" criado automaticamente`);
-              }
-            }
-          }
-
-          // Create main task
-          const { data: mainTask } = await supabase.from("tasks").insert({
-            titulo: dados.titulo || input,
-            modulo: (dados.modulo as any) || "trabalho",
-            urgencia: dados.urgencia || 2,
-            tipo: "operacional" as any,
-            dono: "eu" as any,
-            tempo_min: 30,
-            estado_ideal: "qualquer" as any,
-            impacto: 2,
-            status: "hoje" as any,
-            cliente_id: clienteId,
-            recorrente: dados.recorrente || false,
-            frequencia_recorrencia: dados.frequencia_recorrencia || null,
-            depende_de: dados.depende_de || null,
-            data_limite: dados.data_limite || null,
-            notas: dados.notas || null,
-          } as any).select().single();
-
-          // Create subtasks if detected
-          if (dados.subtarefas && dados.subtarefas.length > 0 && mainTask) {
-            const subtaskInserts = dados.subtarefas.map((sub: string) => ({
-              titulo: sub,
-              modulo: "trabalho" as any,
-              urgencia: dados.urgencia || 2,
-              tipo: "operacional" as any,
-              dono: "eu" as any,
-              tempo_min: 15,
-              estado_ideal: "qualquer" as any,
-              impacto: 1,
-              status: "backlog" as any,
-              parent_task_id: (mainTask as any).id,
-              cliente_id: clienteId,
-            }));
-            await supabase.from("tasks").insert(subtaskInserts as any);
-          }
-
-          // Classify with AI context (mood/energy aware)
-          if (mainTask) {
-            try {
-              const { data: classifyData } = await supabase.functions.invoke("classify-task", {
-                body: {
-                  titulo: dados.titulo || input,
-                  dayContext: {
-                    mood: dayCtx.moodLabel,
-                    energy: dayCtx.energy || undefined,
-                    alertLevel: dayCtx.alertLevel,
-                    dayScore: dayCtx.dayScore,
-                  },
-                },
-              });
-              if (classifyData?.classification) {
-                await supabase.from("tasks").update(classifyData.classification).eq("id", (mainTask as any).id);
-              }
-              if (classifyData?.adaptation_note) {
-                return classifyData.adaptation_note as string;
-              }
-            } catch {}
-          }
-
-          logActivity("tarefa_capturada", {
-            titulo: dados.titulo,
-            modulo: dados.modulo || "trabalho",
-            cliente: dados.cliente_nome,
-            recorrente: dados.recorrente,
-            subtarefas: dados.subtarefas?.length || 0,
-            depende_de: dados.depende_de,
-          });
-          break;
-        }
-
         case "saude_exercicio": {
           await supabase.from("bm_exercicios").insert({
             tipo: dados.tipo_exercicio || "geral",
@@ -465,16 +367,14 @@ export function QuickCapture({ open, onClose, onActionComplete }: QuickCapturePr
         { data: profile },
         { data: recentLogs },
         { data: summaries },
-        { data: clientes },
         { data: pendingTasks },
         { data: lastHumor },
         { data: lastSono },
         { data: tarefasCasa },
       ] = await Promise.all([
-        supabase.from("profiles").select("nome, trabalho_tipo, trabalho_equipe, trabalho_clientes_ativos, objetivo_saude, casa_comodos, casa_moradores, casa_pets").eq("user_id", user.id).maybeSingle(),
+        supabase.from("profiles").select("nome, objetivo_saude, casa_comodos, casa_moradores, casa_pets").eq("user_id", user.id).maybeSingle(),
         supabase.from("activity_log").select("acao, detalhes").eq("user_id", user.id).order("criado_em", { ascending: false }).limit(10),
         supabase.from("configuracoes").select("valor").eq("user_id", user.id).like("chave", "resumo_logs_%").order("updated_at", { ascending: false }).limit(2),
-        supabase.from("clientes").select("nome, tipo, status").eq("status", "ativo").limit(20),
         supabase.from("tasks").select("titulo, status, urgencia, dono").in("status", ["hoje", "em_andamento", "aguardando"]).limit(10),
         supabase.from("registros_humor").select("valor, notas").eq("data", todayStr).maybeSingle(),
         supabase.from("registros_sono").select("horario_dormir, horario_acordar, qualidade").eq("data", todayStr).maybeSingle(),
@@ -483,14 +383,13 @@ export function QuickCapture({ open, onClose, onActionComplete }: QuickCapturePr
 
       const parts: string[] = [];
       if (profile?.nome) parts.push(`Nome: ${profile.nome}`);
-      if (profile?.trabalho_tipo) parts.push(`Trabalho: ${profile.trabalho_tipo}, equipe: ${profile.trabalho_equipe || "solo"}`);
       if (profile?.casa_comodos) parts.push(`Casa: ${profile.casa_comodos} cômodos, ${profile.casa_moradores || 1} moradores${profile.casa_pets ? ", tem pets" : ""}`);
       if (tarefasCasa?.length) {
         const comodos = [...new Set((tarefasCasa as any[]).map((t: any) => t.comodo))];
         parts.push(`Cômodos cadastrados: ${comodos.join(", ")}`);
         parts.push(`Tarefas domésticas cadastradas: ${(tarefasCasa as any[]).map((t: any) => `${t.tarefa} (${t.comodo})`).join(", ")}`);
       }
-      if (clientes?.length) parts.push(`Clientes ativos: ${clientes.map((c: any) => `${c.nome} (${c.tipo})`).join(", ")}`);
+      // clientes removed (trabalho module removed)
       if (pendingTasks?.length) parts.push(`Tarefas pendentes: ${pendingTasks.map((t: any) => `${t.titulo} [${t.status}]`).join(", ")}`);
       if (lastHumor) parts.push(`Humor hoje: ${lastHumor.valor}/5`);
       if (lastSono) parts.push(`Sono: ${lastSono.qualidade ? `qualidade ${lastSono.qualidade}/3` : "registrado"}`);
@@ -566,7 +465,6 @@ export function QuickCapture({ open, onClose, onActionComplete }: QuickCapturePr
     financeiro: "Financeiro",
     calendario: "Calendário",
     casa: "Casa",
-    trabalho: "Trabalho",
     saude_exercicio: "Exercicio",
     saude_medicamento: "Medicamento",
     saude_peso: "Peso",
@@ -580,7 +478,6 @@ export function QuickCapture({ open, onClose, onActionComplete }: QuickCapturePr
     financeiro: "text-green-600",
     calendario: "text-blue-500",
     casa: "text-amber-600",
-    trabalho: "text-primary",
     diario: "text-purple-500",
     saude_exercicio: "text-red-500",
     saude_humor: "text-pink-500",

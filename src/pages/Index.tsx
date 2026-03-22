@@ -8,7 +8,6 @@ import { EnergyStateSelector } from "@/components/EnergyStateSelector";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { ModuleNav, type NavModulo } from "@/components/ModuleNav";
 import { SpeedDialFAB, type SpeedDialAction } from "@/components/SpeedDialFAB";
-import { StructuredTaskForm } from "@/components/StructuredTaskForm";
 import { NotificationManager } from "@/components/NotificationManager";
 import { DayGate } from "@/components/DayGate";
 import { MoodCheckIn } from "@/components/MoodCheckIn";
@@ -42,17 +41,16 @@ const Index = () => {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const isMobile = useIsMobile();
-  const [captureOpen, setCaptureOpen] = useState(false);
   const [activeNav, setActiveNav] = useState<NavModulo>(() => {
     const mod = searchParams.get("mod");
-    if (mod && ["inicio", "trabalho", "casa", "saude", "metas"].includes(mod)) return mod as NavModulo;
+    if (mod && ["inicio", "casa", "saude", "metas"].includes(mod)) return mod as NavModulo;
     return "inicio";
   });
 
   // Sync URL param to nav
   useEffect(() => {
     const mod = searchParams.get("mod");
-    if (mod && ["inicio", "trabalho", "casa", "saude", "metas"].includes(mod) && mod !== activeNav) {
+    if (mod && ["inicio", "casa", "saude", "metas"].includes(mod) && mod !== activeNav) {
       setActiveNav(mod as NavModulo);
       setSearchParams({}, { replace: true });
     }
@@ -132,7 +130,7 @@ const Index = () => {
 
   const handleModulo = (m: NavModulo) => {
     setActiveNav(m);
-    if (m !== "metas" && m !== "inicio") setModulo(m as typeof current_modulo);
+    if (m !== "metas" && m !== "inicio") setModulo(m as "casa" | "saude");
   };
 
   const handleAddMed = (med: Parameters<typeof addMedicamento>[0]) => {
@@ -143,7 +141,6 @@ const Index = () => {
   // ── Adaptative SpeedDial: hide financial & calendar actions in low state ──
   const handleSpeedDial = (action: SpeedDialAction) => {
     switch (action) {
-      case "tarefa": setCaptureOpen(true); break;
       case "entrada": case "saida": navigate("/financeiro"); break;
       case "evento": navigate("/calendario"); break;
     }
@@ -194,7 +191,7 @@ const Index = () => {
 
               {isMobile ? (
                 <div className="space-y-5">
-                  <AlertBanner alerts={(dayCtx.alerts ?? []) as any[]} />
+                  <AlertBanner alerts={dayCtx.alerts} />
                   {pending.length > 0 && (
                     <GlassCard className={`p-1 ${isCrisis || isLowState ? "ring-2 ring-destructive/30" : ""}`}>
                       <MedAlert pendingMeds={pending} onTake={handleTakeMed} />
@@ -232,7 +229,7 @@ const Index = () => {
                     <ContextWidgets isCrisis={isCrisis} isLowState={isLowState} activeNav={activeNav} pending={pending} onTakeMed={handleTakeMed} onMoodUpdated={(val) => setLastMoodValue(val)} />
                   </aside>
                   <main className="col-span-9">
-                    <AlertBanner alerts={(dayCtx.alerts ?? []) as any[]} />
+                    <AlertBanner alerts={dayCtx.alerts} />
                     {isVeryLow && (
                       <div className="rounded-2xl bg-[hsl(210,20%,95%)] border border-border/30 p-4 text-center mb-4 animate-fade-in">
                         <p className="font-body text-sm text-muted-foreground leading-relaxed">
@@ -268,7 +265,6 @@ const Index = () => {
           <SpeedDialFAB onAction={handleSpeedDial} reducedMode={isLowState} />
         )}
 
-        <StructuredTaskForm open={captureOpen} onClose={() => setCaptureOpen(false)} onCreated={() => {}} />
       </div>
     </DayGate>
   );

@@ -94,7 +94,7 @@ export function useBemEstarStore() {
     queryKey: ["bm_refeicoes", today()],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("bm_refeicoes" as any)
+        .from("bm_refeicoes")
         .select("*")
         .eq("data", today())
         .order("created_at");
@@ -109,7 +109,7 @@ export function useBemEstarStore() {
     queryKey: ["bm_exercicios", today()],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("bm_exercicios" as any)
+        .from("bm_exercicios")
         .select("*")
         .eq("data", today())
         .order("created_at");
@@ -125,7 +125,7 @@ export function useBemEstarStore() {
     queryFn: async () => {
       const { start, end } = getWeekRange(new Date());
       const { data, error } = await supabase
-        .from("bm_exercicios" as any)
+        .from("bm_exercicios")
         .select("*")
         .gte("data", start)
         .lte("data", end)
@@ -141,7 +141,7 @@ export function useBemEstarStore() {
     queryKey: ["bm_metas"],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("bm_metas" as any)
+        .from("bm_metas")
         .select("*")
         .eq("ativo", true)
         .limit(1)
@@ -157,7 +157,7 @@ export function useBemEstarStore() {
     queryKey: ["bm_analise_semanal"],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("bm_analise_semanal" as any)
+        .from("bm_analise_semanal")
         .select("*")
         .order("semana_inicio", { ascending: false })
         .limit(12);
@@ -177,8 +177,8 @@ export function useBemEstarStore() {
       categorias?: string[];
       pulou?: boolean;
     }) => {
-      const { error } = await supabase.from("bm_refeicoes" as any).upsert(
-        { data: today(), ...r } as any,
+      const { error } = await supabase.from("bm_refeicoes").upsert(
+        { data: today(), ...r },
         { onConflict: "data,refeicao" }
       );
       if (error) throw error;
@@ -195,8 +195,8 @@ export function useBemEstarStore() {
       notas?: string;
     }) => {
       const { error } = await supabase
-        .from("bm_exercicios" as any)
-        .insert({ data: today(), ...e } as any);
+        .from("bm_exercicios")
+        .insert({ data: today(), ...e });
       if (error) throw error;
     },
     onSuccess: () => {
@@ -212,14 +212,14 @@ export function useBemEstarStore() {
     }) => {
       if (metas?.id) {
         const { error } = await supabase
-          .from("bm_metas" as any)
-          .update(m as any)
+          .from("bm_metas")
+          .update(m)
           .eq("id", metas.id);
         if (error) throw error;
       } else {
         const { error } = await supabase
-          .from("bm_metas" as any)
-          .insert({ ...m, ativo: true } as any);
+          .from("bm_metas")
+          .insert({ ...m, ativo: true });
         if (error) throw error;
       }
     },

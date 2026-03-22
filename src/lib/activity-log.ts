@@ -50,12 +50,12 @@ export async function logActivity(
       return;
     }
 
-    const { error } = await supabase.from("activity_log" as any).insert([{
+    const { error } = await supabase.from("activity_log").insert([{
       acao,
-      detalhes: (detalhes || {}) as any,
+      detalhes: (detalhes || {}) as Record<string, unknown>,
       contexto: contexto || null,
       user_id: user.id,
-    }] as any);
+    }]);
 
     if (error) {
       console.error("Activity log insert failed:", error);
@@ -72,7 +72,7 @@ export async function logActivity(
 async function checkAndConsolidate(userId: string) {
   try {
     const { count, error } = await supabase
-      .from("activity_log" as any)
+      .from("activity_log")
       .select("*", { count: "exact", head: true })
       .eq("user_id", userId);
 
@@ -95,10 +95,10 @@ async function checkAndConsolidate(userId: string) {
 }
 
 /** Get the last 100 logs for AI context */
-export async function getRecentLogsForAI(userId?: string): Promise<any[]> {
+export async function getRecentLogsForAI(userId?: string): Promise<Record<string, unknown>[]> {
   try {
     let query = supabase
-      .from("activity_log" as any)
+      .from("activity_log")
       .select("*")
       .order("criado_em", { ascending: false })
       .limit(100);
@@ -120,7 +120,7 @@ export async function getRecentLogsForAI(userId?: string): Promise<any[]> {
 export async function getTotalLogCount(userId: string): Promise<{ active: number; consolidated: number; total: number }> {
   try {
     const { count: activeCount } = await supabase
-      .from("activity_log" as any)
+      .from("activity_log")
       .select("*", { count: "exact", head: true })
       .eq("user_id", userId);
 
@@ -131,8 +131,9 @@ export async function getTotalLogCount(userId: string): Promise<{ active: number
 
     let consolidatedCount = 0;
     if (consolidated) {
-      consolidated.forEach((c: any) => {
-        consolidatedCount += (c.metricas as any)?.total_logs || 0;
+      consolidated.forEach((c) => {
+        const metricas = c.metricas as Record<string, number> | null;
+        consolidatedCount += metricas?.total_logs || 0;
       });
     }
 
@@ -144,11 +145,11 @@ export async function getTotalLogCount(userId: string): Promise<{ active: number
 }
 
 /** Export all logs (active + consolidated details) as JSON */
-export async function exportAllLogs(userId: string): Promise<any[]> {
+export async function exportAllLogs(userId: string): Promise<Record<string, unknown>[]> {
   try {
     // Get active logs
     const { data: activeLogs } = await supabase
-      .from("activity_log" as any)
+      .from("activity_log")
       .select("*")
       .eq("user_id", userId)
       .order("criado_em", { ascending: true });
@@ -160,12 +161,12 @@ export async function exportAllLogs(userId: string): Promise<any[]> {
       .eq("tipo", "activity_batch")
       .order("periodo_inicio", { ascending: true });
 
-    const allLogs: any[] = [];
+    const allLogs: Record<string, unknown>[] = [];
 
     // Add consolidated logs from batches
     if (batches) {
-      batches.forEach((batch: any) => {
-        const details = batch.detalhes as any[];
+      batches.forEach((batch) => {
+        const details = batch.detalhes as Record<string, unknown>[] | null;
         if (details) {
           allLogs.push(...details);
         }

@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useCallback } from "react";
+import type { Database, Json } from "@/integrations/supabase/types";
 
 export interface CustomTracker {
   id: string;
@@ -33,7 +34,7 @@ export function useTrackerStore() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return [];
       const { data, error } = await supabase
-        .from("custom_trackers" as any)
+        .from("custom_trackers")
         .select("*")
         .eq("user_id", user.id)
         .eq("ativo", true)
@@ -53,7 +54,7 @@ export function useTrackerStore() {
       const since = new Date();
       since.setDate(since.getDate() - 60);
       const { data, error } = await supabase
-        .from("tracker_registros" as any)
+        .from("tracker_registros")
         .select("*")
         .eq("user_id", user.id)
         .gte("data", since.toISOString().split("T")[0])
@@ -67,21 +68,24 @@ export function useTrackerStore() {
 
   const createMut = useMutation({
     mutationFn: async (tracker: Omit<CustomTracker, "id" | "created_at" | "updated_at">) => {
-      const { error } = await supabase.from("custom_trackers" as any).insert(tracker as any);
+      const { error } = await supabase.from("custom_trackers").insert({
+        ...tracker,
+        config: tracker.config as Json,
+      });
       if (error) throw error;
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ["custom_trackers"] }),
   });
 
   const completeMut = useMutation({
-    mutationFn: async ({ tracker_id, user_id, dados }: { tracker_id: string; user_id: string; dados?: Record<string, any> }) => {
+    mutationFn: async ({ tracker_id, user_id, dados }: { tracker_id: string; user_id: string; dados?: Record<string, unknown> }) => {
       const today = new Date().toISOString().split("T")[0];
-      const { error } = await supabase.from("tracker_registros" as any).insert({
+      const { error } = await supabase.from("tracker_registros").insert({
         tracker_id,
         user_id,
         data: today,
-        dados: dados || {},
-      } as any);
+        dados: (dados || {}) as Json,
+      });
       if (error) throw error;
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ["tracker_registros"] }),
@@ -89,7 +93,11 @@ export function useTrackerStore() {
 
   const updateTrackerMut = useMutation({
     mutationFn: async ({ id, changes }: { id: string; changes: Partial<CustomTracker> }) => {
-      const { error } = await supabase.from("custom_trackers" as any).update(changes as any).eq("id", id);
+      const { config, ...rest } = changes;
+      const { error } = await supabase.from("custom_trackers").update({
+        ...rest,
+        ...(config !== undefined ? { config: config as Json } : {}),
+      }).eq("id", id);
       if (error) throw error;
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ["custom_trackers"] }),
