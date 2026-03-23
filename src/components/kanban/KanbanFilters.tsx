@@ -1,9 +1,9 @@
 import { MODULE_ICONS, MODULE_LABELS } from "./kanban-types";
 
 interface KanbanFiltersProps {
-  filterModule: "casa" | "saude" | null;
-  onFilterChange: (mod: "casa" | "saude" | null) => void;
-  moduleCounts: Record<"casa" | "saude", number>;
+  filterModule: "trabalho" | "casa" | "saude" | null;
+  onFilterChange: (mod: "trabalho" | "casa" | "saude" | null) => void;
+  moduleCounts: Record<"trabalho" | "casa" | "saude", number>;
 }
 
 export function KanbanFilters({ filterModule, onFilterChange, moduleCounts }: KanbanFiltersProps) {
@@ -17,7 +17,7 @@ export function KanbanFilters({ filterModule, onFilterChange, moduleCounts }: Ka
       >
         TODOS
       </button>
-      {(["casa", "saude"] as const).map((m) => {
+      {(["trabalho", "casa", "saude"] as const).map((m) => {
         const Icon = MODULE_ICONS[m];
         return (
           <button

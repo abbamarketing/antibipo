@@ -1,6 +1,7 @@
 import { useFlowStore } from "@/lib/store";
 import { UnifiedKanban } from "@/components/UnifiedKanban";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
+import { WorkModule } from "@/components/WorkModule";
 import { HomeModule } from "@/components/HomeModule";
 import { HealthModule } from "@/components/HealthModule";
 import { MetasModule } from "@/components/MetasModule";
@@ -28,8 +29,8 @@ export function ModuleContent({
   activeNav, energy, lastMoodValue, isCrisis,
   onComplete, onDelegate, onPush, onTakeMed, onMood, onSleep, onAddMed,
 }: ModuleContentProps) {
-  const { state, isMedTakenToday, todayHumor, updateMedicamento, deleteMedicamento } = useFlowStore();
-  const kanbanModule = activeNav === "metas" ? null : (activeNav as "casa" | "saude");
+  const { state, getFilteredTasks, isMedTakenToday, todayHumor } = useFlowStore();
+  const kanbanModule = activeNav === "metas" ? null : (activeNav as "trabalho" | "casa" | "saude");
 
   return (
     <div className="space-y-4">
@@ -39,6 +40,11 @@ export function ModuleContent({
 
       {!isCrisis && (
         <div className="animate-fade-in">
+          {activeNav === "trabalho" && (
+            <ModuleOnboardingGuard modulo="trabalho">
+              <WorkModule energy={energy} tasks={getFilteredTasks("trabalho", energy)} allTasks={state.tasks} onComplete={onComplete} onDelegate={onDelegate} onPush={onPush} />
+            </ModuleOnboardingGuard>
+          )}
           {activeNav === "casa" && (
             <ModuleOnboardingGuard modulo="casa">
               <HomeModule energy={energy} />
@@ -46,7 +52,7 @@ export function ModuleContent({
           )}
           {activeNav === "saude" && (
             <ModuleOnboardingGuard modulo="saude">
-              <HealthModule energy={energy} medicamentos={state.medicamentos} registros_humor={state.registros_humor} registros_sono={state.registros_sono} onTakeMed={onTakeMed} isMedTaken={isMedTakenToday} onMood={onMood} onSleep={onSleep} onAddMed={onAddMed} onUpdateMed={updateMedicamento} onDeleteMed={deleteMedicamento} todayHumor={todayHumor} />
+              <HealthModule energy={energy} medicamentos={state.medicamentos} registros_humor={state.registros_humor} registros_sono={state.registros_sono} onTakeMed={onTakeMed} isMedTaken={isMedTakenToday} onMood={onMood} onSleep={onSleep} onAddMed={onAddMed} todayHumor={todayHumor} />
             </ModuleOnboardingGuard>
           )}
           {activeNav === "metas" && <MetasModule />}

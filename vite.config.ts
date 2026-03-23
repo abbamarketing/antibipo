@@ -35,42 +35,14 @@ export default defineConfig(({ mode }) => ({
         ],
       },
       workbox: {
-        navigateFallback: "/index.html",
         navigateFallbackDenylist: [/^\/~oauth/],
         globPatterns: ["**/*.{js,css,html,ico,png,svg,woff2}"],
         importScripts: ["/sw-push.js"],
         runtimeCaching: [
           {
-            urlPattern: /^https:\/\/.*supabase.*\/rest\/v1\/.*/,
+            urlPattern: /^https:\/\/.*supabase.*$/,
             handler: "NetworkFirst",
-            options: {
-              cacheName: "supabase-api",
-              expiration: { maxEntries: 100, maxAgeSeconds: 600 },
-              networkTimeoutSeconds: 5,
-              cacheableResponse: { statuses: [0, 200] },
-            },
-          },
-          {
-            urlPattern: /^https:\/\/.*supabase.*\/auth\/.*/,
-            handler: "NetworkOnly",
-          },
-          {
-            urlPattern: /^https:\/\/.*supabase.*\/storage\/.*/,
-            handler: "CacheFirst",
-            options: {
-              cacheName: "supabase-storage",
-              expiration: { maxEntries: 50, maxAgeSeconds: 86400 },
-              cacheableResponse: { statuses: [0, 200] },
-            },
-          },
-          {
-            urlPattern: /^https:\/\/fonts\.(googleapis|gstatic)\.com\/.*/,
-            handler: "CacheFirst",
-            options: {
-              cacheName: "google-fonts",
-              expiration: { maxEntries: 20, maxAgeSeconds: 31536000 },
-              cacheableResponse: { statuses: [0, 200] },
-            },
+            options: { cacheName: "supabase-api", expiration: { maxEntries: 50, maxAgeSeconds: 300 } },
           },
         ],
       },

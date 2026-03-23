@@ -2,10 +2,10 @@ import { useState, useRef, useEffect } from "react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import {
   Plus, ArrowDownLeft, ArrowUpRight,
-  CalendarPlus,
+  ClipboardList, CalendarPlus,
 } from "lucide-react";
 
-export type SpeedDialAction = "entrada" | "saida" | "evento";
+export type SpeedDialAction = "tarefa" | "entrada" | "saida" | "evento";
 
 interface SpeedDialFABProps {
   onAction: (action: SpeedDialAction) => void;
@@ -13,6 +13,7 @@ interface SpeedDialFABProps {
 }
 
 const ALL_ACTIONS: { key: SpeedDialAction; label: string; icon: typeof Plus; color: string }[] = [
+  { key: "tarefa", label: "Tarefa", icon: ClipboardList, color: "bg-blue-500/90 text-white" },
   { key: "entrada", label: "Entrada", icon: ArrowDownLeft, color: "bg-green-500/90 text-white" },
   { key: "saida", label: "Saída", icon: ArrowUpRight, color: "bg-red-500/90 text-white" },
   { key: "evento", label: "Evento", icon: CalendarPlus, color: "bg-purple-500/90 text-white" },
@@ -23,7 +24,8 @@ export function SpeedDialFAB({ onAction, reducedMode = false }: SpeedDialFABProp
   const isMobile = useIsMobile();
   const menuRef = useRef<HTMLDivElement>(null);
 
-  const actions = reducedMode ? ALL_ACTIONS.slice(0, 1) : ALL_ACTIONS;
+  // In reduced mode, only show "Tarefa"
+  const actions = reducedMode ? ALL_ACTIONS.filter((a) => a.key === "tarefa") : ALL_ACTIONS;
 
   useEffect(() => {
     if (!open) return;
@@ -69,7 +71,7 @@ export function SpeedDialFAB({ onAction, reducedMode = false }: SpeedDialFABProp
           </div>
         )}
         <button
-          onClick={() => setOpen(!open)}
+          onClick={() => reducedMode ? onAction("tarefa") : setOpen(!open)}
           className={`w-14 h-14 rounded-full ${reducedMode ? "bg-muted-foreground/60" : "bg-primary"} text-primary-foreground shadow-lg shadow-primary/20 flex items-center justify-center hover:opacity-90 active:scale-90 transition-all duration-200 ${open ? "rotate-45" : ""}`}
         >
           <Plus className="w-6 h-6 transition-transform duration-200" />

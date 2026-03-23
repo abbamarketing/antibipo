@@ -55,7 +55,7 @@ export function useProfileStore() {
       
       // Try to get existing profile
       const { data, error } = await supabase
-        .from("profiles")
+        .from("profiles" as any)
         .select("*")
         .eq("user_id", user.id)
         .maybeSingle();
@@ -69,8 +69,8 @@ export function useProfileStore() {
       if (!data) {
         console.log("No profile found, creating one for user:", user.id);
         const { data: newProfile, error: insertError } = await supabase
-          .from("profiles")
-          .insert({ user_id: user.id })
+          .from("profiles" as any)
+          .insert({ user_id: user.id } as any)
           .select("*")
           .single();
         if (insertError) {
@@ -90,7 +90,7 @@ export function useProfileStore() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return [];
       const { data, error } = await supabase
-        .from("registros_peso")
+        .from("registros_peso" as any)
         .select("*")
         .eq("user_id", user.id)
         .order("data", { ascending: false })
@@ -108,14 +108,13 @@ export function useProfileStore() {
       console.log("Updating profile for user:", user.id, "with:", updates);
       
       // Use upsert to handle case where profile doesn't exist
-      const { id: _id, ...safeUpdates } = updates;
       const { error } = await supabase
-        .from("profiles")
-        .upsert({
-          ...safeUpdates,
+        .from("profiles" as any)
+        .upsert({ 
+          ...updates, 
           user_id: user.id,
-          updated_at: new Date().toISOString()
-        }, { onConflict: "user_id" });
+          updated_at: new Date().toISOString() 
+        } as any, { onConflict: "user_id" });
       
       if (error) {
         console.error("Profile update error:", error);
@@ -132,8 +131,8 @@ export function useProfileStore() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Not authenticated");
       const { error } = await supabase
-        .from("registros_peso")
-        .insert({ peso_kg: entry.peso_kg, notas: entry.notas ?? null, user_id: user.id });
+        .from("registros_peso" as any)
+        .insert({ ...entry, user_id: user.id } as any);
       if (error) throw error;
     },
     onSuccess: () => {
@@ -143,10 +142,10 @@ export function useProfileStore() {
   });
 
   const THIRTY_DAYS_MS = 30 * 24 * 60 * 60 * 1000;
-  const ADAPTIVE_MODULES: string[] = ["saude"];
+  const ADAPTIVE_MODULES: string[] = ["trabalho", "saude"];
 
   const isOnboardingDone = useCallback(
-    (modulo: "saude" | "casa" | "financeiro") => {
+    (modulo: "saude" | "trabalho" | "casa" | "financeiro") => {
       if (!profile) return false;
       const done = !!profile[`onboarding_${modulo}` as keyof Profile];
       if (!done) return false;

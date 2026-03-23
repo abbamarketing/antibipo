@@ -94,7 +94,7 @@ function VoiceCapture() {
     try {
       await addTask({
         titulo: transcript.trim(),
-        modulo: "casa",
+        modulo: "trabalho",
         urgencia: dayCtx.energy === "basico" ? 1 : 2,
         status: "backlog",
         impacto: 2,

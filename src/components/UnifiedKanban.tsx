@@ -17,7 +17,7 @@ import { type UnifiedTask, STATUS_COLUMNS } from "@/components/kanban/kanban-typ
 interface UnifiedKanbanProps {
   energy: EnergyState;
   lastMoodValue?: number;
-  preferredModule?: "casa" | "saude" | null;
+  preferredModule?: "trabalho" | "casa" | "saude" | null;
 }
 
 function getMoodMessage(mood?: number, todayCount?: number, energy?: string): string {
@@ -41,7 +41,7 @@ export function UnifiedKanban({ energy, lastMoodValue, preferredModule = null }:
   const [collapsedCols, setCollapsedCols] = useState<Set<string>>(
     () => new Set(energy === "basico" ? ["em_andamento", "aguardando", "backlog"] : energy === "modo_leve" ? ["backlog"] : [])
   );
-  const [filterModule, setFilterModule] = useState<"casa" | "saude" | null>(preferredModule);
+  const [filterModule, setFilterModule] = useState<"trabalho" | "casa" | "saude" | null>(preferredModule);
   const [showCompleted, setShowCompleted] = useState(false);
   const [focusIndex, setFocusIndex] = useState(0);
   const [slideDirection, setSlideDirection] = useState<"up" | "none">("none");
@@ -96,7 +96,7 @@ export function UnifiedKanban({ energy, lastMoodValue, preferredModule = null }:
     const mood = dayCtx.moodLabel;
 
     state.tasks
-      .filter((t) => !t.parent_task_id && t.status !== "feito" && t.status !== "descartado" && t.modulo !== "trabalho")
+      .filter((t) => !t.parent_task_id && t.status !== "feito" && t.status !== "descartado")
       .forEach((t) => {
         let displayStatus = t.status;
         if (t.status === "backlog" && t.data_limite) {
@@ -147,6 +147,7 @@ export function UnifiedKanban({ energy, lastMoodValue, preferredModule = null }:
 
   const filtered = filterModule ? allItems.filter((i) => i.modulo === filterModule) : allItems;
   const moduleCounts = useMemo(() => ({
+    trabalho: allItems.filter((i) => i.modulo === "trabalho").length,
     casa: allItems.filter((i) => i.modulo === "casa").length,
     saude: allItems.filter((i) => i.modulo === "saude").length,
   }), [allItems]);
@@ -293,10 +294,9 @@ export function UnifiedKanban({ energy, lastMoodValue, preferredModule = null }:
         <CompletedSection tasks={completedToday} show={showCompleted} onToggle={() => setShowCompleted(!showCompleted)} />
 
         {filtered.length === 0 && (
-          <div className="rounded-3xl bg-card/40 backdrop-blur-xl shadow-sm border border-border/20 p-8 text-center">
-            <CheckCircle2 className="w-8 h-8 mx-auto text-primary/40 mb-3" />
-            <p className="text-sm text-muted-foreground font-body">Nenhuma tarefa pendente hoje.</p>
-            <p className="text-xs text-muted-foreground/60 font-body mt-1">Aproveite o momento!</p>
+          <div className="bg-card rounded-lg border p-8 text-center">
+            <CheckCircle2 className="w-8 h-8 mx-auto text-primary/40 mb-2" />
+            <p className="text-sm text-muted-foreground font-body">Nenhuma tarefa pendente. Use o + para adicionar.</p>
           </div>
         )}
       </div>

@@ -3,7 +3,14 @@ import { Button } from "@/components/ui/button";
 import { AlertTriangle, X } from "lucide-react";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import type { AgentAlert } from "@/hooks/use-day-context";
+
+interface AgentAlert {
+  severity: "warning" | "error";
+  title: string;
+  body: string;
+  module_focus: string;
+  recommended_action: string;
+}
 
 export function AlertBanner({ alerts }: { alerts: AgentAlert[] }) {
   const [dismissed, setDismissed] = useState<Set<number>>(new Set());
@@ -30,7 +37,7 @@ export function AlertBanner({ alerts }: { alerts: AgentAlert[] }) {
                 size="sm"
                 onClick={() => {
                   const mod = alert.module_focus;
-                  if (["casa", "saude", "metas"].includes(mod)) {
+                  if (["trabalho", "casa", "saude", "metas"].includes(mod)) {
                     navigate(`/?mod=${mod}`);
                   } else {
                     navigate(`/${mod}`);

@@ -5,7 +5,7 @@ import { useFlowStore } from "@/lib/store";
 import { logActivity } from "@/lib/activity-log";
 import { brasiliaTimeString } from "@/lib/brasilia";
 import { format } from "date-fns";
-import { X, Plus, Loader2, CheckCircle2, Zap, ArrowRight, Home, Heart } from "lucide-react";
+import { X, Plus, Loader2, CheckCircle2, Zap, ArrowRight, Briefcase, Home, Heart } from "lucide-react";
 import { toast } from "sonner";
 
 import { TemplateSelector } from "@/components/atomic/TemplateSelector";
@@ -25,7 +25,7 @@ interface StructuredTaskFormProps {
   onCreated?: () => void;
 }
 
-const moduloIcons = { casa: Home, saude: Heart };
+const moduloIcons = { trabalho: Briefcase, casa: Home, saude: Heart };
 
 export function StructuredTaskForm({ open, onClose, onCreated }: StructuredTaskFormProps) {
   const { state } = useFlowStore();
@@ -38,16 +38,23 @@ export function StructuredTaskForm({ open, onClose, onCreated }: StructuredTaskF
   const [fields, setFields] = useState<FieldValues>({});
   const [dataEntrega, setDataEntrega] = useState<Date | undefined>();
   const [urgencia, setUrgencia] = useState(2);
-  const [modulo, setModulo] = useState<"casa" | "saude">("casa");
+  const [modulo, setModulo] = useState<"trabalho" | "casa" | "saude">("trabalho");
   const [subtarefas, setSubtarefas] = useState<string[]>([]);
   const [saving, setSaving] = useState(false);
   const [success, setSuccess] = useState(false);
   const [recorrente, setRecorrente] = useState(false);
   const [frequencia, setFrequencia] = useState("semanal");
+  const [showNewClient, setShowNewClient] = useState(false);
+  const [newClientName, setNewClientName] = useState("");
+  const [savingClient, setSavingClient] = useState(false);
   const [smartSuggested, setSmartSuggested] = useState(false);
+  const [clientes, setClientes] = useState<{ id: string; nome: string }[]>([]);
 
   useEffect(() => {
     if (!open) return;
+    supabase.from("clientes").select("id, nome").eq("status", "ativo").order("nome").then(({ data }) => {
+      if (data) setClientes(data);
+    });
     // Focus quick bar on open
     setTimeout(() => quickInputRef.current?.focus(), 100);
   }, [open]);
@@ -62,7 +69,7 @@ export function StructuredTaskForm({ open, onClose, onCreated }: StructuredTaskF
   useEffect(() => {
     if (template === "domestico") setModulo("casa");
     else if (template === "saude") setModulo("saude");
-    else if (template) setModulo("casa");
+    else if (template) setModulo("trabalho");
   }, [template]);
 
   const titulo = template ? buildTitle(template, fields) : "";
@@ -91,13 +98,35 @@ export function StructuredTaskForm({ open, onClose, onCreated }: StructuredTaskF
 
   const reset = () => {
     setTemplate(null); setFields({}); setDataEntrega(undefined);
-    setUrgencia(2); setModulo("casa"); setSubtarefas([]);
+    setUrgencia(2); setModulo("trabalho"); setSubtarefas([]);
     setSuccess(false); setRecorrente(false); setFrequencia("semanal");
-    setSmartSuggested(false);
+    setShowNewClient(false); setNewClientName(""); setSmartSuggested(false);
     setQuickText(""); setQuickParsed(null);
   };
 
   const handleClose = () => { reset(); onClose(); };
+
+  const handleAddClient = async () => {
+    if (!newClientName.trim() || savingClient) return;
+    setSavingClient(true);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("Not authenticated");
+      const { data, error } = await supabase.from("clientes").insert({
+        nome: newClientName.trim(), tipo: "pj", status: "ativo", user_id: user.id,
+      }).select("id, nome").single();
+      if (error) throw error;
+      if (data) {
+        setClientes((prev) => [...prev, data].sort((a, b) => a.nome.localeCompare(b.nome)));
+        queryClient.setQueryData(["clientes"], (current: any[] = []) =>
+          [...current.filter((c) => c.id !== data.id), data].sort((a, b) => a.nome.localeCompare(b.nome))
+        );
+        setFields({ ...fields, cliente: data.nome, cliente_id: data.id });
+        toast.success("Cliente adicionado");
+      }
+    } catch { toast.error("Erro ao adicionar cliente"); }
+    finally { setSavingClient(false); setShowNewClient(false); setNewClientName(""); }
+  };
 
   const handleQuickSubmit = async () => {
     if (!quickParsed || quickParsed.titulo.length < 4 || saving) return;
@@ -113,7 +142,7 @@ export function StructuredTaskForm({ open, onClose, onCreated }: StructuredTaskF
         titulo: quickParsed.titulo,
         modulo: finalModulo as any,
         urgencia: finalUrgencia,
-        tipo: (finalModulo === "casa" ? "domestico" : "operacional") as any,
+        tipo: (finalModulo === "casa" ? "domestico" : finalModulo === "saude" ? "operacional" : "operacional") as any,
         dono: "eu" as any, tempo_min: 30, estado_ideal: "qualquer" as any,
         impacto: finalUrgencia >= 3 ? 3 : 2, status: "backlog" as any,
         user_id: user.id,
@@ -146,9 +175,10 @@ export function StructuredTaskForm({ open, onClose, onCreated }: StructuredTaskF
 
       const { data: mainTask, error } = await supabase.from("tasks").insert({
         titulo, modulo: modulo as any, urgencia,
-        tipo: (template === "domestico" ? "domestico" : "operacional") as any,
+        tipo: (template === "domestico" ? "domestico" : template === "reuniao" ? "administrativo" : "operacional") as any,
         dono: "eu" as any, tempo_min: 30, estado_ideal: "qualquer" as any,
         impacto: urgencia >= 3 ? 3 : 2, status: "backlog" as any,
+        cliente_id: fields.cliente_id || null,
         data_limite: dataEntrega ? format(dataEntrega, "yyyy-MM-dd") : null,
         recorrente, frequencia_recorrencia: recorrente ? frequencia : null,
         user_id: user.id,
@@ -173,6 +203,7 @@ export function StructuredTaskForm({ open, onClose, onCreated }: StructuredTaskF
         });
       }
       queryClient.invalidateQueries({ queryKey: ["tasks"] });
+      try { await supabase.functions.invoke("classify-task", { body: { titulo } }); } catch {}
 
       logActivity("tarefa_estruturada_criada", {
         titulo, template, modulo, urgencia, recorrente,
@@ -262,7 +293,7 @@ export function StructuredTaskForm({ open, onClose, onCreated }: StructuredTaskF
                     )}
                     {!quickParsed.modulo && !quickParsed.urgencia && (
                       <span className="font-body text-[10px] text-muted-foreground/50">
-                        use @saude @casa · !alta !baixa
+                        use @saude @casa @trabalho · !alta !baixa
                       </span>
                     )}
                   </div>
@@ -282,6 +313,10 @@ export function StructuredTaskForm({ open, onClose, onCreated }: StructuredTaskF
                 <div className="space-y-4 animate-fade-in">
                   <DynamicFields
                     template={template} fields={fields} setFields={setFields}
+                    clientes={clientes}
+                    showNewClient={showNewClient} setShowNewClient={setShowNewClient}
+                    newClientName={newClientName} setNewClientName={setNewClientName}
+                    onAddClient={handleAddClient} savingClient={savingClient}
                   />
                   <DatePickerField value={dataEntrega} onChange={setDataEntrega} />
                   <RecurrenceToggle recorrente={recorrente} setRecorrente={setRecorrente} frequencia={frequencia} setFrequencia={setFrequencia} />

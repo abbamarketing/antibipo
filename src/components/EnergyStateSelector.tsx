@@ -1,5 +1,4 @@
 import { EnergyState } from "@/lib/store";
-import { ENERGY_DESCRIPTIONS } from "@/lib/energy-constants";
 import { Zap, Sun, Battery } from "lucide-react";
 
 interface EnergyStateSelectorProps {
@@ -11,21 +10,21 @@ const states = [
   {
     key: "foco_total" as EnergyState,
     label: "FOCO TOTAL",
-    desc: ENERGY_DESCRIPTIONS.foco_total,
+    desc: "Energia alta. Cabeça clara.",
     icon: Zap,
     detail: "Até 3 tarefas · Limpeza profunda · Registro completo",
   },
   {
     key: "modo_leve" as EnergyState,
     label: "MODO LEVE",
-    desc: ENERGY_DESCRIPTIONS.modo_leve,
+    desc: "Presente, com ruído.",
     icon: Sun,
     detail: "1 tarefa por vez · 1 cômodo · Confirmar remédio",
   },
   {
     key: "basico" as EnergyState,
     label: "SÓ O BÁSICO",
-    desc: ENERGY_DESCRIPTIONS.basico,
+    desc: "Energia baixa.",
     icon: Battery,
     detail: "1 tarefa urgente · Lixo + 1 louça · Remédio",
   },
@@ -37,7 +36,7 @@ export function EnergyStateSelector({ current, onSelect }: EnergyStateSelectorPr
       <h2 className="font-mono text-sm tracking-widest text-muted-foreground uppercase">
         Estado de energia
       </h2>
-      <div className="grid gap-3" role="radiogroup" aria-label="Estado de energia">
+      <div className="grid gap-3">
         {states.map((s, i) => {
           const Icon = s.icon;
           const isActive = current === s.key;
@@ -45,9 +44,6 @@ export function EnergyStateSelector({ current, onSelect }: EnergyStateSelectorPr
             <button
               key={s.key}
               onClick={() => onSelect(s.key)}
-              role="radio"
-              aria-checked={isActive}
-              aria-label={`${s.label}: ${s.desc} ${s.detail}`}
               className={`
                 group relative w-full text-left p-4 rounded-lg border transition-all duration-200
                 animate-slide-up

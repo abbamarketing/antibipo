@@ -117,15 +117,6 @@ export function HomeModule({ energy }: HomeModuleProps) {
         ))}
       </div>
 
-      {/* Empty state when no casa tasks and no onboarding */}
-      {casa.tarefas.length === 0 && !profile?.onboarding_casa && activeTab === "tarefas" && (
-        <div className="bg-card rounded-lg border p-6 text-center">
-          <Home className="w-6 h-6 mx-auto text-muted-foreground/40 mb-2" />
-          <p className="text-sm text-muted-foreground font-body">Nenhuma tarefa de casa configurada.</p>
-          <p className="text-xs text-muted-foreground/60 font-body mt-1">Complete o onboarding para configurar.</p>
-        </div>
-      )}
-
       {/* TAREFAS TAB */}
       {activeTab === "tarefas" && (
         <div className="space-y-4">

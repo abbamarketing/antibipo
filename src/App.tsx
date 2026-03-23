@@ -1,12 +1,10 @@
-import { lazy, Suspense, useEffect } from "react";
+import { lazy, Suspense } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Route, Routes } from "react-router-dom";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthGuard } from "@/components/AuthGuard";
-import { OfflineIndicator } from "@/components/shared/OfflineIndicator";
-import { initOfflineSync } from "@/lib/offline-queue";
 import Index from "./pages/Index.tsx";
 import AuthPage from "./pages/Auth.tsx";
 import NotFound from "./pages/NotFound.tsx";
@@ -20,15 +18,9 @@ const AgentsDashboard = lazy(() => import("./pages/AgentsDashboard.tsx"));
 
 const queryClient = new QueryClient();
 
-const App = () => {
-  useEffect(() => {
-    initOfflineSync();
-  }, []);
-
-  return (
+const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
-      <OfflineIndicator />
       <Toaster />
       <Sonner />
       <BrowserRouter>
@@ -52,7 +44,6 @@ const App = () => {
       </BrowserRouter>
     </TooltipProvider>
   </QueryClientProvider>
-  );
-};
+);
 
 export default App;

@@ -2,9 +2,9 @@ import { useState } from "react";
 import { useProfileStore, Profile } from "@/lib/profile-store";
 import { logActivity } from "@/lib/activity-log";
 import { seedTarefasCasa } from "@/lib/casa-seed";
-import { ChevronRight, User, Home, Heart, Wallet, X } from "lucide-react";
+import { ChevronRight, User, Briefcase, Home, Heart, Wallet, X } from "lucide-react";
 
-type ModuloOnboarding = "saude" | "casa" | "financeiro";
+type ModuloOnboarding = "saude" | "trabalho" | "casa" | "financeiro";
 
 interface OnboardingWizardProps {
   modulo: ModuloOnboarding;
@@ -39,6 +39,43 @@ const moduloConfig: Record<ModuloOnboarding, { icon: typeof Heart; title: string
           { value: "ganhar_massa", label: "Ganhar massa" },
           { value: "manter", label: "Manter como está" },
           { value: "melhorar_habitos", label: "Melhorar hábitos" },
+        ],
+      },
+    ],
+  },
+  trabalho: {
+    icon: Briefcase,
+    title: "Sobre seu trabalho",
+    subtitle: "Para organizar suas tarefas do jeito que funciona pra você.",
+    questions: [
+      {
+        key: "trabalho_tipo", label: "Como você trabalha?", type: "select",
+        options: [
+          { value: "freelancer", label: "Freelancer" },
+          { value: "autonomo", label: "Autônomo" },
+          { value: "empresario", label: "Empresário" },
+          { value: "clt", label: "CLT" },
+          { value: "misto", label: "Misto" },
+        ],
+      },
+      { key: "trabalho_horas_dia", label: "Quantas horas trabalha por dia?", type: "number", placeholder: "Ex: 8" },
+      {
+        key: "trabalho_desafio", label: "Seu maior desafio no trabalho?", type: "select",
+        options: [
+          { value: "foco", label: "Manter o foco" },
+          { value: "organizacao", label: "Organização" },
+          { value: "prazos", label: "Cumprir prazos" },
+          { value: "delegacao", label: "Delegar tarefas" },
+          { value: "energia", label: "Ter energia" },
+        ],
+      },
+      { key: "trabalho_clientes_ativos", label: "Quantos clientes ativos?", type: "number", placeholder: "Ex: 5" },
+      {
+        key: "trabalho_equipe", label: "Trabalha sozinho ou em equipe?", type: "select",
+        options: [
+          { value: "sozinho", label: "Sozinho" },
+          { value: "equipe_pequena", label: "Equipe pequena (2-5)" },
+          { value: "equipe_grande", label: "Equipe maior (5+)" },
         ],
       },
     ],

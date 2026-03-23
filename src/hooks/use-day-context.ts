@@ -3,24 +3,16 @@
  * medication, tasks and exercise into a unified "day state" that all
  * components can consume. This is the connective tissue between modules.
  */
-import { useMemo, useEffect, useRef } from "react";
+import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { useFlowStore, today, type EnergyState, type Task } from "@/lib/store";
+import { useFlowStore, today, type EnergyState } from "@/lib/store";
 import { useBemEstarStore } from "@/lib/bem-estar-store";
 import { useCasaStore } from "@/lib/casa-store";
 import { useTrackerStore } from "@/lib/tracker-store";
 
 export type DayMood = "muito_baixo" | "baixo" | "neutro" | "bom" | "muito_bom";
 export type DayAlert = "crise" | "atencao" | "estavel" | "otimo";
-
-export interface AgentAlert {
-  severity: "warning" | "error";
-  title: string;
-  body: string;
-  module_focus: string;
-  recommended_action: string;
-}
 
 export interface Orchestration {
   manic_precursor: boolean | null;
@@ -76,7 +68,7 @@ export interface DayContext {
   orchestration: Orchestration | null;
   scoreShift: number | null;
   weightAdjustmentReason: string | null;
-  alerts: AgentAlert[];
+  alerts: object[];
 }
 
 function moodToLabel(val: number | null): DayMood {
@@ -99,29 +91,24 @@ function computeDayScore(ctx: {
 }): number {
   let score = 50; // baseline
 
-  // Rebalanced formula (trabalho module removed, weight redistributed):
-  // base 50 + mood(±20) + sleep(0-20) + meds(0-20) + exercise(0-15) + tasks(0-15) - gap(0-30)
-  // Sleep and meds weighted highest — clinically most important for bipolar condition.
-  // Total positive max = 90, capped at 100.
-
   // Mood contribution (±20)
   if (ctx.moodValue !== null) {
     score += ctx.moodValue * 10; // -20 to +20
   }
 
-  // Sleep contribution (0-20) — increased from 15, critical for bipolar stability
+  // Sleep contribution (0-15)
   if (ctx.sleepQuality !== null) {
-    score += (ctx.sleepQuality - 1) * 10; // 0, 10, 20
+    score += (ctx.sleepQuality - 1) * 7.5; // 0, 7.5, 15
   }
 
-  // Medication adherence (0-20) — increased from 15, most important clinical factor
-  score += ctx.medsAdherence !== null ? (ctx.medsAdherence / 100) * 20 : 0;
+  // Medication adherence (0-15)
+  score += ctx.medsAdherence !== null ? (ctx.medsAdherence / 100) * 15 : 0;
 
-  // Exercise bonus (0-15) — increased from 10
-  if (ctx.exerciseDone) score += 15;
+  // Exercise bonus (0-10)
+  if (ctx.exerciseDone) score += 10;
 
-  // Task momentum (0-15) — increased from 10
-  score += Math.min(ctx.tasksCompletedToday * 3, 15);
+  // Task momentum (0-10)
+  score += Math.min(ctx.tasksCompletedToday * 2, 10);
 
   // Data absence penalty — silence is a signal in bipolar condition
   if (ctx.consecutiveDaysWithoutData >= 1 && ctx.moodValue === null && ctx.sleepQuality === null) {
@@ -215,9 +202,7 @@ function computeSuggestions(ctx: {
   return suggestions;
 }
 
-/** Count consecutive days without ANY health data (humor, sono, or meds) going back from yesterday.
- *  Weekends (Saturday=6, Sunday=0) are skipped — they don't count toward the gap
- *  to prevent false "crise" alerts when users legitimately don't check in on weekends. */
+/** Count consecutive days without ANY health data (humor, sono, or meds) going back from yesterday */
 function countConsecutiveDaysWithoutData(
   registrosHumor: { data: string }[],
   registrosSono: { data: string }[],
@@ -226,14 +211,9 @@ function countConsecutiveDaysWithoutData(
   const todayDate = new Date();
   let count = 0;
 
-  for (let i = 1; i <= 10; i++) {
+  for (let i = 1; i <= 7; i++) {
     const d = new Date(todayDate);
     d.setDate(d.getDate() - i);
-    const dayOfWeek = d.getDay(); // 0=Sunday, 6=Saturday
-
-    // Skip weekends — they don't count toward consecutive gap
-    if (dayOfWeek === 0 || dayOfWeek === 6) continue;
-
     const dateStr = d.toISOString().split("T")[0];
 
     const hasHumor = registrosHumor.some((r) => r.data === dateStr);
@@ -250,68 +230,15 @@ function countConsecutiveDaysWithoutData(
   return count;
 }
 
-/** Check if a recurring task is due for a new instance based on its frequency */
-function isRecurringTaskDue(task: Task): boolean {
-  if (!task.recorrente || !task.frequencia_recorrencia || task.status !== "feito" || !task.feito_em) return false;
-
-  const freqDays: Record<string, number> = {
-    diario: 1,
-    semanal: 7,
-    quinzenal: 15,
-    mensal: 30,
-  };
-
-  const days = freqDays[task.frequencia_recorrencia];
-  if (!days) return false;
-
-  const doneDate = new Date(task.feito_em);
-  const now = new Date();
-  const elapsed = Math.floor((now.getTime() - doneDate.getTime()) / (24 * 60 * 60 * 1000));
-
-  return elapsed >= days;
-}
-
-const defaultModuleOrder = ["saude", "casa", "financeiro", "calendario", "metas"];
+const defaultModuleOrder = ["saude", "trabalho", "casa", "financeiro", "calendario", "metas"];
 
 export function useDayContext(): DayContext {
-  const { state, addTask } = useFlowStore();
+  const { state } = useFlowStore();
   const bemEstar = useBemEstarStore();
   const casa = useCasaStore();
   const trackers = useTrackerStore();
-  const recurrenceChecked = useRef(false);
 
   const todayStr = today();
-
-  // Recurrence check: auto-create new instances of recurring tasks when due
-  useEffect(() => {
-    if (recurrenceChecked.current || state.tasks.length === 0) return;
-    recurrenceChecked.current = true;
-
-    const dueTasks = state.tasks.filter(isRecurringTaskDue);
-    for (const task of dueTasks) {
-      // Check if a new instance already exists (not completed, same title)
-      const existingNew = state.tasks.find(
-        (t) => t.titulo === task.titulo && t.status !== "feito" && t.status !== "descartado" && t.id !== task.id
-      );
-      if (existingNew) continue;
-
-      addTask({
-        titulo: task.titulo,
-        modulo: task.modulo,
-        tipo: task.tipo,
-        urgencia: task.urgencia,
-        impacto: task.impacto,
-        dono: task.dono,
-        estado_ideal: task.estado_ideal,
-        tempo_min: task.tempo_min,
-        recorrente: true,
-        frequencia_recorrencia: task.frequencia_recorrencia,
-        status: "hoje",
-        notas: task.notas,
-        cliente_id: task.cliente_id,
-      });
-    }
-  }, [state.tasks, addTask]);
 
   const { data: orchestration } = useQuery({
     queryKey: ["orchestration", todayStr],

@@ -1,24 +1,12 @@
 import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import type { Json } from "@/integrations/supabase/types";
 import { useProfileStore } from "@/lib/profile-store";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, RotateCcw, LogOut, Bell, User, Shield, ScrollText, BookOpen, Key, Eye, EyeOff, Activity, SlidersHorizontal, Download, Sun, Moon, Monitor, Pill, Heart, AlertTriangle } from "lucide-react";
-import { getThemeMode, setThemeMode, type ThemeMode } from "@/lib/time-theme";
+import { ArrowLeft, RotateCcw, LogOut, Bell, User, Shield, ScrollText, BookOpen, Key, Eye, EyeOff, Activity, SlidersHorizontal } from "lucide-react";
 import { Slider } from "@/components/ui/slider";
 import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import {
-  requestPermission,
-  getPermissionStatus,
-  getNotificationPreferences,
-  setNotificationPreferences,
-  saveNotificationPrefsToSupabase,
-  loadNotificationPrefsFromSupabase,
-  subscribeToPush,
-  type NotificationPreferences,
-} from "@/lib/push-subscription";
 
 function AIKeySettings() {
   const [apiKey, setApiKey] = useState("");
@@ -31,14 +19,13 @@ function AIKeySettings() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
       const { data } = await supabase
-        .from("configuracoes")
+        .from("configuracoes" as any)
         .select("valor")
         .eq("user_id", user.id)
         .eq("chave", "ai_api_key")
         .maybeSingle();
       if (data) {
-        const valor = data.valor as Record<string, string> | null;
-        const key = valor?.key || "";
+        const key = (data as any).valor?.key || "";
         setSavedKey(key);
         setApiKey(key);
       }
@@ -51,12 +38,12 @@ function AIKeySettings() {
     if (!user) { setSaving(false); return; }
 
     const trimmed = apiKey.trim();
-    await supabase.from("configuracoes").upsert({
+    await supabase.from("configuracoes" as any).upsert({
       user_id: user.id,
       chave: "ai_api_key",
-      valor: { key: trimmed, provider: "custom", updated_at: new Date().toISOString() } as unknown as Json,
+      valor: { key: trimmed, provider: "custom", updated_at: new Date().toISOString() },
       updated_at: new Date().toISOString(),
-    }, { onConflict: "user_id,chave" });
+    } as any, { onConflict: "user_id,chave" });
 
     setSavedKey(trimmed);
     setSaving(false);
@@ -65,7 +52,7 @@ function AIKeySettings() {
   const handleRemove = async () => {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return;
-    await supabase.from("configuracoes").delete().eq("user_id", user.id).eq("chave", "ai_api_key");
+    await supabase.from("configuracoes" as any).delete().eq("user_id", user.id).eq("chave", "ai_api_key");
     setApiKey("");
     setSavedKey(null);
   };
@@ -144,112 +131,6 @@ function AIKeySettings() {
   );
 }
 
-function NotificationSettings() {
-  const [permission, setPermission] = useState<NotificationPermission>(getPermissionStatus());
-  const [prefs, setPrefs] = useState<NotificationPreferences>(getNotificationPreferences());
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    loadNotificationPrefsFromSupabase().then((p) => {
-      setPrefs(p);
-      setLoading(false);
-    });
-  }, []);
-
-  const handleRequestPermission = async () => {
-    const perm = await requestPermission();
-    setPermission(perm);
-    if (perm === "granted") {
-      subscribeToPush();
-      new Notification("AntiBipolaridade", { body: "Notificacoes ativadas com sucesso.", icon: "/pwa-192.png" });
-    }
-  };
-
-  const updatePref = (key: keyof NotificationPreferences, value: boolean) => {
-    const updated = { ...prefs, [key]: value };
-    setPrefs(updated);
-    setNotificationPreferences(updated);
-    saveNotificationPrefsToSupabase(updated);
-  };
-
-  const permissionLabel = permission === "granted" ? "Ativadas" : permission === "denied" ? "Bloqueadas" : "Nao solicitadas";
-  const permissionColor = permission === "granted" ? "text-primary" : permission === "denied" ? "text-destructive" : "text-muted-foreground";
-
-  return (
-    <section className="bg-card rounded-lg border p-4 mb-4">
-      <div className="flex items-center gap-2 mb-3">
-        <Bell className="w-4 h-4 text-muted-foreground" />
-        <h2 className="font-mono text-xs font-semibold tracking-wider">NOTIFICACOES</h2>
-      </div>
-
-      {/* Permission status */}
-      <div className="flex items-center justify-between py-2 border-b border-border/50">
-        <span className="font-mono text-xs text-muted-foreground">Status</span>
-        <div className="flex items-center gap-2">
-          <span className={`font-mono text-xs font-medium ${permissionColor}`}>{permissionLabel}</span>
-          {permission !== "granted" && permission !== "denied" && (
-            <button
-              onClick={handleRequestPermission}
-              className="font-mono text-[10px] bg-primary text-primary-foreground px-2 py-0.5 rounded-md hover:bg-primary/90 transition-colors"
-            >
-              Permitir
-            </button>
-          )}
-          {permission === "denied" && (
-            <span className="font-mono text-[10px] text-muted-foreground/60">
-              (desbloqueie nas config. do navegador)
-            </span>
-          )}
-        </div>
-      </div>
-
-      {/* Toggles (only shown if permission granted) */}
-      {permission === "granted" && !loading && (
-        <>
-          <div className="py-3 border-b border-border/50 flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <Pill className="w-3.5 h-3.5 text-muted-foreground" />
-              <span className="font-mono text-xs text-muted-foreground">Lembretes de medicacao</span>
-            </div>
-            <Switch
-              checked={prefs.med_reminders}
-              onCheckedChange={(v) => updatePref("med_reminders", v)}
-            />
-          </div>
-
-          <div className="py-3 border-b border-border/50 flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <Heart className="w-3.5 h-3.5 text-muted-foreground" />
-              <span className="font-mono text-xs text-muted-foreground">Check-in de humor</span>
-            </div>
-            <Switch
-              checked={prefs.mood_checkin}
-              onCheckedChange={(v) => updatePref("mood_checkin", v)}
-            />
-          </div>
-
-          <div className="py-3 flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <AlertTriangle className="w-3.5 h-3.5 text-muted-foreground" />
-              <span className="font-mono text-xs text-muted-foreground">Alertas de crise</span>
-            </div>
-            <Switch
-              checked={prefs.crisis_alerts}
-              onCheckedChange={(v) => updatePref("crisis_alerts", v)}
-            />
-          </div>
-        </>
-      )}
-
-      {permission !== "granted" && (
-        <p className="font-mono text-[10px] text-muted-foreground/70 mt-2 leading-relaxed">
-          Ative as notificacoes para receber lembretes de medicacao, check-ins de humor e alertas de crise.
-        </p>
-      )}
-    </section>
-  );
-}
-
 const DEFAULTS_AGENTES = {
   med_gap_threshold: 2,
   sleep_quality_threshold: 2,
@@ -284,7 +165,7 @@ function AlertCalibrationSection() {
           user_id: user.id,
           ...values,
           updated_at: new Date().toISOString(),
-        },
+        } as any,
         { onConflict: "user_id" }
       );
     },
@@ -370,28 +251,21 @@ export default function Configuracoes() {
   const [resetting, setResetting] = useState(false);
   const [resumos, setResumos] = useState<any[]>([]);
   const [logCount, setLogCount] = useState<number | null>(null);
-  const [exporting, setExporting] = useState(false);
-  const [themeMode, setThemeModeState] = useState<ThemeMode>(getThemeMode());
-
-  const handleThemeChange = (mode: ThemeMode) => {
-    setThemeModeState(mode);
-    setThemeMode(mode);
-  };
 
   useEffect(() => {
     (async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
       const { data: configs } = await supabase
-        .from("configuracoes")
+        .from("configuracoes" as any)
         .select("*")
         .eq("user_id", user.id)
         .like("chave", "resumo_logs_%")
         .order("created_at", { ascending: false })
         .limit(10);
-      if (configs) setResumos(configs);
+      if (configs) setResumos(configs as any[]);
       const { count } = await supabase
-        .from("activity_log")
+        .from("activity_log" as any)
         .select("*", { count: "exact", head: true })
         .eq("user_id", user.id);
       setLogCount(count ?? 0);
@@ -411,9 +285,9 @@ export default function Configuracoes() {
         throw new Error("Sessão expirada. Faça login novamente para resetar sua conta.");
       }
 
-      const primary = await supabase.rpc("reset_user_data", { p_user_id: user.id });
+      const primary = await supabase.rpc("reset_user_data" as any, { p_user_id: user.id });
       if (primary.error) {
-        const fallback = await supabase.rpc("reset_my_data");
+        const fallback = await supabase.rpc("reset_my_data" as any);
         if (fallback.error) {
           const details = [primary.error.message, primary.error.details, fallback.error.message, fallback.error.details]
             .filter(Boolean)
@@ -441,56 +315,12 @@ export default function Configuracoes() {
     navigate("/auth");
   };
 
-  const handleExportData = async () => {
-    if (exporting) return;
-    setExporting(true);
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error("Nao autenticado");
-      const uid = user.id;
-
-      const [humor, sono, meds, medRegs, tasks, peso, exercicios, refeicoes, metas, profiles] = await Promise.all([
-        supabase.from("registros_humor").select("*").eq("user_id", uid),
-        supabase.from("registros_sono").select("*").eq("user_id", uid),
-        supabase.from("medicamentos").select("*").eq("user_id", uid),
-        supabase.from("registros_medicamento").select("*").eq("user_id", uid),
-        supabase.from("tasks").select("*").eq("user_id", uid),
-        supabase.from("registros_peso").select("*").eq("user_id", uid),
-        supabase.from("bm_exercicios").select("*").eq("user_id", uid),
-        supabase.from("bm_refeicoes").select("*").eq("user_id", uid),
-        supabase.from("bm_metas").select("*").eq("user_id", uid),
-        supabase.from("profiles").select("*").eq("user_id", uid),
-      ]);
-
-      const exportData = {
-        exported_at: new Date().toISOString(),
-        user_id: uid,
-        profile: profiles.data ?? [],
-        registros_humor: humor.data ?? [],
-        registros_sono: sono.data ?? [],
-        medicamentos: meds.data ?? [],
-        registros_medicamento: medRegs.data ?? [],
-        tasks: tasks.data ?? [],
-        registros_peso: peso.data ?? [],
-        exercicios: exercicios.data ?? [],
-        refeicoes: refeicoes.data ?? [],
-        metas: metas.data ?? [],
-      };
-
-      const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: "application/json" });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = `lifebit-export-${new Date().toISOString().split("T")[0]}.json`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
-    } catch (error: any) {
-      console.error("Export failed:", error);
-      alert("Falha ao exportar dados: " + (error?.message || "Tente novamente"));
-    } finally {
-      setExporting(false);
+  const handleRequestNotifications = async () => {
+    if ("Notification" in window) {
+      const perm = await Notification.requestPermission();
+      if (perm === "granted") {
+        new Notification("AntiBipolaridade", { body: "Notificacoes ativadas com sucesso.", icon: "/pwa-192.png" });
+      }
     }
   };
 
@@ -522,37 +352,7 @@ export default function Configuracoes() {
           {infoRow("Peso", profile?.peso_kg ? `${profile.peso_kg} kg` : null)}
           {infoRow("Altura", profile?.altura_cm ? `${profile.altura_cm} cm` : null)}
           {infoRow("Objetivo saude", profile?.objetivo_saude)}
-        </section>
-
-        {/* Tema */}
-        <section className="bg-card rounded-lg border p-4 mb-4">
-          <div className="flex items-center gap-2 mb-3">
-            <Sun className="w-4 h-4 text-muted-foreground" />
-            <h2 className="font-mono text-xs font-semibold tracking-wider">TEMA</h2>
-          </div>
-          <div className="flex gap-2">
-            {([
-              { mode: "auto" as ThemeMode, label: "Auto", Icon: Monitor },
-              { mode: "light" as ThemeMode, label: "Claro", Icon: Sun },
-              { mode: "dark" as ThemeMode, label: "Escuro", Icon: Moon },
-            ]).map(({ mode, label, Icon }) => (
-              <button
-                key={mode}
-                onClick={() => handleThemeChange(mode)}
-                className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-md font-mono text-xs transition-all ${
-                  themeMode === mode
-                    ? "bg-primary text-primary-foreground"
-                    : "bg-secondary/50 text-muted-foreground hover:bg-secondary"
-                }`}
-              >
-                <Icon className="w-3.5 h-3.5" />
-                {label}
-              </button>
-            ))}
-          </div>
-          <p className="font-mono text-[10px] text-muted-foreground/70 mt-2 leading-relaxed">
-            Auto alterna automaticamente com base no horario (escuro apos 19h).
-          </p>
+          {infoRow("Trabalho", profile?.trabalho_tipo)}
         </section>
 
         {/* Onboarding */}
@@ -561,7 +361,7 @@ export default function Configuracoes() {
             <Shield className="w-4 h-4 text-muted-foreground" />
             <h2 className="font-mono text-xs font-semibold tracking-wider">ONBOARDING</h2>
           </div>
-          {(["saude", "casa", "financeiro"] as const).map((m) => {
+          {(["saude", "trabalho", "casa", "financeiro"] as const).map((m) => {
             const done = !!profile?.[`onboarding_${m}` as keyof typeof profile];
             const at = profile?.[`onboarding_${m}_at` as keyof typeof profile] as string | null;
             return (
@@ -595,7 +395,7 @@ export default function Configuracoes() {
           ) : (
             <div className="space-y-2">
               {resumos.map((r: any) => {
-                const valor = r.valor as Record<string, unknown> | null;
+                const valor = r.valor as any;
                 return (
                   <div key={r.id} className="bg-secondary/50 rounded-md p-3 space-y-1">
                     <div className="flex items-center justify-between">
@@ -615,9 +415,6 @@ export default function Configuracoes() {
             </div>
           )}
         </section>
-
-        {/* Notification Settings */}
-        <NotificationSettings />
 
         {/* Alert Calibration */}
         <AlertCalibrationSection />
@@ -653,25 +450,19 @@ export default function Configuracoes() {
           </button>
         </section>
 
-        {/* Data Export */}
-        <section className="mb-4">
-          <button
-            onClick={handleExportData}
-            disabled={exporting}
-            className="w-full flex items-center gap-3 p-4 bg-card rounded-lg border hover:bg-secondary/50 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
-          >
-            <Download className="w-4 h-4 text-primary" />
-            <div className="text-left">
-              <p className="font-mono text-xs font-medium">
-                {exporting ? "Exportando..." : "Exportar dados"}
-              </p>
-              <p className="font-mono text-[10px] text-muted-foreground">Baixa todos os seus dados em formato JSON</p>
-            </div>
-          </button>
-        </section>
-
         {/* Actions */}
         <section className="space-y-2">
+          <button
+            onClick={handleRequestNotifications}
+            className="w-full flex items-center gap-3 p-4 bg-card rounded-lg border hover:bg-secondary/50 transition-colors"
+          >
+            <Bell className="w-4 h-4 text-muted-foreground" />
+            <div className="text-left">
+              <p className="font-mono text-xs font-medium">Ativar notificacoes</p>
+              <p className="font-mono text-[10px] text-muted-foreground">Permite alertas de medicamentos, reunioes e lembretes</p>
+            </div>
+          </button>
+
           <button
             onClick={handleResetAccount}
             disabled={resetting}

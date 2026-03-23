@@ -82,7 +82,7 @@ export function today(): string {
 export function useFlowStore() {
   const qc = useQueryClient();
   const userId = useUserId();
-  const [currentModulo, setCurrentModulo] = useState<Modulo>("casa");
+  const [currentModulo, setCurrentModulo] = useState<Modulo>("trabalho");
 
   // Energy state — derived from React Query (single source of truth, globally reactive)
   const { data: energySession } = useQuery({
@@ -175,8 +175,17 @@ export function useFlowStore() {
     enabled: !!userId,
   });
 
-  // clientes table removed (trabalho module removed)
-  const clientes: never[] = [];
+  const { data: clientes = [] } = useQuery({
+    queryKey: ["clientes"],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("clientes").select("*").eq("status", "ativo").order("nome");
+      if (error) throw error;
+      return data;
+    },
+    staleTime: 5 * 60 * 1000,
+    refetchOnWindowFocus: false,
+    enabled: !!userId,
+  });
 
   const makeTempId = (prefix: string) => `tmp_${prefix}_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
 
@@ -202,7 +211,7 @@ export function useFlowStore() {
         feito_em: null,
         frequencia_recorrencia: task.frequencia_recorrencia ?? null,
         impacto: task.impacto ?? 2,
-        modulo: task.modulo ?? "casa",
+        modulo: task.modulo ?? "trabalho",
         notas: task.notas ?? null,
         parent_task_id: task.parent_task_id ?? null,
         recorrente: task.recorrente ?? false,
@@ -302,69 +311,9 @@ export function useFlowStore() {
     onSettled: () => qc.invalidateQueries({ queryKey: ["medicamentos"] }),
   });
 
-  const updateMedMut = useMutation({
-    mutationFn: async ({ id, changes }: { id: string; changes: Partial<Database["public"]["Tables"]["medicamentos"]["Update"]> }) => {
-      const { error } = await supabase.from("medicamentos").update(changes).eq("id", id);
-      if (error) throw error;
-    },
-    onMutate: async ({ id, changes }) => {
-      await qc.cancelQueries({ queryKey: ["medicamentos"] });
-      const previousMeds = qc.getQueryData<Medicamento[]>(["medicamentos"]) || [];
-      qc.setQueryData<Medicamento[]>(["medicamentos"], (current = []) =>
-        current.map((m) => (m.id === id ? { ...m, ...changes } : m))
-      );
-      return { previousMeds };
-    },
-    onError: (_error, _variables, context) => {
-      if (context?.previousMeds) {
-        qc.setQueryData(["medicamentos"], context.previousMeds);
-      }
-    },
-    onSettled: () => qc.invalidateQueries({ queryKey: ["medicamentos"] }),
-  });
-
-  const deleteMedMut = useMutation({
-    mutationFn: async (id: string) => {
-      const { error } = await supabase.from("medicamentos").delete().eq("id", id);
-      if (error) throw error;
-    },
-    onMutate: async (id) => {
-      await qc.cancelQueries({ queryKey: ["medicamentos"] });
-      const previousMeds = qc.getQueryData<Medicamento[]>(["medicamentos"]) || [];
-      qc.setQueryData<Medicamento[]>(["medicamentos"], (current = []) =>
-        current.filter((m) => m.id !== id)
-      );
-      return { previousMeds };
-    },
-    onError: (_error, _variables, context) => {
-      if (context?.previousMeds) {
-        qc.setQueryData(["medicamentos"], context.previousMeds);
-      }
-    },
-    onSettled: () => qc.invalidateQueries({ queryKey: ["medicamentos"] }),
-  });
-
   const takeMedMut = useMutation({
     mutationFn: async ({ medicamento_id, horario_previsto }: { medicamento_id: string; horario_previsto: string }) => {
       const { data: { user } } = await supabase.auth.getUser();
-      const todayStr = today();
-
-      // Guard: check if this specific dose (med + date + horario) already exists
-      // to prevent overwrites when meds have multiple daily doses (e.g., 8am and 8pm)
-      const { data: existing } = await supabase
-        .from("registros_medicamento")
-        .select("id")
-        .eq("medicamento_id", medicamento_id)
-        .eq("data", todayStr)
-        .eq("horario_previsto", horario_previsto)
-        .eq("tomado", true)
-        .maybeSingle();
-
-      if (existing) {
-        // Already recorded — skip to avoid overwrite
-        return;
-      }
-
       const { error } = await supabase.from("registros_medicamento").insert({
         medicamento_id,
         horario_previsto,
@@ -378,15 +327,6 @@ export function useFlowStore() {
       const todayStr = today();
       await qc.cancelQueries({ queryKey: ["registros_medicamento", todayStr] });
       const previousRegistros = qc.getQueryData<RegistroMedicamento[]>(["registros_medicamento", todayStr]) || [];
-
-      // Prevent duplicate optimistic entries for the same med + horario
-      const alreadyExists = previousRegistros.some(
-        (r) => r.medicamento_id === medicamento_id && r.horario_previsto === horario_previsto && r.tomado
-      );
-      if (alreadyExists) {
-        return { previousRegistros, todayStr };
-      }
-
       const optimisticRegistro: RegistroMedicamento = {
         id: makeTempId("medreg"),
         data: todayStr,
@@ -579,20 +519,6 @@ export function useFlowStore() {
     [addMedMut, userId]
   );
 
-  const updateMedicamento = useCallback(
-    (id: string, changes: Partial<Database["public"]["Tables"]["medicamentos"]["Update"]>) => {
-      updateMedMut.mutate({ id, changes });
-    },
-    [updateMedMut]
-  );
-
-  const deleteMedicamento = useCallback(
-    (id: string) => {
-      deleteMedMut.mutate(id);
-    },
-    [deleteMedMut]
-  );
-
   const registrarMedicamento = useCallback(
     (medicamento_id: string, horario_previsto: string) => {
       takeMedMut.mutate({ medicamento_id, horario_previsto });
@@ -704,8 +630,6 @@ export function useFlowStore() {
     completeTask,
     deleteTask,
     addMedicamento,
-    updateMedicamento,
-    deleteMedicamento,
     registrarMedicamento,
     registrarHumor,
     registrarSono,

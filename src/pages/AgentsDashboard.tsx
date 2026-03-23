@@ -8,6 +8,7 @@ import { ArrowLeft } from "lucide-react";
 const AGENT_LABELS: Record<string, string> = {
   saude: "Saúde",
   humor: "Humor",
+  trabalho: "Trabalho",
   metas: "Metas",
   financeiro: "Financeiro",
   calendario: "Calendário",

@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useProfileStore } from "@/lib/profile-store";
 import { OnboardingWizard } from "@/components/OnboardingWizard";
 
-type ModuloOnboarding = "saude" | "casa" | "financeiro";
+type ModuloOnboarding = "saude" | "trabalho" | "casa" | "financeiro";
 
 interface ModuleOnboardingGuardProps {
   modulo: ModuloOnboarding;

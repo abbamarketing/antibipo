@@ -1,10 +1,10 @@
 import type { Task } from "@/lib/store";
-import { Home, Heart } from "lucide-react";
+import { Briefcase, Home, Heart } from "lucide-react";
 
 export interface UnifiedTask {
   id: string;
   titulo: string;
-  modulo: "casa" | "saude";
+  modulo: "trabalho" | "casa" | "saude";
   tipo: "task" | "casa" | "tracker";
   status: string;
   urgencia: number;
@@ -13,6 +13,7 @@ export interface UnifiedTask {
   tempo_min?: number;
   taskType?: string;
   dono?: string;
+  clienteName?: string;
   data_limite?: string | null;
   recorrente?: boolean;
   frequencia_recorrencia?: string | null;
@@ -29,21 +30,27 @@ export const STATUS_COLUMNS = [
 ];
 
 export const MODULE_COLORS: Record<string, string> = {
+  trabalho: "bg-blue-500/15 text-blue-700 dark:text-blue-300",
   casa: "bg-emerald-500/15 text-emerald-700 dark:text-emerald-300",
   saude: "bg-rose-500/15 text-rose-700 dark:text-rose-300",
 };
 
 export const MODULE_LABELS: Record<string, string> = {
+  trabalho: "Trabalho",
   casa: "Casa",
   saude: "Saúde",
 };
 
-export const MODULE_ICONS: Record<string, typeof Home> = {
+export const MODULE_ICONS: Record<string, typeof Briefcase> = {
+  trabalho: Briefcase,
   casa: Home,
   saude: Heart,
 };
 
 export const TYPE_LABELS: Record<string, string> = {
+  estrategico: "Estratégico",
   operacional: "Operacional",
+  delegavel: "Delegável",
+  administrativo: "Admin",
   domestico: "Doméstico",
 };

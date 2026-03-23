@@ -104,58 +104,6 @@ export function WeightTracker() {
               Último registro: {formatDistanceToNow(new Date(ultimoPeso.data), { locale: ptBR, addSuffix: true })}
             </p>
           )}
-
-          {/* 30-day weight trend line chart */}
-          {pesoHistory.length >= 2 && (() => {
-            const last30 = pesoHistory
-              .filter((p) => {
-                const diff = Date.now() - new Date(p.data).getTime();
-                return diff <= 30 * 24 * 60 * 60 * 1000;
-              })
-              .slice()
-              .reverse();
-            if (last30.length < 2) return null;
-            const weights = last30.map((p) => p.peso_kg);
-            const minW = Math.min(...weights);
-            const maxW = Math.max(...weights);
-            const range = maxW - minW || 1;
-            const oldest = last30[0].peso_kg;
-            const newest = last30[last30.length - 1].peso_kg;
-            const diff30 = newest - oldest;
-            const chartH = 40;
-            return (
-              <div className="mt-3 pt-3 border-t border-border/50">
-                <div className="flex items-center justify-between mb-2">
-                  <p className="text-[10px] font-mono text-muted-foreground">Tendência 30 dias</p>
-                  <span className={`text-[10px] font-mono font-medium ${diff30 > 0 ? "text-red-400" : diff30 < 0 ? "text-green-500" : "text-muted-foreground"}`}>
-                    {diff30 > 0 ? `\u2191 +${diff30.toFixed(1)}kg` : diff30 < 0 ? `\u2193 ${diff30.toFixed(1)}kg` : "= 0kg"}
-                  </span>
-                </div>
-                <div className="flex items-center gap-1">
-                  <span className="text-[8px] font-mono text-muted-foreground/60 w-8 text-right">{maxW.toFixed(0)}</span>
-                  <div className="flex-1 relative" style={{ height: chartH }}>
-                    <svg width="100%" height={chartH} viewBox={`0 0 ${last30.length - 1} ${chartH}`} preserveAspectRatio="none" className="overflow-visible">
-                      <polyline
-                        fill="none"
-                        stroke="hsl(var(--foreground) / 0.3)"
-                        strokeWidth="1.5"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        points={last30.map((p, i) => `${i},${chartH - ((p.peso_kg - minW) / range) * (chartH - 4) - 2}`).join(" ")}
-                      />
-                      <circle
-                        cx={last30.length - 1}
-                        cy={chartH - ((newest - minW) / range) * (chartH - 4) - 2}
-                        r="2.5"
-                        fill="hsl(var(--primary))"
-                      />
-                    </svg>
-                  </div>
-                  <span className="text-[8px] font-mono text-muted-foreground/60 w-8">{minW.toFixed(0)}</span>
-                </div>
-              </div>
-            );
-          })()}
         </div>
       ) : (
         <button

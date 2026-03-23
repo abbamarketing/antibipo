@@ -267,7 +267,7 @@ export default function Calendario() {
             ) : !showAdd ? (
               <div className="bg-card rounded-lg border border-dashed p-6 text-center">
                 <CalendarDays className="w-5 h-5 mx-auto text-muted-foreground/40 mb-1.5" />
-                <p className="text-xs text-muted-foreground font-body">Nenhum evento para este dia.</p>
+                <p className="text-xs text-muted-foreground font-body">Nenhuma reuniao neste dia.</p>
               </div>
             ) : null}
           </div>

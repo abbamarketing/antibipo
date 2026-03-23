@@ -53,7 +53,7 @@ export function BrushingTracker() {
                 disabled={isDone}
                 className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-md font-mono text-xs transition-all ${
                   isDone
-                    ? "bg-secondary text-foreground/50 cursor-default"
+                    ? "bg-secondary text-muted-foreground cursor-default"
                     : "bg-primary text-primary-foreground hover:opacity-90"
                 }`}
               >

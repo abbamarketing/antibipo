@@ -125,7 +125,7 @@ export function UrgenciaSelector({ value, onChange, showEnergyHint }: UrgenciaSe
 
 interface ModuloSelectorProps {
   value: string;
-  onChange: (v: "casa" | "saude") => void;
+  onChange: (v: "trabalho" | "casa" | "saude") => void;
 }
 
 export function ModuloSelector({ value, onChange }: ModuloSelectorProps) {

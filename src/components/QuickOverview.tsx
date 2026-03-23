@@ -7,14 +7,14 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { brasiliaISO } from "@/lib/brasilia";
 import {
-  Home, Heart, Target, Wallet, CalendarDays,
+  Briefcase, Home, Heart, Target, Wallet, CalendarDays,
   ChevronRight, CheckCircle2,
 } from "lucide-react";
 
 interface ModuleSnippet {
   key: string;
   label: string;
-  icon: typeof Home;
+  icon: typeof Briefcase;
   task: string | null;
   meta?: string;
   path: string;
@@ -30,11 +30,11 @@ export function QuickOverview() {
 
   // Top task per module from store
   const topTaskByModule = useMemo(() => {
-    const result: Record<string, string | null> = { casa: null, saude: null };
+    const result: Record<string, string | null> = { trabalho: null, casa: null, saude: null };
     const activeTasks = state.tasks.filter(
       (t) => !t.parent_task_id && t.status !== "feito" && t.status !== "descartado"
     );
-    for (const mod of ["casa", "saude"] as const) {
+    for (const mod of ["trabalho", "casa", "saude"] as const) {
       const modTasks = activeTasks
         .filter((t) => t.modulo === mod)
         .sort((a, b) => b.urgencia - a.urgencia);
@@ -97,6 +97,11 @@ export function QuickOverview() {
   });
 
   const snippetMap: Record<string, ModuleSnippet> = {
+    trabalho: {
+      key: "trabalho", label: "Trabalho", icon: Briefcase,
+      task: topTaskByModule.trabalho, path: "/?mod=trabalho",
+      color: "bg-blue-500/10 text-blue-600 dark:text-blue-400",
+    },
     casa: {
       key: "casa", label: "Casa", icon: Home,
       task: topTaskByModule.casa, path: "/?mod=casa",
@@ -130,7 +135,7 @@ export function QuickOverview() {
   };
 
   const hiddenModules = dayCtx.orchestration?.modules_to_hide ?? [];
-  const orderedKeys = (dayCtx.moduleOrder ?? ["saude", "casa", "financeiro", "metas", "calendario"])
+  const orderedKeys = (dayCtx.moduleOrder ?? ["saude", "trabalho", "casa", "financeiro", "metas", "calendario"])
     .filter((k) => !hiddenModules.includes(k) && snippetMap[k]);
 
   // Add any keys not in moduleOrder but present in snippetMap (safety fallback)

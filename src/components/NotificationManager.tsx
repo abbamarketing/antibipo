@@ -5,11 +5,7 @@ import { useMetasStore } from "@/lib/metas-store";
 import { useCasaStore } from "@/lib/casa-store";
 import { useTrackerStore } from "@/lib/tracker-store";
 import { isRecorrenteDue, type RecorrenteConfig } from "@/lib/tracker-blueprints";
-import {
-  subscribeToPush,
-  scheduleLocalNotification,
-  getNotificationPreferences,
-} from "@/lib/push-subscription";
+import { subscribeToPush } from "@/lib/push-subscription";
 
 interface NotificationManagerProps {
   medicamentos: Medicamento[];
@@ -25,7 +21,7 @@ function requestPermission() {
 
 function notify(title: string, body: string, tag?: string) {
   if ("Notification" in window && Notification.permission === "granted") {
-    new Notification(title, { body, icon: "/pwa-192.png", tag });
+    new Notification(title, { body, icon: "/favicon.ico", tag }); // tag deduplicates
   }
 }
 
@@ -49,14 +45,15 @@ export function NotificationManager({ medicamentos, isMedTaken, hasEnergy }: Not
   const casaStore = useCasaStore();
   const trackerStore = useTrackerStore();
 
-  // Init: permission, push subscription, welcome notification (one-time)
   useEffect(() => {
     requestPermission();
 
+    // Subscribe to Web Push for background notifications
     subscribeToPush().then((ok) => {
       if (ok) console.log("Web Push subscription active");
     });
 
+    // Welcome notification on first PWA open
     const welcomed = localStorage.getItem("ab_welcomed");
     if (!welcomed && "Notification" in window) {
       const checkPerm = () => {
@@ -72,67 +69,71 @@ export function NotificationManager({ medicamentos, isMedTaken, hasEnergy }: Not
     }
   }, []);
 
-  // Consolidated 1-minute interval: morning reminder, med reminders, meeting reminders
+  // Morning reminder — once per day (7-9h)
   useEffect(() => {
     const check = () => {
-      const prefs = getNotificationPreferences();
       const now = new Date();
       const hour = now.getHours();
       const todayStr = today();
-      const nowMinutes = now.getHours() * 60 + now.getMinutes();
-      const currentTime = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
 
-      // Morning reminder — once per day (7-9h)
       if (hour >= 7 && hour <= 9 && lastMorning.current !== todayStr && !hasEnergy) {
         lastMorning.current = todayStr;
+
         const meetings = calStore.todayMeetings.length;
         const meetingMsg = meetings > 0 ? ` ${meetings} reuniao(oes) hoje.` : "";
         const pendingGoals = metasStore.metasAtivas.length;
         const goalMsg = pendingGoals > 0 ? ` ${pendingGoals} metas ativas.` : "";
+
         notify("AntiBipolaridade", `Selecione seu estado de energia para comecar.${meetingMsg}${goalMsg}`);
       }
+    };
 
-      // Med reminders (respects preference)
-      if (prefs.med_reminders) {
-        const medCheckKey = `${todayStr}-${currentTime}`;
-        if (lastMedCheck.current !== medCheckKey) {
-          medicamentos.forEach((med) => {
-            med.horarios.forEach((h) => {
-              const [hh, mm] = h.split(":");
-              const medMinutes = parseInt(hh) * 60 + parseInt(mm);
-              if (nowMinutes >= medMinutes && nowMinutes <= medMinutes + 5 && !isMedTaken(med.id, h)) {
-                lastMedCheck.current = medCheckKey;
-                notify("Medicacao", `${med.nome} — ${med.dose} · ${h}`, `med_${med.id}_${h}`);
-              }
-            });
-          });
+    check();
+    const interval = setInterval(check, 60000);
+    return () => clearInterval(interval);
+  }, [hasEnergy, calStore.todayMeetings, metasStore.metasAtivas]);
 
-          // Schedule local fallback for overdue meds (next check in 30 min)
-          const overdueMeds = medicamentos.filter((med) =>
-            med.horarios.some((h) => {
-              const [hh, mm] = h.split(":");
-              const medMinutes = parseInt(hh) * 60 + parseInt(mm);
-              return nowMinutes > medMinutes + 5 && !isMedTaken(med.id, h);
-            })
-          );
-          if (overdueMeds.length > 0) {
-            const names = overdueMeds.map((m) => m.nome).join(", ");
-            scheduleLocalNotification(
-              "Medicacao atrasada",
-              `${names} — ainda nao registrado`,
-              30 * 60 * 1000,
-              { tag: `overdue_med_${todayStr}_${hour}`, type: "med_reminder" }
-            );
+  // Med reminders
+  useEffect(() => {
+    const check = () => {
+      const now = new Date();
+      const currentTime = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
+      const checkKey = `${today()}-${currentTime}`;
+
+      if (lastMedCheck.current === checkKey) return;
+
+      medicamentos.forEach((med) => {
+        med.horarios.forEach((h) => {
+          const [hh, mm] = h.split(":");
+          const medMinutes = parseInt(hh) * 60 + parseInt(mm);
+          const nowMinutes = now.getHours() * 60 + now.getMinutes();
+
+          if (nowMinutes >= medMinutes && nowMinutes <= medMinutes + 5 && !isMedTaken(med.id, h)) {
+            lastMedCheck.current = checkKey;
+            notify("Medicacao", `${med.nome} — ${med.dose} · ${h}`);
           }
-        }
-      }
+        });
+      });
+    };
 
-      // Meeting reminders — 15 min before
+    check();
+    const interval = setInterval(check, 60000);
+    return () => clearInterval(interval);
+  }, [medicamentos, isMedTaken]);
+
+  // Meeting reminders — 15 min before
+  useEffect(() => {
+    const check = () => {
+      const now = new Date();
+      const nowMinutes = now.getHours() * 60 + now.getMinutes();
+      const todayStr = today();
+
       calStore.todayMeetings.forEach((r) => {
         const [hh, mm] = r.hora_inicio.split(":");
         const meetMinutes = parseInt(hh) * 60 + parseInt(mm);
         const diff = meetMinutes - nowMinutes;
         const checkKey = `${todayStr}-${r.id}-${r.hora_inicio}`;
+
         if (diff > 0 && diff <= (r.lembrete_min || 15) && lastMeetingCheck.current !== checkKey) {
           lastMeetingCheck.current = checkKey;
           notify("Reuniao em breve", `${r.titulo} — ${r.hora_inicio}${r.local ? ` · ${r.local}` : ""}`);
@@ -143,19 +144,18 @@ export function NotificationManager({ medicamentos, isMedTaken, hasEnergy }: Not
     check();
     const interval = setInterval(check, 60000);
     return () => clearInterval(interval);
-  }, [hasEnergy, calStore.todayMeetings, metasStore.metasAtivas, medicamentos, isMedTaken]);
+  }, [calStore.todayMeetings]);
 
-  // Consolidated 5-minute interval: pending tasks, mood check-in, evening reminder
+  // Pending tasks reminder — once at 10h and once at 14h
   useEffect(() => {
     const check = () => {
-      const prefs = getNotificationPreferences();
       const now = new Date();
       const hour = now.getHours();
       const todayStr = today();
 
-      // Pending tasks reminder — once at 10h and once at 14h
       if ((hour === 10 || hour === 14) && hasEnergy) {
         const tag = `pending_tasks_${todayStr}_${hour}`;
+        // Count casa tasks due
         const casaDue = casaStore.tarefas.filter((t) => {
           if (t.ativo === false) return false;
           const lastDone = casaStore.registros.find((r) => r.tarefa_casa_id === t.id);
@@ -165,6 +165,7 @@ export function NotificationManager({ medicamentos, isMedTaken, hasEnergy }: Not
           return daysSince >= freqDays;
         }).length;
 
+        // Count tracker tasks due
         const trackersDue = trackerStore.trackers.filter((t) => {
           if (!t.ativo || t.tipo !== "recorrente") return false;
           const config = t.config as unknown as RecorrenteConfig;
@@ -180,42 +181,6 @@ export function NotificationManager({ medicamentos, isMedTaken, hasEnergy }: Not
           notifyOnce("Tarefas pendentes", `Voce tem ${parts.join(" e ")} aguardando.`, tag);
         }
       }
-
-      // Mood check-in reminder — adaptive interval (respects preference)
-      if (prefs.mood_checkin) {
-        const checkinHours = [9, 12, 15, 18, 21];
-        if (checkinHours.includes(hour) && hasEnergy) {
-          const tag = `mood_checkin_${todayStr}_${hour}`;
-          const lastCheckin = localStorage.getItem("last_mood_checkin");
-          const elapsed = lastCheckin ? Date.now() - parseInt(lastCheckin, 10) : Infinity;
-          // Adaptive: 3h min, up to 6h if last mood was neutral/positive
-          const lastMoodVal = parseInt(localStorage.getItem("last_mood_value") || "0", 10);
-          const minInterval = lastMoodVal >= 0 ? 5 * 60 * 60 * 1000 : 2.5 * 60 * 60 * 1000; // 5h if ok, 2.5h if negative
-          if (elapsed > minInterval) {
-            notifyOnce("Check-in emocional", "Como voce esta se sentindo? Abra o app para registrar.", tag);
-          }
-        }
-      }
-
-      // Crisis alert — notify if DayScore enters "crise" (respects preference)
-      if (prefs.crisis_alerts) {
-        const crisisTag = `crisis_${todayStr}`;
-        const alertLevel = localStorage.getItem("ab_current_alert_level");
-        if (alertLevel === "crise" && !notifiedTags.has(crisisTag)) {
-          notifyOnce(
-            "Alerta de crise",
-            "Seus indicadores sugerem um momento dificil. Considere falar com alguem de confianca.",
-            crisisTag
-          );
-        }
-      }
-
-      // Evening reminder — weight and exercise check (20-21h)
-      const eveningKey = `ab_evening_${todayStr}`;
-      if (hour >= 20 && hour <= 21 && !sessionStorage.getItem(eveningKey) && hasEnergy) {
-        sessionStorage.setItem(eveningKey, "1");
-        notify("AntiBipolaridade", "Registrou tudo hoje? Peso, exercicio e humor ajudam no acompanhamento.");
-      }
     };
 
     check();
@@ -223,7 +188,31 @@ export function NotificationManager({ medicamentos, isMedTaken, hasEnergy }: Not
     return () => clearInterval(interval);
   }, [hasEnergy, casaStore.tarefas, casaStore.registros, trackerStore.trackers]);
 
-  // Inactivity check — if no interaction for 2h
+  // Mood check-in reminder — every 3h (9, 12, 15, 18, 21)
+  useEffect(() => {
+    const check = () => {
+      const now = new Date();
+      const hour = now.getHours();
+      const todayStr = today();
+      const checkinHours = [9, 12, 15, 18, 21];
+
+      if (checkinHours.includes(hour) && hasEnergy) {
+        const tag = `mood_checkin_${todayStr}_${hour}`;
+        const lastCheckin = localStorage.getItem("last_mood_checkin");
+        const elapsed = lastCheckin ? Date.now() - parseInt(lastCheckin, 10) : Infinity;
+
+        if (elapsed > 2.5 * 60 * 60 * 1000) { // 2.5h since last check-in
+          notifyOnce("Check-in emocional", "Como você está se sentindo? Abra o app para registrar.", tag);
+        }
+      }
+    };
+
+    check();
+    const interval = setInterval(check, 10 * 60 * 1000);
+    return () => clearInterval(interval);
+  }, [hasEnergy]);
+
+  // Inactivity check — if no interaction for 2h (reduced from always)
   useEffect(() => {
     const resetInactivity = () => {
       lastInactivity.current = Date.now();
@@ -245,6 +234,25 @@ export function NotificationManager({ medicamentos, isMedTaken, hasEnergy }: Not
       window.removeEventListener("keydown", resetInactivity);
       clearInterval(check);
     };
+  }, [hasEnergy]);
+
+  // Evening reminder — weight and exercise check (20-21h)
+  useEffect(() => {
+    const check = () => {
+      const now = new Date();
+      const hour = now.getHours();
+      const todayStr = today();
+      const eveningKey = `ab_evening_${todayStr}`;
+
+      if (hour >= 20 && hour <= 21 && !sessionStorage.getItem(eveningKey) && hasEnergy) {
+        sessionStorage.setItem(eveningKey, "1");
+        notify("AntiBipolaridade", "Registrou tudo hoje? Peso, exercicio e humor ajudam no acompanhamento.");
+      }
+    };
+
+    check();
+    const interval = setInterval(check, 5 * 60 * 1000);
+    return () => clearInterval(interval);
   }, [hasEnergy]);
 
   return null;
