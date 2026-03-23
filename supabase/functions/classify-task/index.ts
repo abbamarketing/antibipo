@@ -1,5 +1,9 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { corsHeaders } from "../_shared/cors.ts";
+
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
+};
 
 function buildSystemPrompt(dayContext?: { mood?: string; energy?: string; alertLevel?: string; dayScore?: number }) {
   const base = `Você é um classificador de tarefas para o sistema AntiBipolaridade. Recebe o título de uma tarefa e informações adicionais e retorna a classificação usando tool calling.
@@ -131,27 +135,6 @@ serve(async (req) => {
     const toolCall = result.choices?.[0]?.message?.tool_calls?.[0];
     if (!toolCall?.function?.arguments) throw new Error("No classification returned");
     const classification = JSON.parse(toolCall.function.arguments);
-
-    // Validate and sanitize classification values
-    const MODULOS_VALIDOS = ['trabalho', 'casa', 'saude'];
-    const URGENCIA_VALIDA = [1, 2, 3];
-    const TIPOS_VALIDOS = ['estrategico', 'operacional', 'delegavel', 'administrativo', 'domestico'];
-    const ESTADOS_VALIDOS = ['foco_total', 'modo_leve', 'basico', 'qualquer'];
-    const DONOS_VALIDOS = ['eu', 'socio_medico', 'editor'];
-
-    if (!MODULOS_VALIDOS.includes(classification.modulo) || !URGENCIA_VALIDA.includes(classification.urgencia)) {
-      console.error('[classify-task] Resultado inesperado:', {
-        modulo: classification.modulo,
-        urgencia: classification.urgencia,
-      });
-      if (!MODULOS_VALIDOS.includes(classification.modulo)) classification.modulo = 'trabalho';
-      if (!URGENCIA_VALIDA.includes(classification.urgencia)) classification.urgencia = 2;
-    }
-    if (!TIPOS_VALIDOS.includes(classification.tipo)) classification.tipo = 'operacional';
-    if (!ESTADOS_VALIDOS.includes(classification.estado_ideal)) classification.estado_ideal = 'qualquer';
-    if (!DONOS_VALIDOS.includes(classification.dono)) classification.dono = 'eu';
-    if (typeof classification.impacto !== 'number' || classification.impacto < 1 || classification.impacto > 3) classification.impacto = 2;
-    if (typeof classification.tempo_min !== 'number' || classification.tempo_min < 1) classification.tempo_min = 30;
 
     // Extract adaptation_note before sending classification
     const adaptation_note = classification.adaptation_note || null;

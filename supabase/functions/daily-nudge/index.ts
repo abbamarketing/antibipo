@@ -1,15 +1,15 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { corsHeaders } from "../_shared/cors.ts";
+
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
+};
 
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
-    // Parse body early (stream can only be read once)
-    let reqBody: any = null;
-    try { reqBody = await req.json(); } catch { /* no body */ }
-
     const authHeader = req.headers.get("Authorization");
     const supabase = createClient(
       Deno.env.get("SUPABASE_URL")!,
@@ -151,26 +151,15 @@ serve(async (req) => {
     if (!hasData) {
       const registrosNaSemana = weekHumor?.length || 0;
 
-      // Check how long since last data via activity_log or humor
-      const lastDataDate = allLogs.length > 0
-        ? allLogs[0].criado_em
-        : allHumor.length > 0
-        ? allHumor[0].data
-        : null;
-
-      const diasSemDados = lastDataDate
-        ? Math.floor((Date.now() - new Date(lastDataDate).getTime()) / (1000 * 60 * 60 * 24))
-        : null;
-
       let noDataMessage: string;
-      if (diasSemDados === null || diasSemDados < 1) {
-        noDataMessage = "Hoje ainda não tem dados registrados. Que tal começar com como você está dormindo?";
-      } else if (diasSemDados === 1) {
-        noDataMessage = "Ontem você não registrou dados. Não precisa ser completo — um registro de humor já ajuda.";
-      } else if (diasSemDados <= 3) {
-        noDataMessage = `Faz ${diasSemDados} dias sem registros. Tudo bem parar. Quando quiser, estou aqui.`;
+      if (registrosNaSemana === 0) {
+        noDataMessage = "Nenhum registro esta semana. Isso pode dificultar identificar padrões. Como você está?";
+      } else if (registrosNaSemana < 3) {
+        noDataMessage = "Você está sem registrar há alguns dias. Tudo bem? Um check-in rápido pode ajudar o app a te ajudar melhor.";
+      } else if (registrosNaSemana < 5) {
+        noDataMessage = "Ontem sem registros, mas a semana está indo. Que tal um check-in rápido?";
       } else {
-        noDataMessage = `Faz ${diasSemDados} dias sem registros. Sem pressão — um check-in rápido quando puder já ajuda.`;
+        noDataMessage = "Novo dia. Você tem sido consistente esta semana, continue assim!";
       }
 
       return new Response(JSON.stringify({ message: noDataMessage }), {
@@ -181,29 +170,10 @@ serve(async (req) => {
     const nome = profile?.nome || "usuário";
     const memoryContext = latestSummary?.[0]?.valor?.resumo || "";
 
-    const orchestrationContext = reqBody?.orchestration_context || null;
-
     const registrosHumorSemana = weekHumor?.length || 0;
     const lacunaAviso = registrosHumorSemana < 3
       ? `\nATENCAO: usuario tem apenas ${registrosHumorSemana} registros de humor nos ultimos 7 dias. Mencione gentilmente essa lacuna e incentive a registrar.`
       : "";
-
-    // Tone instruction from orchestration
-    let toneInstruction = "Tom: parceiro, factual, direto.";
-    if (orchestrationContext?.depressive_precursor) {
-      toneInstruction = "Tom: acolhedor e sem pressão. Foco em pequenos passos. Reconheça o esforço mínimo.";
-    } else if (orchestrationContext?.manic_precursor) {
-      toneInstruction = "Tom: atencioso e calmante. Foco em consistência e pausas. Evite estimular novos projetos.";
-    } else if (orchestrationContext?.nudge_tone) {
-      toneInstruction = `Tom: ${orchestrationContext.nudge_tone}.`;
-    }
-
-    const focusInstruction = orchestrationContext?.nudge_focus
-      ? `\nFoco principal: ${orchestrationContext.nudge_focus}.` : "";
-    const factualBase = orchestrationContext?.nudge_factual_base
-      ? `\nBase factual da orquestradora: ${orchestrationContext.nudge_factual_base}` : "";
-    const medsAnchor = orchestrationContext?.meds_as_anchor
-      ? "\nMedicação é âncora importante hoje — reforce adesão gentilmente." : "";
 
     const systemContent = `Você gera UMA frase curta (máx 20 palavras) para ${nome} que relata algo CONCRETO de ontem.
 NÃO seja motivacional genérico. Seja factual e específico.
@@ -211,7 +181,7 @@ Use dados reais: tarefas concluídas, exercícios, medicamentos, sono, humor.
 Cruze módulos quando possível: "treinou e fechou 3 tarefas, humor subiu pra 4".
 Se o sono foi ruim ou humor baixo, seja empático sem ser dramático.
 Se há padrão de consistência na semana, reconheça.
-${toneInstruction} Sem emojis, sem aspas.${focusInstruction}${factualBase}${medsAnchor}${lacunaAviso}`;
+Tom: parceiro, factual, direto. Sem emojis, sem aspas.${lacunaAviso}`;
 
     const userContent = `ONTEM:\nAções: ${yesterdaySummary || "nenhuma"}\nDiário: ${diaryText || "nenhum"}\nBem-estar: ${wellBeing.join("; ") || "sem dados"}\n\nSEMANA:\nAções: ${weekSummary || "sem dados"}\nDiário: ${weekDiaryText || "nenhum"}\nMetas ativas: ${metasText || "nenhuma"}${memoryContext ? `\nMemória IA: ${memoryContext}` : ""}`;
 

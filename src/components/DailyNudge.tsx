@@ -160,24 +160,10 @@ function VoiceCapture() {
 export function DailyNudge() {
   const contextAlerts = useContextAlerts();
 
-  const dayCtx = useDayContext();
-
   const { data } = useQuery({
     queryKey: ["daily-nudge"],
     queryFn: async () => {
-      const orch = dayCtx.orchestration;
-      const { data, error } = await supabase.functions.invoke("daily-nudge", {
-        body: {
-          orchestration_context: orch ? {
-            nudge_tone: orch.nudge_tone,
-            nudge_focus: orch.nudge_focus,
-            nudge_factual_base: orch.nudge_factual_base,
-            meds_as_anchor: orch.meds_as_anchor,
-            depressive_precursor: orch.depressive_precursor,
-            manic_precursor: orch.manic_precursor,
-          } : null,
-        },
-      });
+      const { data, error } = await supabase.functions.invoke("daily-nudge");
       if (error) throw error;
       if (data?.ai_provider) trackAIProvider(data.ai_provider);
       return data as { message: string };
@@ -210,7 +196,7 @@ export function DailyNudge() {
       {/* AI nudge + voice capture */}
       <div className="flex items-center justify-between gap-2">
         {hasNudge && (
-          <p className="font-mono text-[11px] leading-relaxed text-foreground/80 flex-1 line-clamp-2 md:line-clamp-none">
+          <p className="font-mono text-[11px] leading-relaxed text-foreground/80 flex-1">
             {data.message}
           </p>
         )}

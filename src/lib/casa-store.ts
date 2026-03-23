@@ -80,10 +80,9 @@ export function useCasaStore() {
 
   const completarTarefaMut = useMutation({
     mutationFn: async (t: { tarefa_casa_id: string; comodo: string; tarefa: string; notas?: string }) => {
-      const { data: { user } } = await supabase.auth.getUser();
       const { error } = await supabase
         .from("registros_limpeza" as any)
-        .insert({ ...t, feito_em: new Date().toISOString(), user_id: user!.id } as any);
+        .insert({ ...t, feito_em: new Date().toISOString() } as any);
       if (error) throw error;
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ["registros_limpeza"] }),
@@ -91,10 +90,9 @@ export function useCasaStore() {
 
   const addTarefaMut = useMutation({
     mutationFn: async (t: { comodo: string; tarefa: string; frequencia: string; tempo_min: number }) => {
-      const { data: { user } } = await supabase.auth.getUser();
       const { error } = await supabase
         .from("tarefas_casa" as any)
-        .insert({ ...t, user_id: user!.id } as any);
+        .insert(t as any);
       if (error) throw error;
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ["tarefas_casa"] }),
@@ -102,10 +100,9 @@ export function useCasaStore() {
 
   const addItemCompraMut = useMutation({
     mutationFn: async (item: { item: string; quantidade?: string; categoria?: string }) => {
-      const { data: { user } } = await supabase.auth.getUser();
       const { error } = await supabase
         .from("lista_compras" as any)
-        .insert({ ...item, user_id: user!.id } as any);
+        .insert(item as any);
       if (error) throw error;
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ["lista_compras"] }),

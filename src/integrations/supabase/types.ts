@@ -21,7 +21,7 @@ export type Database = {
           criado_em: string
           detalhes: Json | null
           id: string
-          user_id: string
+          user_id: string | null
         }
         Insert: {
           acao: string
@@ -29,7 +29,7 @@ export type Database = {
           criado_em?: string
           detalhes?: Json | null
           id?: string
-          user_id?: string
+          user_id?: string | null
         }
         Update: {
           acao?: string
@@ -37,211 +37,7 @@ export type Database = {
           criado_em?: string
           detalhes?: Json | null
           id?: string
-          user_id?: string
-        }
-        Relationships: []
-      }
-      agentes_config: {
-        Row: {
-          created_at: string | null
-          depressive_weights: Json | null
-          id: string
-          manic_weights: Json | null
-          med_gap_threshold: number | null
-          mood_volatility_threshold: number | null
-          notify_daily_summary: boolean | null
-          notify_on_crisis: boolean | null
-          notify_on_warning: boolean | null
-          sleep_quality_threshold: number | null
-          spending_spike_threshold: number | null
-          updated_at: string | null
-          user_id: string
-        }
-        Insert: {
-          created_at?: string | null
-          depressive_weights?: Json | null
-          id?: string
-          manic_weights?: Json | null
-          med_gap_threshold?: number | null
-          mood_volatility_threshold?: number | null
-          notify_daily_summary?: boolean | null
-          notify_on_crisis?: boolean | null
-          notify_on_warning?: boolean | null
-          sleep_quality_threshold?: number | null
-          spending_spike_threshold?: number | null
-          updated_at?: string | null
-          user_id: string
-        }
-        Update: {
-          created_at?: string | null
-          depressive_weights?: Json | null
-          id?: string
-          manic_weights?: Json | null
-          med_gap_threshold?: number | null
-          mood_volatility_threshold?: number | null
-          notify_daily_summary?: boolean | null
-          notify_on_crisis?: boolean | null
-          notify_on_warning?: boolean | null
-          sleep_quality_threshold?: number | null
-          spending_spike_threshold?: number | null
-          updated_at?: string | null
-          user_id?: string
-        }
-        Relationships: []
-      }
-      agentes_orquestracao: {
-        Row: {
-          alert_level_original: string | null
-          alert_level_recalibrated: string | null
-          created_at: string | null
-          day_score_base: number | null
-          day_score_recalibrated: number | null
-          days_until_crisis: number | null
-          depressive_confidence: number | null
-          depressive_precursor: boolean | null
-          id: string
-          manic_confidence: number | null
-          manic_precursor: boolean | null
-          meds_adherence_7d: number | null
-          meds_as_anchor: boolean | null
-          meds_status: string | null
-          module_order: string[]
-          modules_to_hide: string[] | null
-          modules_to_show: string[] | null
-          nudge_factual_base: string | null
-          nudge_focus: string | null
-          nudge_tone: string | null
-          periodo: string
-          preventive_action: string | null
-          score_shift: number | null
-          similar_pattern_history: Json | null
-          timestamp: string | null
-          updated_at: string | null
-          user_id: string
-          weight_adjustment_reason: string | null
-          weights: Json
-        }
-        Insert: {
-          alert_level_original?: string | null
-          alert_level_recalibrated?: string | null
-          created_at?: string | null
-          day_score_base?: number | null
-          day_score_recalibrated?: number | null
-          days_until_crisis?: number | null
-          depressive_confidence?: number | null
-          depressive_precursor?: boolean | null
-          id?: string
-          manic_confidence?: number | null
-          manic_precursor?: boolean | null
-          meds_adherence_7d?: number | null
-          meds_as_anchor?: boolean | null
-          meds_status?: string | null
-          module_order?: string[]
-          modules_to_hide?: string[] | null
-          modules_to_show?: string[] | null
-          nudge_factual_base?: string | null
-          nudge_focus?: string | null
-          nudge_tone?: string | null
-          periodo: string
-          preventive_action?: string | null
-          score_shift?: number | null
-          similar_pattern_history?: Json | null
-          timestamp?: string | null
-          updated_at?: string | null
-          user_id: string
-          weight_adjustment_reason?: string | null
-          weights?: Json
-        }
-        Update: {
-          alert_level_original?: string | null
-          alert_level_recalibrated?: string | null
-          created_at?: string | null
-          day_score_base?: number | null
-          day_score_recalibrated?: number | null
-          days_until_crisis?: number | null
-          depressive_confidence?: number | null
-          depressive_precursor?: boolean | null
-          id?: string
-          manic_confidence?: number | null
-          manic_precursor?: boolean | null
-          meds_adherence_7d?: number | null
-          meds_as_anchor?: boolean | null
-          meds_status?: string | null
-          module_order?: string[]
-          modules_to_hide?: string[] | null
-          modules_to_show?: string[] | null
-          nudge_factual_base?: string | null
-          nudge_focus?: string | null
-          nudge_tone?: string | null
-          periodo?: string
-          preventive_action?: string | null
-          score_shift?: number | null
-          similar_pattern_history?: Json | null
-          timestamp?: string | null
-          updated_at?: string | null
-          user_id?: string
-          weight_adjustment_reason?: string | null
-          weights?: Json
-        }
-        Relationships: []
-      }
-      agentes_relatorios: {
-        Row: {
-          agent: string
-          alerts: Json[] | null
-          context: Json | null
-          created_at: string | null
-          cross_domain: Json | null
-          episode_risk: Json | null
-          id: string
-          module_recs: Json | null
-          nudge_context: Json | null
-          patterns: string[] | null
-          periodo: string
-          signals: Json
-          status: string
-          timestamp: string | null
-          tipo: string
-          updated_at: string | null
-          user_id: string
-        }
-        Insert: {
-          agent: string
-          alerts?: Json[] | null
-          context?: Json | null
-          created_at?: string | null
-          cross_domain?: Json | null
-          episode_risk?: Json | null
-          id?: string
-          module_recs?: Json | null
-          nudge_context?: Json | null
-          patterns?: string[] | null
-          periodo: string
-          signals: Json
-          status: string
-          timestamp?: string | null
-          tipo: string
-          updated_at?: string | null
-          user_id: string
-        }
-        Update: {
-          agent?: string
-          alerts?: Json[] | null
-          context?: Json | null
-          created_at?: string | null
-          cross_domain?: Json | null
-          episode_risk?: Json | null
-          id?: string
-          module_recs?: Json | null
-          nudge_context?: Json | null
-          patterns?: string[] | null
-          periodo?: string
-          signals?: Json
-          status?: string
-          timestamp?: string | null
-          tipo?: string
-          updated_at?: string | null
-          user_id?: string
+          user_id?: string | null
         }
         Relationships: []
       }
@@ -485,7 +281,7 @@ export type Database = {
           nome: string
           status: string
           tipo: string
-          user_id: string
+          user_id: string | null
           valor_mensal: number | null
         }
         Insert: {
@@ -496,7 +292,7 @@ export type Database = {
           nome: string
           status?: string
           tipo?: string
-          user_id?: string
+          user_id?: string | null
           valor_mensal?: number | null
         }
         Update: {
@@ -507,7 +303,7 @@ export type Database = {
           nome?: string
           status?: string
           tipo?: string
-          user_id?: string
+          user_id?: string | null
           valor_mensal?: number | null
         }
         Relationships: []
@@ -748,7 +544,6 @@ export type Database = {
           id: string
           item: string
           quantidade: string | null
-          user_id: string
         }
         Insert: {
           categoria?: string | null
@@ -757,7 +552,6 @@ export type Database = {
           id?: string
           item: string
           quantidade?: string | null
-          user_id?: string
         }
         Update: {
           categoria?: string | null
@@ -766,7 +560,6 @@ export type Database = {
           id?: string
           item?: string
           quantidade?: string | null
-          user_id?: string
         }
         Relationships: []
       }
@@ -815,7 +608,7 @@ export type Database = {
           id: string
           instrucoes: string | null
           nome: string
-          user_id: string
+          user_id: string | null
         }
         Insert: {
           criado_em?: string
@@ -825,7 +618,7 @@ export type Database = {
           id?: string
           instrucoes?: string | null
           nome: string
-          user_id?: string
+          user_id?: string | null
         }
         Update: {
           criado_em?: string
@@ -835,7 +628,7 @@ export type Database = {
           id?: string
           instrucoes?: string | null
           nome?: string
-          user_id?: string
+          user_id?: string | null
         }
         Relationships: []
       }
@@ -1021,21 +814,21 @@ export type Database = {
           data: string
           id: string
           notas: string | null
-          user_id: string
+          user_id: string | null
           valor: number
         }
         Insert: {
           data?: string
           id?: string
           notas?: string | null
-          user_id?: string
+          user_id?: string | null
           valor: number
         }
         Update: {
           data?: string
           id?: string
           notas?: string | null
-          user_id?: string
+          user_id?: string | null
           valor?: number
         }
         Relationships: []
@@ -1048,7 +841,6 @@ export type Database = {
           notas: string | null
           tarefa: string
           tarefa_casa_id: string | null
-          user_id: string
         }
         Insert: {
           comodo: string
@@ -1057,7 +849,6 @@ export type Database = {
           notas?: string | null
           tarefa: string
           tarefa_casa_id?: string | null
-          user_id?: string
         }
         Update: {
           comodo?: string
@@ -1066,7 +857,6 @@ export type Database = {
           notas?: string | null
           tarefa?: string
           tarefa_casa_id?: string | null
-          user_id?: string
         }
         Relationships: [
           {
@@ -1086,7 +876,7 @@ export type Database = {
           id: string
           medicamento_id: string
           tomado: boolean
-          user_id: string
+          user_id: string | null
         }
         Insert: {
           data?: string
@@ -1095,7 +885,7 @@ export type Database = {
           id?: string
           medicamento_id: string
           tomado?: boolean
-          user_id?: string
+          user_id?: string | null
         }
         Update: {
           data?: string
@@ -1104,7 +894,7 @@ export type Database = {
           id?: string
           medicamento_id?: string
           tomado?: boolean
-          user_id?: string
+          user_id?: string | null
         }
         Relationships: [
           {
@@ -1151,7 +941,7 @@ export type Database = {
           horario_dormir: string | null
           id: string
           qualidade: number | null
-          user_id: string
+          user_id: string | null
         }
         Insert: {
           data?: string
@@ -1160,7 +950,7 @@ export type Database = {
           horario_dormir?: string | null
           id?: string
           qualidade?: number | null
-          user_id?: string
+          user_id?: string | null
         }
         Update: {
           data?: string
@@ -1169,7 +959,7 @@ export type Database = {
           horario_dormir?: string | null
           id?: string
           qualidade?: number | null
-          user_id?: string
+          user_id?: string | null
         }
         Relationships: []
       }
@@ -1269,21 +1059,21 @@ export type Database = {
           estado: Database["public"]["Enums"]["energy_state"]
           hora_inicio: string
           id: string
-          user_id: string
+          user_id: string | null
         }
         Insert: {
           data?: string
           estado: Database["public"]["Enums"]["energy_state"]
           hora_inicio?: string
           id?: string
-          user_id?: string
+          user_id?: string | null
         }
         Update: {
           data?: string
           estado?: Database["public"]["Enums"]["energy_state"]
           hora_inicio?: string
           id?: string
-          user_id?: string
+          user_id?: string | null
         }
         Relationships: []
       }
@@ -1296,7 +1086,6 @@ export type Database = {
           id: string
           tarefa: string
           tempo_min: number | null
-          user_id: string
         }
         Insert: {
           ativo?: boolean | null
@@ -1306,7 +1095,6 @@ export type Database = {
           id?: string
           tarefa: string
           tempo_min?: number | null
-          user_id?: string
         }
         Update: {
           ativo?: boolean | null
@@ -1316,7 +1104,6 @@ export type Database = {
           id?: string
           tarefa?: string
           tempo_min?: number | null
-          user_id?: string
         }
         Relationships: []
       }
@@ -1341,7 +1128,7 @@ export type Database = {
           tipo: Database["public"]["Enums"]["task_tipo"]
           titulo: string
           urgencia: number
-          user_id: string
+          user_id: string | null
         }
         Insert: {
           cliente_id?: string | null
@@ -1363,7 +1150,7 @@ export type Database = {
           tipo?: Database["public"]["Enums"]["task_tipo"]
           titulo: string
           urgencia?: number
-          user_id?: string
+          user_id?: string | null
         }
         Update: {
           cliente_id?: string | null
@@ -1385,7 +1172,7 @@ export type Database = {
           tipo?: Database["public"]["Enums"]["task_tipo"]
           titulo?: string
           urgencia?: number
-          user_id?: string
+          user_id?: string | null
         }
         Relationships: [
           {

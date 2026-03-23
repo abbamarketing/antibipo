@@ -96,54 +96,59 @@ export function QuickOverview() {
     staleTime: 5 * 60 * 1000,
   });
 
-  const snippetMap: Record<string, ModuleSnippet> = {
-    trabalho: {
-      key: "trabalho", label: "Trabalho", icon: Briefcase,
-      task: topTaskByModule.trabalho, path: "/?mod=trabalho",
+  const snippets: ModuleSnippet[] = [
+    {
+      key: "trabalho",
+      label: "Trabalho",
+      icon: Briefcase,
+      task: topTaskByModule.trabalho,
+      path: "/?mod=trabalho",
       color: "bg-blue-500/10 text-blue-600 dark:text-blue-400",
     },
-    casa: {
-      key: "casa", label: "Casa", icon: Home,
-      task: topTaskByModule.casa, path: "/?mod=casa",
+    {
+      key: "casa",
+      label: "Casa",
+      icon: Home,
+      task: topTaskByModule.casa,
+      path: "/?mod=casa",
       color: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400",
     },
-    saude: {
-      key: "saude", label: "Saúde", icon: Heart,
-      task: topTaskByModule.saude, path: "/?mod=saude",
+    {
+      key: "saude",
+      label: "Saúde",
+      icon: Heart,
+      task: topTaskByModule.saude,
+      path: "/?mod=saude",
       color: "bg-rose-500/10 text-rose-600 dark:text-rose-400",
     },
-    metas: {
-      key: "metas", label: "Metas", icon: Target,
+    {
+      key: "metas",
+      label: "Metas",
+      icon: Target,
       task: topMeta ? `${topMeta.titulo} (${topMeta.progresso}%)` : null,
       path: "/?mod=metas",
       color: "bg-purple-500/10 text-purple-600 dark:text-purple-400",
     },
-    financeiro: {
-      key: "financeiro", label: "Finanças", icon: Wallet,
+    {
+      key: "financeiro",
+      label: "Finanças",
+      icon: Wallet,
       task: finSummary
         ? `Saldo: R$ ${finSummary.balance.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}`
         : null,
       path: "/financeiro",
       color: "bg-amber-500/10 text-amber-600 dark:text-amber-400",
     },
-    calendario: {
-      key: "calendario", label: "Calendário", icon: CalendarDays,
+    {
+      key: "calendario",
+      label: "Calendário",
+      icon: CalendarDays,
       task: nextEvent ? `${nextEvent.hora_inicio} — ${nextEvent.titulo}` : null,
       path: "/calendario",
       color: "bg-sky-500/10 text-sky-600 dark:text-sky-400",
     },
-  };
+  ];
 
-  const hiddenModules = dayCtx.orchestration?.modules_to_hide ?? [];
-  const orderedKeys = (dayCtx.moduleOrder ?? ["saude", "trabalho", "casa", "financeiro", "metas", "calendario"])
-    .filter((k) => !hiddenModules.includes(k) && snippetMap[k]);
-
-  // Add any keys not in moduleOrder but present in snippetMap (safety fallback)
-  Object.keys(snippetMap).forEach((k) => {
-    if (!orderedKeys.includes(k) && !hiddenModules.includes(k)) orderedKeys.push(k);
-  });
-
-  const snippets = orderedKeys.map((k) => snippetMap[k]);
   return (
     <div className="space-y-2">
       <h3 className="font-mono text-[11px] tracking-widest text-muted-foreground uppercase px-1">

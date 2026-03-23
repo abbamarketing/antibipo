@@ -4,8 +4,6 @@
  * components can consume. This is the connective tissue between modules.
  */
 import { useMemo } from "react";
-import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
 import { useFlowStore, today, type EnergyState } from "@/lib/store";
 import { useBemEstarStore } from "@/lib/bem-estar-store";
 import { useCasaStore } from "@/lib/casa-store";
@@ -13,27 +11,6 @@ import { useTrackerStore } from "@/lib/tracker-store";
 
 export type DayMood = "muito_baixo" | "baixo" | "neutro" | "bom" | "muito_bom";
 export type DayAlert = "crise" | "atencao" | "estavel" | "otimo";
-
-export interface Orchestration {
-  manic_precursor: boolean | null;
-  depressive_precursor: boolean | null;
-  manic_confidence: number | null;
-  depressive_confidence: number | null;
-  weights: Record<string, number>;
-  weight_adjustment_reason: string | null;
-  module_order: string[];
-  modules_to_show: string[] | null;
-  modules_to_hide: string[] | null;
-  nudge_tone: string | null;
-  nudge_focus: string | null;
-  nudge_factual_base: string | null;
-  meds_adherence_7d: number | null;
-  meds_status: string | null;
-  meds_as_anchor: boolean | null;
-  day_score_recalibrated: number | null;
-  alert_level_recalibrated: string | null;
-  score_shift: number | null;
-}
 
 export interface DayContext {
   // Raw values
@@ -44,7 +21,7 @@ export interface DayContext {
   sleepHours: number | null;
   medsTaken: number;
   medsTotal: number;
-  medsAdherence: number | null; // 0-100% or null when no meds registered
+  medsAdherence: number; // 0-100%
   exerciseDone: boolean;
   exerciseMinutes: number;
 
@@ -62,13 +39,6 @@ export interface DayContext {
   tasksCompletedToday: number;
   tasksPending: number;
   tasksOverdue: number;
-
-  // Orchestration
-  moduleOrder: string[];
-  orchestration: Orchestration | null;
-  scoreShift: number | null;
-  weightAdjustmentReason: string | null;
-  alerts: object[];
 }
 
 function moodToLabel(val: number | null): DayMood {
@@ -83,7 +53,7 @@ function moodToLabel(val: number | null): DayMood {
 function computeDayScore(ctx: {
   moodValue: number | null;
   sleepQuality: number | null;
-  medsAdherence: number | null;
+  medsAdherence: number;
   exerciseDone: boolean;
   tasksCompletedToday: number;
   energy: EnergyState | null;
@@ -102,7 +72,7 @@ function computeDayScore(ctx: {
   }
 
   // Medication adherence (0-15)
-  score += ctx.medsAdherence !== null ? (ctx.medsAdherence / 100) * 15 : 0;
+  score += (ctx.medsAdherence / 100) * 15;
 
   // Exercise bonus (0-10)
   if (ctx.exerciseDone) score += 10;
@@ -124,7 +94,7 @@ function computeDayScore(ctx: {
   return Math.max(0, Math.min(100, Math.round(score)));
 }
 
-function computeAlert(score: number, moodValue: number | null, medsAdherence: number | null, consecutiveDaysWithoutData: number): { level: DayAlert; message: string } {
+function computeAlert(score: number, moodValue: number | null, medsAdherence: number, consecutiveDaysWithoutData: number): { level: DayAlert; message: string } {
   // Data gap overrides — silence is dangerous in bipolar condition
   if (consecutiveDaysWithoutData >= 5) {
     return { level: "crise", message: `Voce esta sumido ha ${consecutiveDaysWithoutData} dias. Tudo bem? Registre como se sente.` };
@@ -136,7 +106,7 @@ function computeAlert(score: number, moodValue: number | null, medsAdherence: nu
     return { level: "atencao", message: `${consecutiveDaysWithoutData} dias sem dados. Que tal registrar como voce esta?` };
   }
 
-  if (moodValue !== null && moodValue <= -2 && medsAdherence !== null && medsAdherence < 50) {
+  if (moodValue !== null && moodValue <= -2 && medsAdherence < 50) {
     return { level: "crise", message: "Humor muito baixo e medicacao pendente. Priorize so o essencial." };
   }
   if (score < 30 || (moodValue !== null && moodValue <= -2)) {
@@ -175,7 +145,7 @@ function computeTaskLimits(energy: EnergyState | null, moodValue: number | null)
 
 function computeSuggestions(ctx: {
   moodValue: number | null;
-  medsAdherence: number | null;
+  medsAdherence: number;
   exerciseDone: boolean;
   sleepQuality: number | null;
   tasksCompletedToday: number;
@@ -183,7 +153,7 @@ function computeSuggestions(ctx: {
 }): string[] {
   const suggestions: string[] = [];
 
-  if (ctx.medsAdherence !== null && ctx.medsAdherence < 100) {
+  if (ctx.medsAdherence < 100) {
     suggestions.push("Tomar medicacao pendente");
   }
   if (!ctx.exerciseDone && ctx.moodValue !== null && ctx.moodValue <= 0) {
@@ -230,34 +200,14 @@ function countConsecutiveDaysWithoutData(
   return count;
 }
 
-const defaultModuleOrder = ["saude", "trabalho", "casa", "financeiro", "calendario", "metas"];
-
 export function useDayContext(): DayContext {
   const { state } = useFlowStore();
   const bemEstar = useBemEstarStore();
   const casa = useCasaStore();
   const trackers = useTrackerStore();
 
-  const todayStr = today();
-
-  const { data: orchestration } = useQuery({
-    queryKey: ["orchestration", todayStr],
-    queryFn: async () => {
-      const { data: userData } = await supabase.auth.getUser();
-      if (!userData.user) return null;
-      const { data } = await supabase
-        .from("agentes_orquestracao")
-        .select("*")
-        .eq("user_id", userData.user.id)
-        .eq("periodo", todayStr)
-        .maybeSingle();
-      return data as Orchestration | null;
-    },
-    staleTime: 1000 * 60 * 15,
-    refetchOnWindowFocus: false,
-  });
-
   return useMemo(() => {
+    const todayStr = today();
     const energy = state.current_energy;
 
     // Mood
@@ -269,11 +219,11 @@ export function useDayContext(): DayContext {
     const sleepQuality = todaySleep?.qualidade ?? null;
     const sleepHours = todaySleep?.duracao_min ? todaySleep.duracao_min / 60 : null;
 
-    // Meds
+    // Meds — neutral (50) when no meds registered, not inflated 100
     const todayMedRecords = state.registros_medicamento.filter((r) => r.data === todayStr);
     const totalMedSlots = state.medicamentos.reduce((sum, m) => sum + m.horarios.length, 0);
     const medsTaken = todayMedRecords.filter((r) => r.tomado).length;
-    const medsAdherence = totalMedSlots > 0 ? Math.round((medsTaken / totalMedSlots) * 100) : null;
+    const medsAdherence = totalMedSlots > 0 ? Math.round((medsTaken / totalMedSlots) * 100) : 50;
 
     // Exercise
     const exerciseDone = bemEstar.exerciciosHoje.length > 0;
@@ -297,15 +247,9 @@ export function useDayContext(): DayContext {
       state.registros_medicamento,
     );
 
-    // Computed local score
-    const localDayScore = computeDayScore({ moodValue, sleepQuality, medsAdherence, exerciseDone, tasksCompletedToday, energy, consecutiveDaysWithoutData });
-    const localAlert = computeAlert(localDayScore, moodValue, medsAdherence, consecutiveDaysWithoutData);
-
-    // Prefer orchestration values when available
-    const dayScore = orchestration?.day_score_recalibrated ?? localDayScore;
-    const alertLevel = (orchestration?.alert_level_recalibrated as DayAlert) ?? localAlert.level;
-    const alertMessage = localAlert.message;
-
+    // Computed
+    const dayScore = computeDayScore({ moodValue, sleepQuality, medsAdherence, exerciseDone, tasksCompletedToday, energy, consecutiveDaysWithoutData });
+    const { level: alertLevel, message: alertMessage } = computeAlert(dayScore, moodValue, medsAdherence, consecutiveDaysWithoutData);
     const { taskLimit, casaLimit } = computeTaskLimits(energy, moodValue);
     const suggestedActions = computeSuggestions({ moodValue, medsAdherence, exerciseDone, sleepQuality, tasksCompletedToday, energy });
 
@@ -333,14 +277,8 @@ export function useDayContext(): DayContext {
       tasksCompletedToday,
       tasksPending,
       tasksOverdue,
-      moduleOrder: orchestration?.module_order ?? defaultModuleOrder,
-      orchestration: orchestration ?? null,
-      scoreShift: orchestration?.score_shift ?? null,
-      weightAdjustmentReason: orchestration?.weight_adjustment_reason ?? null,
-      alerts: [],
     };
   }, [
-    todayStr,
     state.current_energy,
     state.registros_humor,
     state.registros_sono,
@@ -348,6 +286,5 @@ export function useDayContext(): DayContext {
     state.medicamentos,
     state.tasks,
     bemEstar.exerciciosHoje,
-    orchestration,
   ]);
 }

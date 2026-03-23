@@ -2,18 +2,14 @@
  * DayScore — Circular gauge with cross-module summary.
  */
 import { useDayContext, type DayAlert, type DayMood } from "@/hooks/use-day-context";
-import { useQueryClient } from "@tanstack/react-query";
-import { getEnergyStatus } from "@/lib/energy-utils";
 import {
   Activity, Pill, Moon, Dumbbell, CheckCircle2,
   AlertTriangle, AlertCircle, Sun, Sparkles, ChevronDown, ChevronRight,
-  Angry, Frown, Meh, Smile, Laugh, ClipboardEdit, Zap,
+  Angry, Frown, Meh, Smile, Laugh, ClipboardEdit,
 } from "lucide-react";
 import { useState } from "react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { MoodCheckIn } from "./MoodCheckIn";
-import { Badge } from "@/components/ui/badge";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 const ALERT_STYLES: Record<DayAlert, { bg: string; text: string; icon: typeof AlertTriangle; label: string; gaugeColor: string }> = {
   crise: { bg: "bg-destructive/10", text: "text-destructive", icon: AlertCircle, label: "CRISE", gaugeColor: "hsl(var(--destructive))" },
@@ -80,17 +76,12 @@ function CompactIndicator({ icon, label, value }: { icon: React.ReactNode; label
 
 export function DayScore() {
   const ctx = useDayContext();
-  const qc = useQueryClient();
   const isMobile = useIsMobile();
   const [expanded, setExpanded] = useState(false);
   const [showMoodCheckIn, setShowMoodCheckIn] = useState(false);
   const alertStyle = ALERT_STYLES[ctx.alertLevel];
   const moodCfg = MOOD_ICONS[ctx.moodLabel];
   const MoodIcon = moodCfg.icon;
-
-  // Energy session staleness — read from query cache (set by store)
-  const energySession = qc.getQueryData<{ hora_inicio: string } | null>(["current_energy"]);
-  const energyStatus = getEnergyStatus(energySession ?? null);
 
   const gapDays = ctx.consecutiveDaysWithoutData;
   const isCriticalGap = gapDays >= 4;
@@ -133,39 +124,17 @@ export function DayScore() {
         <MoodCheckIn onMoodUpdated={() => setShowMoodCheckIn(false)} />
       )}
       {/* Alert bar */}
-      <div
-        className={`rounded-lg p-3 ${alertStyle.bg}`}
-        title={{ crise: "Alerta: Crise", atencao: "Alerta: Atenção", estavel: "Estável", otimo: "Ótimo" }[ctx.alertLevel] ?? ctx.alertLevel}
-      >
+      <div className={`rounded-lg p-3 ${alertStyle.bg}`}>
         <div className="flex items-center gap-2">
           {(() => { const I = alertStyle.icon; return <I className={`w-4 h-4 shrink-0 ${alertStyle.text}`} />; })()}
           <p className={`text-xs font-body ${alertStyle.text}`}>{ctx.alertMessage}</p>
         </div>
       </div>
 
-      {/* Energy staleness badge */}
-      {energyStatus === 'expirado' && (
-        <Badge variant="destructive" className="text-xs w-full justify-center gap-1">
-          <Zap className="w-3 h-3" /> Energia desatualizada — registre agora
-        </Badge>
-      )}
-      {energyStatus === 'expirando' && (
-        <Badge variant="outline" className="text-xs w-full justify-center gap-1 border-yellow-500 text-yellow-600 dark:text-yellow-400">
-          <Zap className="w-3 h-3" /> Atualizar energia em breve
-        </Badge>
-      )}
-      {energyStatus === 'sem_dados' && (
-        <Badge variant="outline" className="text-xs w-full justify-center gap-1 text-muted-foreground">
-          <Zap className="w-3 h-3" /> Energia não registrada hoje
-        </Badge>
-      )}
-
       {/* Gauge + modules summary */}
       <button
         onClick={() => setExpanded(!expanded)}
         className="w-full rounded-xl p-4 text-left transition-all duration-200 hover:bg-secondary/20 active:scale-[0.99]"
-        aria-label={`DayScore: ${ctx.dayScore} de 100. Nível de alerta: ${{ crise: "Crise", atencao: "Atenção", estavel: "Estável", otimo: "Ótimo" }[ctx.alertLevel] ?? ctx.alertLevel}`}
-        role="status"
       >
         <div className="space-y-3">
           {/* Gauge centered with score inside, tasks count as badge */}
@@ -178,20 +147,6 @@ export function DayScore() {
                 <span className="text-[11px] font-mono font-bold">{ctx.tasksCompletedToday}</span>
               </div>
             </div>
-            {ctx.scoreShift !== null && ctx.scoreShift !== 0 && (
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <span className="text-xs text-muted-foreground cursor-help ml-1">
-                      {ctx.scoreShift > 0 ? `↑${ctx.scoreShift}` : `↓${Math.abs(ctx.scoreShift)}`} ajustado
-                    </span>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p className="max-w-xs text-xs">{ctx.weightAdjustmentReason}</p>
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-            )}
           </div>
 
           {/* 4 compact indicators in a row */}
@@ -202,9 +157,9 @@ export function DayScore() {
               value={ctx.moodLabel === "neutro" ? "—" : ctx.moodLabel.replace("_", " ")}
             />
             <CompactIndicator
-              icon={<Pill className={`w-3.5 h-3.5 ${ctx.medsAdherence !== null && ctx.medsAdherence >= 100 ? "text-green-500" : ctx.medsAdherence !== null && ctx.medsAdherence > 0 ? "text-amber-500" : "text-muted-foreground"}`} />}
+              icon={<Pill className={`w-3.5 h-3.5 ${ctx.medsAdherence >= 100 ? "text-green-500" : ctx.medsAdherence > 0 ? "text-amber-500" : "text-muted-foreground"}`} />}
               label="Meds"
-              value={ctx.medsAdherence === null ? "sem registro" : `${ctx.medsTaken}/${ctx.medsTotal}`}
+              value={`${ctx.medsTaken}/${ctx.medsTotal}`}
             />
             <CompactIndicator
               icon={<Moon className={`w-3.5 h-3.5 ${ctx.sleepQuality === 3 ? "text-green-500" : ctx.sleepQuality === 2 ? "text-amber-500" : ctx.sleepQuality === 1 ? "text-destructive" : "text-muted-foreground/30"}`} />}
