@@ -88,9 +88,14 @@ export function WeatherWidget({ compact = false, inline = false }: WeatherWidget
       let lon = -43.8617;
 
       try {
-        const pos = await new Promise<GeolocationPosition>((resolve, reject) =>
-          navigator.geolocation.getCurrentPosition(resolve, reject, { timeout: 5000 })
-        );
+        const pos = await Promise.race([
+          new Promise<GeolocationPosition>((resolve, reject) =>
+            navigator.geolocation.getCurrentPosition(resolve, reject, { timeout: 5000 })
+          ),
+          new Promise<never>((_, reject) =>
+            setTimeout(() => reject(new Error("geo timeout")), 6000)
+          ),
+        ]);
         lat = pos.coords.latitude;
         lon = pos.coords.longitude;
       } catch {
